@@ -1,0 +1,13 @@
+{
+  "model": "claude-sonnet-4-6",
+
+  "env": {
+    "TOKENLB_API_KEY": "sk-GMOxcS1pEHbypmw3Dn0QLwo3BVpO6Kvnfa5AZ81tCoJI22qZ",
+    "ANTHROPIC_AUTH_TOKEN": "sk-GMOxcS1pEHbypmw3Dn0QLwo3BVpO6Kvnfa5AZ81tCoJI22qZ",
+    "ANTHROPIC_BASE_URL": "https://tokenlb.net/v1",
+
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-4-6",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-4-8",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-4-5-20251001"
+  }
+}
