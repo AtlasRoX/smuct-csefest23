@@ -36,14 +36,14 @@ export default function NotFoundPage() {
       <div className="flex flex-col sm:flex-row gap-3">
         <Link
           href="/"
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-sm bg-primary text-neutral-50 text-sm font-semibold font-sans hover:bg-primary/90 transition-colors"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-primary text-white text-sm font-semibold font-sans hover:bg-primary/90 transition-colors"
         >
           <Home className="h-4 w-4" />
           Return Home
         </Link>
         <button
           onClick={() => window.history.back()}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-sm bg-neutral-900 border border-neutral-800 text-neutral-300 text-sm font-semibold font-sans hover:bg-neutral-800 transition-colors cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-neutral-900 border border-neutral-800 text-neutral-300 text-sm font-semibold font-sans hover:bg-neutral-800 transition-colors cursor-pointer"
         >
           <ArrowLeft className="h-4 w-4" />
           Go Back

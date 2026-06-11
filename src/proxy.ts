@@ -1,12 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let response = NextResponse.next({
     request: {
       headers: request.headers,
     },
   });
+
+  const path = request.nextUrl.pathname;
+
+  // API routes handle their own auth — skip middleware entirely for them
+  // to avoid a redundant Supabase round-trip on every API call
+  if (path.startsWith("/api/")) {
+    return response;
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,8 +43,6 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const path = request.nextUrl.pathname;
-
   // Protected route scopes
   const isParticipantRoute =
     path.startsWith("/dashboard") ||
@@ -46,27 +52,49 @@ export async function middleware(request: NextRequest) {
     path.startsWith("/profile-setup");
 
   const isAdminRoute = path.startsWith("/admin");
+  const isAuthRoute =
+    path.startsWith("/login") || path.startsWith("/register");
 
-  // Auth guards
+  // Guard: unauthenticated user trying to access protected routes
   if (!user && (isParticipantRoute || isAdminRoute)) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // Redirect to dashboard if logged-in user tries to open login/register
-  if (user && (path.startsWith("/login") || path.startsWith("/register"))) {
+  // Only fetch role from DB when it's actually needed:
+  // - Authenticated user on an auth page (redirect to dashboard)
+  // - Authenticated user on an admin route (role check)
+  // - Authenticated user on a participant route (admin conflict check)
+  const needsRoleCheck = user && (isAuthRoute || isAdminRoute || isParticipantRoute);
+  let userRole: string | null = null;
+
+  if (needsRoleCheck) {
+    const { data: userData } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user!.id)
+      .single();
+    userRole = userData?.role || null;
+  }
+
+  // Redirect authenticated users away from login/register
+  if (user && isAuthRoute) {
+    if (userRole === "admin") {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
+    }
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
   // Secure admin routes server-side
   if (user && isAdminRoute) {
-    const { data: userData } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    if (!userData || userData.role !== "admin") {
+    if (userRole !== "admin") {
       return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+  }
+
+  // Prevent admin from accessing participant routes
+  if (user && isParticipantRoute) {
+    if (userRole === "admin") {
+      return NextResponse.redirect(new URL("/admin/dashboard", request.url));
     }
   }
 
@@ -77,11 +105,13 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
+     * - api (API routes — they self-authenticate)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public files (svg, png, jpg, jpeg, gif, webp)
      */
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
+

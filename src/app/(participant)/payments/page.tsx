@@ -233,16 +233,16 @@ export default function PaymentsPage() {
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-10 bg-neutral-900 w-1/3 rounded-radius-sm" />
-        <div className="h-24 bg-neutral-900 w-full rounded-radius-md" />
-        <div className="h-64 bg-neutral-900 w-full rounded-radius-md" />
+        <div className="h-10 bg-neutral-900 w-1/3 rounded-sm" />
+        <div className="h-24 bg-neutral-900 w-full rounded-md" />
+        <div className="h-64 bg-neutral-900 w-full rounded-md" />
       </div>
     );
   }
 
   if (teams.length === 0) {
     return (
-      <div className="py-16 text-center border border-dashed border-neutral-800 rounded-radius-md bg-neutral-900/10 space-y-4">
+      <div className="py-16 text-center border border-dashed border-neutral-800 rounded-md bg-neutral-900/10 space-y-4">
         <Users className="h-10 w-10 text-neutral-700 mx-auto" />
         <div className="space-y-1 max-w-sm mx-auto">
           <h3 className="font-heading font-semibold text-sm text-neutral-300">No Roster Memberships</h3>
@@ -298,14 +298,14 @@ export default function PaymentsPage() {
 
       {/* Messages */}
       {errorMsg && (
-        <div className="p-4 rounded-radius-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
           <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-4 rounded-radius-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
           <Check className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{successMsg}</span>
         </div>
@@ -324,7 +324,7 @@ export default function PaymentsPage() {
                 <select
                   value={selectedTeamId}
                   onChange={(e) => setSelectedTeamId(e.target.value)}
-                  className="flex h-10 w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                  className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                 >
                   {teams.map((t) => (
                     <option key={t.id} value={t.id}>
@@ -338,7 +338,7 @@ export default function PaymentsPage() {
 
           {/* Payment Status Info */}
           {paymentsLoading ? (
-            <div className="h-48 bg-neutral-900/40 rounded-radius-md animate-pulse" />
+            <div className="h-48 bg-neutral-900/40 rounded-md animate-pulse" />
           ) : latestPayment ? (
             <Card
               variant="default"
@@ -417,7 +417,7 @@ export default function PaymentsPage() {
                     <div className="text-xs text-neutral-500 font-semibold uppercase tracking-wide">
                       Screenshot Proof
                     </div>
-                    <div className="relative aspect-video max-w-sm rounded-radius-sm border border-neutral-800 overflow-hidden bg-neutral-950">
+                    <div className="relative aspect-video max-w-sm rounded-sm border border-neutral-800 overflow-hidden bg-neutral-950">
                       <img
                         src={latestPayment.screenshot_url}
                         alt="Payment screenshot proof"
@@ -448,7 +448,7 @@ export default function PaymentsPage() {
                       <button
                         type="button"
                         onClick={() => setMethod("bkash")}
-                        className={`flex items-center justify-between px-4 py-3 rounded-radius-sm border font-semibold text-sm transition-all ${
+                        className={`flex items-center justify-between px-4 py-3 rounded-sm border font-semibold text-sm transition-all ${
                           method === "bkash"
                             ? "bg-[#E2125D]/10 border-[#E2125D] text-[#E2125D]"
                             : "bg-neutral-950 border-neutral-800 text-neutral-400 hover:border-neutral-700"
@@ -460,7 +460,7 @@ export default function PaymentsPage() {
                       <button
                         type="button"
                         onClick={() => setMethod("nagad")}
-                        className={`flex items-center justify-between px-4 py-3 rounded-radius-sm border font-semibold text-sm transition-all ${
+                        className={`flex items-center justify-between px-4 py-3 rounded-sm border font-semibold text-sm transition-all ${
                           method === "nagad"
                             ? "bg-[#F57C20]/10 border-[#F57C20] text-[#F57C20]"
                             : "bg-neutral-950 border-neutral-800 text-neutral-400 hover:border-neutral-700"
@@ -478,7 +478,7 @@ export default function PaymentsPage() {
                       <label className="text-sm font-medium text-neutral-300 font-sans">
                         Required Registration Fee
                       </label>
-                      <div className="h-10 flex items-center bg-neutral-900 border border-neutral-800 px-3 rounded-radius-sm text-neutral-100 font-mono font-bold text-sm">
+                      <div className="h-10 flex items-center bg-neutral-900 border border-neutral-800 px-3 rounded-sm text-neutral-100 font-mono font-bold text-sm">
                         {entryFee} BDT
                       </div>
                     </div>
@@ -497,13 +497,13 @@ export default function PaymentsPage() {
                     <label className="text-sm font-medium text-neutral-300">
                       Upload Screenshot Proof
                     </label>
-                    <div className="relative border-2 border-dashed border-neutral-800 rounded-radius-md p-6 flex flex-col items-center justify-center bg-neutral-950 hover:border-neutral-700 transition-colors">
+                    <div className="relative border-2 border-dashed border-neutral-800 rounded-md p-6 flex flex-col items-center justify-center bg-neutral-950 hover:border-neutral-700 transition-colors">
                       {screenshotBase64 ? (
                         <div className="relative max-h-48 w-full overflow-hidden flex flex-col items-center justify-center">
                           <img
                             src={screenshotBase64}
                             alt="Screenshot preview"
-                            className="max-h-40 rounded-radius-sm object-contain"
+                            className="max-h-40 rounded-sm object-contain"
                           />
                           <button
                             type="button"
@@ -587,11 +587,11 @@ export default function PaymentsPage() {
               <div className="space-y-2 pb-4 border-b border-neutral-850">
                 <h3 className="font-semibold text-neutral-300">Gateway Accounts</h3>
                 <div className="space-y-3 pt-2">
-                  <div className="flex items-center justify-between bg-neutral-950 p-2.5 rounded-radius-sm border border-neutral-850">
+                  <div className="flex items-center justify-between bg-neutral-950 p-2.5 rounded-sm border border-neutral-850">
                     <span className="text-[#E2125D] font-bold">bKash Personal</span>
                     <span className="text-neutral-300 font-mono font-medium">+880 1711-223344</span>
                   </div>
-                  <div className="flex items-center justify-between bg-neutral-950 p-2.5 rounded-radius-sm border border-neutral-850">
+                  <div className="flex items-center justify-between bg-neutral-950 p-2.5 rounded-sm border border-neutral-850">
                     <span className="text-[#F57C20] font-bold">Nagad Personal</span>
                     <span className="text-neutral-300 font-mono font-medium">+880 1711-223344</span>
                   </div>

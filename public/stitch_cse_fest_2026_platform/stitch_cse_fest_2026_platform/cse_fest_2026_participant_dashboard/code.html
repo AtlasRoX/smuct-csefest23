@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Dashboard | CSE Fest 2026</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;family=Geist+Mono:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-lowest": "#0e0d16",
+                        "primary": "#c3c0ff",
+                        "surface-bright": "#393842",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "surface-tint": "#c3c0ff",
+                        "on-secondary-fixed": "#2c0051",
+                        "on-secondary-fixed-variant": "#6900b3",
+                        "inverse-surface": "#e4e1ee",
+                        "secondary-fixed": "#f0dbff",
+                        "inverse-primary": "#4d44e3",
+                        "error": "#ffb4ab",
+                        "outline": "#918fa1",
+                        "on-secondary-container": "#d6a9ff",
+                        "tertiary-container": "#a44100",
+                        "on-error": "#690005",
+                        "surface-variant": "#35343e",
+                        "secondary-fixed-dim": "#ddb7ff",
+                        "on-background": "#e4e1ee",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#351000",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "tertiary-fixed-dim": "#ffb695",
+                        "surface-container": "#1f1f28",
+                        "on-tertiary": "#571f00",
+                        "surface-container-high": "#2a2933",
+                        "on-secondary": "#490080",
+                        "surface": "#13121b",
+                        "secondary-container": "#6f00be",
+                        "on-primary-fixed": "#0f0069",
+                        "on-primary": "#1d00a5",
+                        "primary-container": "#4f46e5",
+                        "error-container": "#93000a",
+                        "inverse-on-surface": "#302f39",
+                        "background": "#13121b",
+                        "secondary": "#ddb7ff",
+                        "on-surface-variant": "#c7c4d8",
+                        "tertiary": "#ffb695",
+                        "surface-container-highest": "#35343e",
+                        "primary-fixed": "#e2dfff",
+                        "tertiary-fixed": "#ffdbcc",
+                        "surface-container-low": "#1b1b24",
+                        "on-tertiary-container": "#ffd2be",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "on-surface": "#e4e1ee",
+                        "on-primary-container": "#dad7ff",
+                        "surface-dim": "#13121b",
+                        "outline-variant": "#464555"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "64px",
+                        "gutter": "24px",
+                        "max-width": "1280px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Inter"],
+                        "headline-xl": ["Space Grotesk"],
+                        "headline-lg": ["Space Grotesk"],
+                        "label-sm": ["Inter"],
+                        "headline-lg-mobile": ["Space Grotesk"],
+                        "data-display": ["Geist Mono"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "headline-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "data-display": ["14px", {"lineHeight": "1.4", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .bg-grid-pattern {
+            background-image: linear-gradient(to right, rgba(195, 192, 255, 0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(195, 192, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .glass-panel {
+            background: rgba(31, 31, 40, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glow-primary:hover {
+            box-shadow: 0 0 20px rgba(195, 192, 255, 0.3);
+        }
+        .pulse-breathing {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md bg-grid-pattern min-h-screen">
+<!-- SideNavBar Anchor -->
+<aside class="fixed left-0 top-0 h-screen w-64 z-40 bg-surface-container/80 backdrop-blur-xl border-r border-white/10 shadow-2xl flex flex-col p-4 space-y-2">
+<div class="px-2 py-6 mb-4">
+<h1 class="font-headline-lg text-headline-lg text-primary">Console v2.6</h1>
+<p class="text-on-surface-variant font-label-sm uppercase tracking-widest opacity-60">Participant Portal</p>
+</div>
+<nav class="flex-grow space-y-1">
+<!-- Active State: Overview -->
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container rounded-lg font-bold shadow-[0_0_15px_rgba(79,70,229,0.4)] active:scale-[0.98] transition-all duration-200" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard</span>
+<span>Overview</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg hover:translate-x-1 transition-all duration-200 active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span>My Teams</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg hover:translate-x-1 transition-all duration-200 active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">upload_file</span>
+<span>Submissions</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg hover:translate-x-1 transition-all duration-200 active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span>Payments</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg hover:translate-x-1 transition-all duration-200 active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span>Settings</span>
+</a>
+</nav>
+<div class="mt-auto space-y-2 pt-4 border-t border-white/5">
+<button class="w-full bg-primary text-on-primary font-bold py-3 rounded-lg shadow-lg glow-primary transition-all duration-300 active:scale-95">
+                Join Discord
+            </button>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg hover:translate-x-1 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">gavel</span>
+<span>Rules</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/30 rounded-lg hover:translate-x-1 transition-all duration-200" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span>Log Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 p-margin-desktop min-h-screen">
+<!-- Top Navigation Anchor (Simulated within content context) -->
+<header class="flex justify-between items-center mb-10">
+<div>
+<h2 class="font-headline-xl text-headline-xl text-primary">Command Center</h2>
+<p class="text-on-surface-variant flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
+                    System Online: CSE Fest 2026 Core
+                </p>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center bg-surface-container-high rounded-full px-4 py-2 border border-white/10">
+<span class="material-symbols-outlined text-primary mr-2">terminal</span>
+<span class="font-data-display text-primary">USR_ALPHA_02</span>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined text-on-surface-variant text-2xl cursor-pointer hover:text-primary transition-colors">notifications</span>
+<span class="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></span>
+</div>
+<img alt="User profile avatar" class="w-10 h-10 rounded-full border-2 border-primary/50 object-cover shadow-lg" data-alt="A professional headshot of a young computer science student wearing a sleek black hoodie, lit with dramatic blue and purple neon lighting against a dark tech-inspired background. The image has a cinematic high-tech aesthetic, with sharp focus and shallow depth of field, fitting for a futuristic digital festival portal." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxlXn7D_6OAEtAkY3eKySnALItJRyZI-vblcvvWt3KokIDhlfhrxkGe69tLBFwpYsX2jIiLmfIf5_yIv-5xuuUACJ0IOgZDfDdCR4rYivwJuA_ih2zKMjwexhLjJhVLRJY1mMNV3xqMTYmMQ7fo-HzsleZhTS5EPQ6X_pXbjTNSus1R0TmIDNN22MqAZ0CCc4oIPcz4_HKfezzN-ByropkGV5xmBWF6EyCKslix42bDxkrdaLd5G4RVPnpBnHSt-ZoqbdcQKqbdKyR"/>
+</div>
+</header>
+<!-- 1. Verification Status Banner -->
+<section class="mb-gutter">
+<div class="relative overflow-hidden glass-panel rounded-xl p-6 border-l-4 border-tertiary-fixed-dim bg-gradient-to-r from-tertiary-container/20 to-transparent flex flex-col md:flex-row justify-between items-center gap-4">
+<div class="flex items-center gap-4">
+<div class="bg-tertiary-fixed-dim/20 p-3 rounded-lg pulse-breathing">
+<span class="material-symbols-outlined text-tertiary-fixed-dim text-3xl">warning</span>
+</div>
+<div>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-tertiary-fixed-dim">Verification Pending</h3>
+<p class="text-on-surface-variant">Your identity verification is currently being processed. Complete your profile to unlock all event features.</p>
+</div>
+</div>
+<button class="px-6 py-3 bg-tertiary-fixed-dim text-on-tertiary-fixed font-bold rounded-lg hover:brightness-110 active:scale-95 transition-all whitespace-nowrap">
+                    Complete Profile
+                </button>
+</div>
+</section>
+<!-- 2. Statistics Row -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-gutter">
+<div class="glass-panel p-6 rounded-xl hover:translate-y-[-4px] transition-transform duration-300">
+<p class="font-label-sm text-on-surface-variant uppercase tracking-widest mb-2">Registered Events</p>
+<div class="flex items-end justify-between">
+<span class="font-headline-xl text-headline-xl text-primary font-data-display">03</span>
+<span class="material-symbols-outlined text-primary/40 text-4xl">event_available</span>
+</div>
+<div class="mt-4 h-1 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[75%] shadow-[0_0_10px_rgba(195,192,255,0.5)]"></div>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-xl hover:translate-y-[-4px] transition-transform duration-300">
+<p class="font-label-sm text-on-surface-variant uppercase tracking-widest mb-2">Active Teams</p>
+<div class="flex items-end justify-between">
+<span class="font-headline-xl text-headline-xl text-secondary font-data-display">02</span>
+<span class="material-symbols-outlined text-secondary/40 text-4xl">groups_2</span>
+</div>
+<div class="mt-4 h-1 bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-secondary w-[40%] shadow-[0_0_10px_rgba(221,183,255,0.5)]"></div>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-xl hover:translate-y-[-4px] transition-transform duration-300">
+<p class="font-label-sm text-on-surface-variant uppercase tracking-widest mb-2">Global Rank</p>
+<div class="flex items-end justify-between">
+<span class="font-headline-xl text-headline-xl text-on-surface-variant font-data-display">N/A</span>
+<span class="material-symbols-outlined text-on-surface-variant/40 text-4xl">military_tech</span>
+</div>
+<div class="mt-4 text-xs font-data-display text-on-surface-variant/60 italic">Ranking starts after first submission</div>
+</div>
+</section>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
+<!-- 3. My Teams Section (Bento Grid Style) -->
+<div class="lg:col-span-2 space-y-gutter">
+<div class="flex justify-between items-center">
+<h3 class="font-headline-lg text-headline-lg text-white">My Teams</h3>
+<button class="text-primary font-label-sm flex items-center gap-1 hover:underline">
+                        View All <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<!-- Team Card 1 -->
+<div class="glass-panel rounded-xl overflow-hidden group">
+<div class="h-24 bg-gradient-to-br from-primary-container to-secondary-container relative">
+<div class="absolute inset-0 bg-black/20"></div>
+<span class="absolute top-4 right-4 bg-black/40 backdrop-blur-md text-primary px-3 py-1 rounded-full text-xs font-data-display border border-primary/30 flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+                                In Progress
+                            </span>
+</div>
+<div class="p-6">
+<h4 class="font-headline-lg-mobile text-headline-lg-mobile mb-4">Hackathon 4.0</h4>
+<div class="flex -space-x-2 mb-6">
+<img alt="Team member" class="w-8 h-8 rounded-full border-2 border-surface shadow-md" data-alt="Close-up of a diverse professional student looking at the camera, wearing modern minimalist tech attire. The background is a blurred office environment with cool indigo and violet light accents, emphasizing a high-tech corporate computer science festival atmosphere." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB1MQp30oXJVFqhyWxOY663PpLw02wyZe5P8cI5ENsU7c7w7gdBo-XFv7FZAWsKkC6w__sBCjVAGgrdClKEuqMqe7FlDzWLCcRey0uQfv9HU1-pIL-L5BoEpyJAZfT-Cq1LyutaO_sdkUYOt7OZ2-YiaaV41pcpLsJfvPySAeg8y_WrsYj5Mq44aqU5NJYnjCKu7RoDSCKk3pHMHdYHealtLb9mCU74_Z_qAHCgam59Uhz6TT1PLBDekDEtvZYNdXoPIZuAWpEKMBfA"/>
+<img alt="Team member" class="w-8 h-8 rounded-full border-2 border-surface shadow-md" data-alt="A portrait of a young woman with a focused expression, representing a digital designer or developer. She is framed by soft ambient cyber-tech lighting in shades of purple and deep navy. The style is clean, professional, and contemporary." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDiGlkAB8l_YTUqklW6odaHcVA85ktiq1yaYN_-JyLLlh14qTU7NqUN01hNYlhdgOpzGF2IafykNQuFcXvGxLaTnPso7bubIH1YzdUhVXhffb1jeqUSHXA3eQd6RZnGVLb7xGiHE2cdXj3n70NCDHRMYMtU-G38_DjVVamS3Vzr_cBNEGw2PgZsGao9DPvs2p-53TBXWLQglxijGHerNT0vGclOlXZKIpfQfl3NTNCIsxpaso3IU0nn0Dtj4Wm1mFpE790iIMrOhtjB"/>
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-high flex items-center justify-center text-[10px] font-bold text-on-surface-variant">+1</div>
+</div>
+<button class="w-full py-2 bg-surface-variant/50 text-white rounded-lg hover:bg-surface-variant transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">rocket_launch</span>
+                                Project Portal
+                            </button>
+</div>
+</div>
+<!-- Team Card 2 -->
+<div class="glass-panel rounded-xl overflow-hidden group">
+<div class="h-24 bg-gradient-to-br from-tertiary-container/60 to-surface-container relative">
+<div class="absolute inset-0 bg-black/20"></div>
+<span class="absolute top-4 right-4 bg-black/40 backdrop-blur-md text-tertiary px-3 py-1 rounded-full text-xs font-data-display border border-tertiary/30">
+                                Pending Payment
+                            </span>
+</div>
+<div class="p-6">
+<h4 class="font-headline-lg-mobile text-headline-lg-mobile mb-4">UI/UX Challenge</h4>
+<div class="flex -space-x-2 mb-6">
+<img alt="Team member" class="w-8 h-8 rounded-full border-2 border-surface shadow-md" data-alt="Close-up of a creative technologist with a bright, enthusiastic look. The setting is a futuristic lab with soft glowing lines of light in the background. High contrast, sharp details, and professional lighting in line with a cyber-tech design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDn5EQ9xO2v7lDL314AXo2Gs1Q7JE1siVtYrrUsNKiGv0etHlodmwLOHzkHFoJKVLDqqSE7MPNMawBwLLZeBDcbwqLju106PqQK5-AQeLMD5nZjpwaB7YpdiHJgdC4E50GdxTeIYgS-yC2sffWeqFHNi-Vx2ZCl6smL-5DCtlbIB2qQQwYIgfD-FxI4-NImgwV-M-3hbx25lyjSbcKvrQJMKCy4cCnyRomnPhbjntF5d9LMheLXzipHJqkBvdiK8ks-IXR7G0p67ok_"/>
+<div class="w-8 h-8 rounded-full border-2 border-surface bg-surface-container-high flex items-center justify-center text-[10px] font-bold text-on-surface-variant">Empty</div>
+</div>
+<button class="w-full py-2 bg-secondary text-on-secondary font-bold rounded-lg hover:brightness-110 transition-all flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">payments</span>
+                                Pay Entry Fee
+                            </button>
+</div>
+</div>
+</div>
+<!-- 5. Notification Feed (Embedded in main area) -->
+<div class="glass-panel rounded-xl p-6">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary">sensors</span>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile">Recent Uplink Notifications</h3>
+</div>
+<div class="space-y-4">
+<div class="flex gap-4 p-4 rounded-lg bg-surface-variant/20 hover:bg-surface-variant/40 transition-colors border border-transparent hover:border-white/5 group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person_add</span>
+</div>
+<div class="flex-grow">
+<p class="text-white">Team Invite from <span class="font-bold text-primary">Alex Mercer</span></p>
+<p class="text-xs text-on-surface-variant font-data-display">Received: 14:32:01 UTC</p>
+</div>
+<div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="w-8 h-8 rounded bg-primary/20 text-primary flex items-center justify-center hover:bg-primary hover:text-on-primary transition-all">
+<span class="material-symbols-outlined text-sm">check</span>
+</button>
+<button class="w-8 h-8 rounded bg-error/20 text-error flex items-center justify-center hover:bg-error hover:text-on-error transition-all">
+<span class="material-symbols-outlined text-sm">close</span>
+</button>
+</div>
+</div>
+<div class="flex gap-4 p-4 rounded-lg bg-surface-variant/20 hover:bg-surface-variant/40 transition-colors border border-transparent hover:border-white/5">
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">manage_accounts</span>
+</div>
+<div>
+<p class="text-white">Profile Updated successfully</p>
+<p class="text-xs text-on-surface-variant font-data-display">Received: 09:15:44 UTC</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- 4. Deadlines Timeline -->
+<aside class="space-y-gutter">
+<div class="glass-panel rounded-xl p-6 h-full border-t-2 border-primary">
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile mb-8 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">schedule</span>
+                        Timeline
+                    </h3>
+<div class="relative space-y-12 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-0 before:w-[2px] before:bg-gradient-to-b before:from-primary before:to-transparent">
+<!-- Timeline Item 1 -->
+<div class="relative pl-10 group">
+<div class="absolute left-0 top-1 w-[24px] h-[24px] rounded-full bg-background border-2 border-primary z-10 flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_rgba(195,192,255,1)]"></div>
+</div>
+<div>
+<p class="font-data-display text-primary text-sm mb-1">MAR 20, 2026</p>
+<h4 class="text-white font-bold text-lg group-hover:text-primary transition-colors">Project Proposal Submission</h4>
+<p class="text-sm text-on-surface-variant mt-2 leading-relaxed">Ensure all technical diagrams and architectural maps are uploaded in PDF format.</p>
+<div class="mt-4 flex items-center gap-2">
+<span class="px-2 py-1 bg-primary/10 text-primary text-[10px] rounded border border-primary/20 uppercase font-bold tracking-tighter">Required</span>
+<span class="text-[10px] text-on-surface-variant italic">7 days remaining</span>
+</div>
+</div>
+</div>
+<!-- Timeline Item 2 -->
+<div class="relative pl-10 group">
+<div class="absolute left-0 top-1 w-[24px] h-[24px] rounded-full bg-background border-2 border-surface-variant z-10 flex items-center justify-center">
+<div class="w-2 h-2 rounded-full bg-surface-variant"></div>
+</div>
+<div>
+<p class="font-data-display text-on-surface-variant text-sm mb-1">MAR 28, 2026</p>
+<h4 class="text-white/60 font-bold text-lg group-hover:text-white transition-colors">Final Presentation</h4>
+<p class="text-sm text-on-surface-variant/60 mt-2 leading-relaxed">Grand Hall, Block C. Teams must arrive 30 minutes prior for system checks.</p>
+<div class="mt-4 flex items-center gap-2 opacity-50">
+<span class="px-2 py-1 bg-surface-variant text-white text-[10px] rounded border border-white/10 uppercase font-bold tracking-tighter">Coming Soon</span>
+</div>
+</div>
+</div>
+<!-- Timeline Item 3 (Visual Filler) -->
+<div class="relative pl-10 group opacity-40">
+<div class="absolute left-0 top-1 w-[24px] h-[24px] rounded-full bg-background border-2 border-surface-variant z-10 flex items-center justify-center">
+</div>
+<div>
+<p class="font-data-display text-on-surface-variant text-sm mb-1">APR 05, 2026</p>
+<h4 class="text-white/40 font-bold text-lg">Award Ceremony</h4>
+</div>
+</div>
+</div>
+<!-- Decorative Grid in Timeline -->
+<div class="mt-12 p-4 border border-white/5 bg-white/5 rounded-lg">
+<div class="flex items-center justify-between text-[10px] font-data-display text-primary/40 mb-2">
+<span>UPTIME_STATUS</span>
+<span>99.98%</span>
+</div>
+<div class="flex gap-1">
+<div class="h-4 flex-grow bg-primary/40 rounded-sm"></div>
+<div class="h-4 flex-grow bg-primary/40 rounded-sm"></div>
+<div class="h-4 flex-grow bg-primary/40 rounded-sm"></div>
+<div class="h-4 flex-grow bg-primary/40 rounded-sm"></div>
+<div class="h-4 flex-grow bg-error/40 rounded-sm"></div>
+<div class="h-4 flex-grow bg-primary/40 rounded-sm"></div>
+<div class="h-4 flex-grow bg-primary/40 rounded-sm"></div>
+<div class="h-4 flex-grow bg-primary/40 rounded-sm"></div>
+</div>
+</div>
+</div>
+</aside>
+</div>
+</main>
+<!-- Floating Action Button (FAB) - Suppression Logic Applied (Suppressed as this is a Dashboard Details/Overview screen) -->
+<!-- Script for Micro-interactions -->
+<script>
+        document.querySelectorAll('.glass-panel').forEach(panel => {
+            panel.addEventListener('mousemove', (e) => {
+                const rect = panel.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                panel.style.setProperty('--mouse-x', `${x}px`);
+                panel.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+    </script>
+</body></html>

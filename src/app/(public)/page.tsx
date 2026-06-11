@@ -1,231 +1,152 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { ChevronDown, Trophy, Users, Shield, Calendar, ArrowUpRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ChevronDown, Calendar, Users, Sparkles } from "lucide-react";
 import useSWR from "swr";
+import { Navbar } from "@/components/shared/Navbar";
+import { NewsTicker } from "@/components/public/NewsTicker";
+import { HeroSection } from "@/components/public/HeroSection";
+import { FeaturedCompetitions } from "@/components/public/FeaturedCompetitions";
+import { Timeline } from "@/components/public/Timeline";
+import { Footer } from "@/components/shared/Footer";
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 interface FAQData {
   question: string;
   answer: string;
 }
-import { Navbar } from "@/components/shared/Navbar";
-import { NewsTicker } from "@/components/public/NewsTicker";
-import { HeroSection } from "@/components/public/HeroSection";
-import { Footer } from "@/components/shared/Footer";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { COMPETITIONS_CATALOG, TIMELINE_ITEMS, HOMEPAGE_FAQS } from "@/constants/content";
 
 export default function PublicHomePage() {
   const [activeFaqIndex, setActiveFaqIndex] = React.useState<number | null>(null);
   const { data } = useSWR("/api/public/cms/faqs", fetcher);
 
-  const faqList = React.useMemo(() => {
-    if (data && data.success && data.data && data.data.length > 0) {
-      return data.data as FAQData[];
-    }
-    return HOMEPAGE_FAQS;
+  const faqList = React.useMemo<FAQData[]>(() => {
+    if (data?.success && data?.data?.length > 0) return data.data as FAQData[];
+    return [];
   }, [data]);
 
   const toggleFaq = (index: number) => {
     setActiveFaqIndex(activeFaqIndex === index ? null : index);
   };
 
-  const getCompIcon = (type: string) => {
-    switch (type.toLowerCase()) {
-      case "showcase":
-        return <Trophy className="h-5 w-5 text-accent" />;
-      case "programming":
-        return <Users className="h-5 w-5 text-secondary" />;
-      case "security":
-        return <Shield className="h-5 w-5 text-primary" />;
-      default:
-        return <Calendar className="h-5 w-5 text-neutral-400" />;
-    }
-  };
-
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Top Navbar Navigation */}
+    <div className="flex flex-col min-h-screen bg-background text-on-background font-sans select-text">
+      {/* Navigation */}
       <Navbar />
 
-      {/* Scrolling News Ticker Updates */}
+      {/* Scrolling News Ticker */}
       <NewsTicker />
 
-      {/* Main Hero Showcase */}
-      <HeroSection />
-
-      {/* About Section */}
-      <section id="about" className="py-24 border-b border-neutral-900 bg-neutral-950/20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="max-w-3xl space-y-6 text-left">
-            <h2 className="text-h3 sm:text-h2 font-bold font-heading text-neutral-50">
-              About The Festival
-            </h2>
-            <p className="text-body sm:text-body-lg text-neutral-400 font-sans leading-relaxed">
-              Jointly organized by the <strong>Department of Computer Science & Engineering (CSE)</strong> and the <strong>Department of Computer Science & Information Technology (CSIT)</strong> of Shanto-Mariam University of Creative Technology (SMUCT). 
-            </p>
-            <p className="text-body text-neutral-400 font-sans leading-relaxed">
-              CSE Fest 2026 brings together brilliant minds from academic institutions across Bangladesh. Over the course of the event, participants will showcase software products, build hardware prototypes, write competitive algorithms, and engage with technology professionals.
-            </p>
-          </div>
+      {/* Hero Section with Countdown & Cyber Console */}
+      <main className="pt-4 relative min-h-screen bg-grid-pattern overflow-hidden">
+        {/* Decorative background glows */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[20%] left-[10%] w-[30vw] h-[30vw] bg-primary/10 blur-[120px] rounded-full" />
+          <div className="absolute bottom-[20%] right-[10%] w-[40vw] h-[40vw] bg-secondary/10 blur-[120px] rounded-full" />
         </div>
-      </section>
 
-      {/* Competitions Showcase Grid */}
-      <section id="competitions" className="py-24 border-b border-neutral-900 bg-neutral-950/40">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-12 space-y-4">
-            <h2 className="text-h3 sm:text-h2 font-bold font-heading text-neutral-50">
-              External Showcases
-            </h2>
-            <p className="text-body text-neutral-400 font-sans max-w-2xl leading-relaxed">
-              Open to students from all public and private universities across Bangladesh. Form your team and compete for massive rewards.
-            </p>
-          </div>
+        {/* Hero Section */}
+        <HeroSection />
 
-          {/* Cards catalog grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {COMPETITIONS_CATALOG.map((comp) => (
-              <Card key={comp.id} hoverable variant="default" className="flex flex-col justify-between">
-                <CardHeader>
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="p-2.5 rounded-radius-sm bg-neutral-950 border border-neutral-800">
-                      {getCompIcon(comp.type)}
-                    </div>
-                    <Badge variant="accent" className="capitalize">
-                      {comp.eligibility}
-                    </Badge>
-                  </div>
-                  <CardTitle className="mb-2 text-xl font-heading">{comp.name}</CardTitle>
-                  <CardDescription className="text-neutral-400 line-clamp-3 leading-relaxed">
-                    {comp.shortDescription}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="mt-4">
-                  <div className="space-y-2.5 font-sans text-sm border-t border-neutral-800/60 pt-4">
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500 font-medium">Team Limit:</span>
-                      <span className="text-neutral-300 font-semibold">{comp.teamSize}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500 font-medium">Entry Fee:</span>
-                      <span className="text-neutral-300 font-semibold font-mono">{comp.fee}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-neutral-500 font-medium">Prize Pool:</span>
-                      <span className="text-accent font-semibold font-mono">{comp.prizePool}</span>
-                    </div>
-                  </div>
-                  <div className="pt-6">
-                    <Link href={`/competitions/${comp.id}`}>
-                      <Button variant="secondary" className="w-full gap-2 justify-center">
-                        <span>View Details</span>
-                        <ArrowUpRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Visual Timeline Section */}
-      <section id="timeline" className="py-24 border-b border-neutral-900 bg-neutral-950/20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-16 space-y-4">
-            <h2 className="text-h3 sm:text-h2 font-bold font-heading text-neutral-50">
-              Event Timeline
-            </h2>
-            <p className="text-body text-neutral-400 font-sans max-w-2xl leading-relaxed">
-              Track the milestones leading up to the main exhibition and offline contests on July 18, 2026.
-            </p>
-          </div>
-
-          {/* Timeline Nodes */}
-          <div className="relative pl-6 md:pl-8 border-l border-neutral-800 space-y-12 max-w-3xl ml-4">
-            {TIMELINE_ITEMS.map((item, idx) => (
-              <div key={item.title} className="relative group">
-                {/* Node Dot indicator */}
-                <span className="absolute left-[-31px] md:left-[-39px] top-1.5 flex items-center justify-center w-4 h-4 rounded-full bg-neutral-950 border border-neutral-700 group-hover:border-accent group-hover:bg-accent/20 transition-all duration-150">
-                  <span className="w-1.5 h-1.5 rounded-full bg-neutral-500 group-hover:bg-accent transition-all duration-150" />
-                </span>
-                <div className="space-y-1.5">
-                  <span className="font-mono text-xs font-semibold text-accent tracking-wider uppercase block">
-                    {item.date}
-                  </span>
-                  <h3 className="font-heading font-semibold text-lg text-neutral-200">
-                    {item.title}
-                  </h3>
-                  <p className="text-sm font-sans text-neutral-400 leading-relaxed max-w-xl">
-                    {item.description}
-                  </p>
+        {/* Pioneering Technical Creativity (About Section) */}
+        <section id="about" className="max-w-[1280px] mx-auto px-4 md:px-16 py-24 border-t border-neutral-850">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+            <div className="space-y-6">
+              <h2 className="font-heading text-4xl font-extrabold text-neutral-100">Pioneering Technical Creativity</h2>
+              <p className="text-neutral-400 font-sans leading-relaxed text-sm">
+                Organized by the <span className="text-primary font-bold">SMUCT CSE & CSIT Department</span>, CSE FEST 26 is the premier technology event of Shanto-Mariam University of Creative Technology. We bridge the gap between creative design and technical precision.
+              </p>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-6 rounded-2xl bg-neutral-900/60 border border-neutral-850">
+                  <div className="text-4xl font-black text-primary mb-1">500k+</div>
+                  <div className="text-[10px] uppercase tracking-widest text-neutral-500 font-mono font-bold">Prize Pool BDT</div>
+                </div>
+                <div className="p-6 rounded-2xl bg-neutral-900/60 border border-neutral-850">
+                  <div className="text-4xl font-black text-secondary mb-1">1500+</div>
+                  <div className="text-[10px] uppercase tracking-widest text-neutral-500 font-mono font-bold">Participants</div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </div>
 
-      {/* FAQ Accordion Section */}
-      <section id="faq" className="py-24 border-b border-neutral-900 bg-neutral-950/40">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-16 space-y-4">
-            <h2 className="text-h3 sm:text-h2 font-bold font-heading text-neutral-50">
-              Frequently Asked Questions
-            </h2>
-            <p className="text-body text-neutral-400 font-sans max-w-2xl leading-relaxed">
-              Everything you need to know about registering, submissions, and competition rules.
-            </p>
-          </div>
-
-          {/* Accordion Panels */}
-          <div className="space-y-4 max-w-3xl">
-            {faqList.map((faq, idx) => {
-              const isExpanded = activeFaqIndex === idx;
-              return (
-                <div
-                  key={idx}
-                  className="rounded-radius-sm border border-neutral-800/80 bg-neutral-900/40 overflow-hidden transition-all duration-150"
-                >
-                  <button
-                    id={`faq-button-${idx}`}
-                    onClick={() => toggleFaq(idx)}
-                    aria-expanded={isExpanded}
-                    aria-controls={`faq-answer-${idx}`}
-                    className="w-full flex items-center justify-between p-5 text-left font-heading font-medium text-neutral-200 hover:text-neutral-50 transition-colors focus:outline-none cursor-pointer"
-                  >
-                    <span>{faq.question}</span>
-                    <ChevronDown
-                      className={`h-4 w-4 text-neutral-500 transition-transform duration-normal ${
-                        isExpanded ? "rotate-180 text-accent" : ""
-                      }`}
-                    />
-                  </button>
-                  {isExpanded && (
-                    <div
-                      id={`faq-answer-${idx}`}
-                      role="region"
-                      aria-labelledby={`faq-button-${idx}`}
-                      className="px-5 pb-5 pt-0 border-t border-neutral-800/40 mt-1 text-sm font-sans text-neutral-400 leading-relaxed animate-fade-in"
-                    >
-                      {faq.answer}
-                    </div>
-                  )}
+            <div className="grid grid-cols-2 gap-6">
+              <div className="aspect-square rounded-3xl bg-neutral-900/40 backdrop-blur-md border border-neutral-850/80 p-8 flex flex-col justify-between group hover:border-primary/50 transition-all duration-normal cursor-pointer">
+                <Calendar className="text-primary h-10 w-10 group-hover:scale-105 transition-transform" />
+                <div>
+                  <div className="text-3xl font-heading font-bold text-neutral-200">15+</div>
+                  <div className="text-xs text-neutral-500 font-sans">Tech Events</div>
                 </div>
-              );
-            })}
+              </div>
+              <div className="aspect-square rounded-3xl bg-neutral-900/40 backdrop-blur-md border border-neutral-850/80 p-8 flex flex-col justify-between group hover:border-secondary/50 transition-all duration-normal cursor-pointer translate-y-8">
+                <Users className="text-secondary h-10 w-10 group-hover:scale-105 transition-transform" />
+                <div>
+                  <div className="text-3xl font-heading font-bold text-neutral-200">20+</div>
+                  <div className="text-xs text-neutral-500 font-sans">Partners</div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Footer Navigation */}
+        {/* Competitions Section */}
+        <FeaturedCompetitions />
+
+        {/* Timeline Section */}
+        <Timeline />
+
+        {/* FAQ Section */}
+        <section id="faq" className="max-w-[1280px] mx-auto px-4 md:px-16 py-24 border-t border-neutral-850">
+          <h2 className="font-heading text-4xl font-extrabold text-neutral-100 mb-12 text-center">Frequently Asked Questions</h2>
+          
+          <div className="max-w-3xl mx-auto space-y-4">
+            {faqList.length > 0 ? (
+              faqList.map((faq, idx) => {
+                const isOpen = activeFaqIndex === idx;
+                return (
+                  <div key={idx} className="bg-neutral-900/30 backdrop-blur-md border border-neutral-850 rounded-2xl overflow-hidden transition-all duration-normal">
+                    <button
+                      onClick={() => toggleFaq(idx)}
+                      className="w-full flex justify-between items-center p-6 cursor-pointer hover:bg-neutral-900/40 transition-colors text-left"
+                    >
+                      <span className="font-bold text-neutral-200 text-sm sm:text-base">{faq.question}</span>
+                      <ChevronDown className={`h-5 w-5 text-neutral-400 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    <AnimatePresence initial={false}>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.25, ease: "easeInOut" }}
+                          className="overflow-hidden"
+                        >
+                          <div className="px-6 pb-6 text-neutral-400 text-xs sm:text-sm border-t border-neutral-850/40 pt-4 leading-relaxed">
+                            {faq.answer}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="py-16 text-center rounded-xl border border-dashed border-neutral-850 bg-neutral-900/10 flex flex-col items-center justify-center space-y-4">
+                <div className="w-12 h-12 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-600">
+                  <Sparkles className="h-6 w-6" />
+                </div>
+                <h3 className="font-heading font-extrabold text-lg text-neutral-300">FAQs Loading Soon</h3>
+                <p className="text-xs sm:text-sm text-neutral-500 font-sans max-w-sm leading-relaxed">
+                  The FAQs are currently being updated by the organizers. Please check back later!
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+      </main>
+
+      {/* Footer */}
       <Footer />
     </div>
   );

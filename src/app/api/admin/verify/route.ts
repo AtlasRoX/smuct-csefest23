@@ -63,30 +63,46 @@ export async function POST(req: Request) {
       .single();
 
     // 5. Update student_verifications status
-    const { error: verifyErr } = await supabase
+    const { data: verifyData, error: verifyErr } = await supabase
       .from("student_verifications")
       .update({
         status: targetStatus,
         reviewed_by: adminUser.id,
         reviewed_at: new Date().toISOString(),
       })
-      .eq("user_id", user_id);
+      .eq("user_id", user_id)
+      .select("id");
 
     if (verifyErr) {
       throw new Error(`Verification update failed: ${verifyErr.message}`);
     }
 
+    // Detect silent RLS block (update succeeded but 0 rows affected)
+    if (!verifyData || verifyData.length === 0) {
+      throw new Error(
+        "student_verifications update was blocked — check RLS policies. Run migration_fix_admin_update.sql in Supabase."
+      );
+    }
+
     // 6. Update profiles verification_status
-    const { error: profileErr } = await supabase
+    const { data: profileData, error: profileErr } = await supabase
       .from("profiles")
       .update({
         verification_status: targetStatus,
         updated_at: new Date().toISOString(),
       })
-      .eq("id", user_id);
+      .eq("id", user_id)
+      .select("id");
 
     if (profileErr) {
       throw new Error(`Profile status update failed: ${profileErr.message}`);
+    }
+
+    // Detect silent RLS block on profiles
+    if (!profileData || profileData.length === 0) {
+      throw new Error(
+        "profiles.verification_status update was blocked — admin UPDATE policy is missing. Run migration_fix_admin_update.sql in Supabase."
+      );
     }
 
     // 7. Write to audit logs
@@ -105,17 +121,7 @@ export async function POST(req: Request) {
       }
     );
 
-    // 8. Create system notification for the user
-    await supabase.from("notifications").insert({
-      user_id,
-      title: action === "approve" ? "Student ID Verified" : "Student ID Rejected",
-      message:
-        action === "approve"
-          ? "Your Student ID document has been verified successfully. You can now join or create teams."
-          : "Your Student ID document was rejected. Please re-upload clear photos of the front and back of your ID.",
-      type: action === "approve" ? "success" : "error",
-      action_url: "/profile-setup",
-    });
+    // 8. In-app notification is handled automatically via database trigger (tr_verification_notification)
 
     return NextResponse.json({
       success: true,
@@ -123,6 +129,7 @@ export async function POST(req: Request) {
     });
   } catch (err) {
     const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred.";
+    console.error("[/api/admin/verify] Error:", errorMessage);
     return NextResponse.json(
       { success: false, message: errorMessage },
       { status: 500 }

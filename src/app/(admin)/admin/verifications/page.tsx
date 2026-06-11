@@ -51,22 +51,63 @@ export default function VerificationsPage() {
   React.useEffect(() => {
     let active = true;
     async function loadVerifications() {
-      setLoading(true);
-      setErrorMsg(null);
+      if (active) {
+        setLoading(true);
+        setErrorMsg(null);
+      }
       try {
         let query = supabase
           .from("student_verifications")
-          .select("*, profiles:user_id(full_name, university, student_id, department, email:user_id(email))")
+          .select("*")
           .order("created_at", { ascending: false });
 
         if (statusFilter !== "all") {
           query = query.eq("status", statusFilter);
         }
 
-        const { data, error } = await query;
+        const { data: verifsData, error } = await query;
         if (error) throw error;
-        if (active) {
-          setVerifications((data as unknown as VerificationItem[]) || []);
+
+        if (verifsData && verifsData.length > 0) {
+          const userIds = verifsData.map((v) => v.user_id);
+          const { data: profilesData, error: profilesErr } = await supabase
+            .from("profiles")
+            .select("id, full_name, university, student_id, department")
+            .in("id", userIds);
+
+          if (profilesErr) throw profilesErr;
+
+          const { data: usersData, error: usersErr } = await supabase
+            .from("users")
+            .select("id, email")
+            .in("id", userIds);
+
+          if (usersErr) throw usersErr;
+
+          const merged = verifsData.map((v) => {
+            const profile = profilesData?.find((p) => p.id === v.user_id) || null;
+            const userRecord = usersData?.find((u) => u.id === v.user_id) || null;
+            return {
+              ...v,
+              profiles: profile
+                ? {
+                    full_name: profile.full_name || "",
+                    university: profile.university || "",
+                    student_id: profile.student_id || "",
+                    department: profile.department || "",
+                    email: userRecord ? { email: userRecord.email } : null,
+                  }
+                : null,
+            };
+          });
+
+          if (active) {
+            setVerifications(merged as unknown as VerificationItem[]);
+          }
+        } else {
+          if (active) {
+            setVerifications([]);
+          }
         }
       } catch (err) {
         if (active) {
@@ -129,14 +170,14 @@ export default function VerificationsPage() {
 
       {/* Messages */}
       {errorMsg && (
-        <div className="p-4 rounded-radius-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
           <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-4 rounded-radius-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
           <Check className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{successMsg}</span>
         </div>
@@ -177,7 +218,7 @@ export default function VerificationsPage() {
       {loading ? (
         <div className="space-y-4 animate-pulse">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-44 bg-neutral-900 rounded-radius-md" />
+            <div key={i} className="h-44 bg-neutral-900 rounded-md" />
           ))}
         </div>
       ) : filteredVerifications.length > 0 ? (
@@ -264,7 +305,7 @@ export default function VerificationsPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {/* Front View */}
-                  <div className="relative group rounded-radius-sm border border-neutral-850 overflow-hidden bg-neutral-950 aspect-8/5 flex items-center justify-center">
+                  <div className="relative group rounded-sm border border-neutral-850 overflow-hidden bg-neutral-950 aspect-8/5 flex items-center justify-center">
                     {v.id_front_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -280,7 +321,7 @@ export default function VerificationsPage() {
                     )}
                   </div>
                   {/* Back View */}
-                  <div className="relative group rounded-radius-sm border border-neutral-850 overflow-hidden bg-neutral-950 aspect-8/5 flex items-center justify-center">
+                  <div className="relative group rounded-sm border border-neutral-850 overflow-hidden bg-neutral-950 aspect-8/5 flex items-center justify-center">
                     {v.id_back_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -301,7 +342,7 @@ export default function VerificationsPage() {
           ))}
         </div>
       ) : (
-        <div className="py-16 text-center border border-dashed border-neutral-800 rounded-radius-md bg-neutral-900/10">
+        <div className="py-16 text-center border border-dashed border-neutral-800 rounded-md bg-neutral-900/10">
           <Clock className="h-10 w-10 text-neutral-700 mb-4 mx-auto" />
           <h3 className="font-heading font-semibold text-neutral-300 mb-1">No Verifications Found</h3>
           <p className="text-xs text-neutral-500 font-sans max-w-xs mx-auto">
@@ -326,7 +367,7 @@ export default function VerificationsPage() {
               </button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-              <div className="border border-neutral-800 rounded-radius-md overflow-hidden bg-neutral-950 aspect-8/5 flex items-center justify-center">
+              <div className="border border-neutral-800 rounded-md overflow-hidden bg-neutral-950 aspect-8/5 flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={lightboxImages.front}
@@ -334,7 +375,7 @@ export default function VerificationsPage() {
                   className="object-contain w-full h-full max-h-[60vh]"
                 />
               </div>
-              <div className="border border-neutral-800 rounded-radius-md overflow-hidden bg-neutral-950 aspect-8/5 flex items-center justify-center">
+              <div className="border border-neutral-800 rounded-md overflow-hidden bg-neutral-950 aspect-8/5 flex items-center justify-center">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={lightboxImages.back}

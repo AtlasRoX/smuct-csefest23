@@ -126,14 +126,14 @@ export default function AdminSubmissionsPage() {
 
       {/* Messages */}
       {errorMsg && (
-        <div className="p-4 rounded-radius-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
           <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-4 rounded-radius-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
           <Check className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{successMsg}</span>
         </div>
@@ -174,7 +174,7 @@ export default function AdminSubmissionsPage() {
       {loading ? (
         <div className="space-y-4 animate-pulse">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-40 bg-neutral-900 rounded-radius-md" />
+            <div key={i} className="h-40 bg-neutral-900 rounded-md" />
           ))}
         </div>
       ) : filteredSubmissions.length > 0 ? (
@@ -263,7 +263,7 @@ export default function AdminSubmissionsPage() {
                 </div>
 
                 {s.notes && (
-                  <div className="p-3 bg-neutral-950 rounded-radius-sm border border-neutral-850/60 text-xs">
+                  <div className="p-3 bg-neutral-950 rounded-sm border border-neutral-850/60 text-xs">
                     <div className="font-semibold text-neutral-400 mb-1">Roster Technical Notes:</div>
                     <p className="text-neutral-300 leading-relaxed whitespace-pre-wrap">{s.notes}</p>
                   </div>
@@ -277,7 +277,7 @@ export default function AdminSubmissionsPage() {
           ))}
         </div>
       ) : (
-        <div className="py-16 text-center border border-dashed border-neutral-800 rounded-radius-md bg-neutral-900/10">
+        <div className="py-16 text-center border border-dashed border-neutral-800 rounded-md bg-neutral-900/10">
           <Send className="h-10 w-10 text-neutral-700 mb-4 mx-auto" />
           <h3 className="font-heading font-semibold text-neutral-300 mb-1">No Proposals Found</h3>
           <p className="text-xs text-neutral-500 font-sans max-w-xs mx-auto">

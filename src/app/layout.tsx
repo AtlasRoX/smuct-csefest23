@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Agentation } from "agentation";
 import { Space_Grotesk, Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -76,10 +77,29 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${inter.variable} ${geistMono.variable} dark h-full antialiased`}
+      className={`${spaceGrotesk.variable} ${inter.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full bg-neutral-950 text-neutral-50 font-sans antialiased flex flex-col">
+      <head>
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var theme = localStorage.getItem('theme') || 'light';
+                if (theme === 'dark') {
+                  document.documentElement.classList.add('dark');
+                } else {
+                  document.documentElement.classList.remove('dark');
+                }
+              } catch (e) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-full bg-neutral-950 text-neutral-50 font-sans antialiased flex flex-col" suppressHydrationWarning>
         {children}
+        {process.env.NODE_ENV === "development" && <Agentation />}
       </body>
     </html>
   );

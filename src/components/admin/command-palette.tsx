@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Search, Compass, Trophy, Users, ShieldAlert, X } from "lucide-react";
+import { Search, Compass, Trophy, ShieldAlert, X } from "lucide-react";
 import useSWR from "swr";
 import { Badge } from "@/components/ui/Badge";
 
@@ -111,7 +111,7 @@ export function CommandPalette() {
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] px-4 bg-neutral-950/80 backdrop-blur-sm">
       {/* Container Card */}
-      <div className="w-full max-w-xl bg-neutral-900 border border-neutral-800 rounded-radius-md shadow-level-3 overflow-hidden flex flex-col max-h-[60vh] font-sans">
+      <div className="w-full max-w-xl bg-neutral-900 border border-neutral-800 rounded-md shadow-level-3 overflow-hidden flex flex-col max-h-[60vh] font-sans">
         
         {/* Input area */}
         <div className="flex items-center px-4 border-b border-neutral-800 gap-2 h-14 shrink-0">

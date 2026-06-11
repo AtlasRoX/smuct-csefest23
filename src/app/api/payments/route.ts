@@ -231,23 +231,7 @@ export async function POST(req: Request) {
       throw new Error(`Failed to record payment: ${insertErr.message}`);
     }
 
-    // 8. Notify team members
-    const { data: teamMembers } = await supabase
-      .from("team_members")
-      .select("user_id")
-      .eq("team_id", team_id)
-      .eq("invitation_status", "accepted");
-
-    if (teamMembers) {
-      const notifications = teamMembers.map((m) => ({
-        user_id: m.user_id,
-        title: "Payment Submitted",
-        message: `Your payment of ${amount} BDT via ${method.toUpperCase()} (TXID: ${transaction_id}) has been submitted for verification.`,
-        type: "info",
-        action_url: "/payments",
-      }));
-      await supabase.from("notifications").insert(notifications);
-    }
+    // 8. In-app notification is handled automatically via database trigger (tr_payment_inserted_notification)
 
     return NextResponse.json({
       success: true,

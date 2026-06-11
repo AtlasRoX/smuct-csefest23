@@ -1,5 +1,65 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  /* Theme-dependent base variables (Light Mode by default) */
+  --accent-color: hsl(180, 85%, 35%); /* Darker cyan for text contrast in light mode */
+  --grid-line-color: rgba(0, 0, 0, 0.045);
+  
+  --neutral-950: hsl(240, 15%, 97%); /* Light base background */
+  --neutral-900: hsl(0, 0%, 100%);  /* Light card background */
+  --neutral-850: hsl(240, 8%, 93%);  /* Light border */
+  --neutral-800: hsl(240, 8%, 89%);  /* Light component background */
+  --neutral-700: hsl(240, 6%, 83%);  /* Light elevated / modal */
+  --neutral-600: hsl(240, 5%, 60%);  /* Slate text */
+  --neutral-500: hsl(240, 5%, 45%);  /* Mid dark text */
+  --neutral-400: hsl(240, 6%, 32%);  /* Muted dark text */
+  --neutral-300: hsl(240, 8%, 20%);  /* Border highlight */
+  --neutral-200: hsl(240, 10%, 12%); /* High contrast dark text */
+  --neutral-100: hsl(240, 10%, 8%);  /* Strong contrast text */
+  --neutral-50: hsl(240, 10%, 4%);   /* Very high contrast dark text */
+
+  /* Glassmorphism settings for Light Mode */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.08);
+
+  /* Shadows for Light Mode */
+  --shadow-1-opacity: 0.08;
+  --shadow-2-opacity: 0.12;
+  --shadow-3-opacity: 0.15;
+  --shadow-4-glow: rgba(99, 102, 241, 0.08);
+}
+
+.dark {
+  /* Theme-dependent base variables (Dark Mode override) */
+  --accent-color: hsl(180, 85%, 65%); /* Soft cyan for dark mode */
+  --grid-line-color: rgba(255, 255, 255, 0.045);
+
+  --neutral-950: hsl(240, 10%, 4%);  /* Dark base background */
+  --neutral-900: hsl(240, 10%, 7%);  /* Dark card background */
+  --neutral-850: hsl(240, 10%, 9%);  /* Dark border */
+  --neutral-800: hsl(240, 10%, 12%); /* Dark component background */
+  --neutral-700: hsl(240, 10%, 18%); /* Dark elevated / modal */
+  --neutral-600: hsl(240, 5%, 35%);  /* Muted text */
+  --neutral-500: hsl(240, 5%, 48%);  /* Mid light text */
+  --neutral-400: hsl(240, 5%, 65%);  /* Muted light text */
+  --neutral-300: hsl(240, 5%, 80%);  /* Light border */
+  --neutral-200: hsl(240, 5%, 90%);  /* High contrast light text */
+  --neutral-100: hsl(240, 5%, 95%);  /* High contrast white */
+  --neutral-50: hsl(0, 0%, 98%);     /* White / High contrast text */
+
+  /* Glassmorphism settings for Dark Mode */
+  --glass-bg: rgba(10, 10, 12, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.08);
+
+  /* Shadows for Dark Mode */
+  --shadow-1-opacity: 0.4;
+  --shadow-2-opacity: 0.5;
+  --shadow-3-opacity: 0.6;
+  --shadow-4-glow: rgba(99, 102, 241, 0.2);
+}
+
 @theme {
   /* Font families loaded in layout.tsx */
   --font-sans: var(--font-inter), sans-serif;
@@ -9,42 +69,54 @@
   /* Theme color palette */
   --color-primary: hsl(243, 75%, 59%);
   --color-secondary: hsl(270, 95%, 60%);
-  --color-accent: hsl(180, 85%, 65%);
+  --color-tertiary: var(--accent-color);
+  --color-accent: var(--accent-color);
   --color-success: hsl(142, 76%, 45%);
   --color-warning: hsl(38, 92%, 50%);
   --color-error: hsl(0, 84%, 60%);
+  --color-gold: hsl(43, 96%, 56%);
+  --color-silver: hsl(240, 5%, 65%);
+  --color-bronze: hsl(25, 60%, 45%);
+  --color-background: var(--neutral-950);
+  --color-on-background: var(--neutral-50);
 
-  /* Neutrals (dark first theme) */
-  --color-neutral-950: hsl(240, 10%, 4%);
-  --color-neutral-900: hsl(240, 10%, 7%);
-  --color-neutral-850: hsl(240, 10%, 9%);
-  --color-neutral-800: hsl(240, 10%, 12%);
-  --color-neutral-700: hsl(240, 10%, 18%);
-  --color-neutral-600: hsl(240, 5%, 35%);
-  --color-neutral-500: hsl(240, 5%, 48%);
-  --color-neutral-400: hsl(240, 5%, 65%);
-  --color-neutral-300: hsl(240, 5%, 80%);
-  --color-neutral-200: hsl(240, 5%, 90%);
-  --color-neutral-50: hsl(0, 0%, 98%);
+  /* Neutrals mapped to CSS variables */
+  --color-neutral-950: var(--neutral-950);
+  --color-neutral-900: var(--neutral-900);
+  --color-neutral-850: var(--neutral-850);
+  --color-neutral-800: var(--neutral-800);
+  --color-neutral-700: var(--neutral-700);
+  --color-neutral-600: var(--neutral-600);
+  --color-neutral-500: var(--neutral-500);
+  --color-neutral-400: var(--neutral-400);
+  --color-neutral-300: var(--neutral-300);
+  --color-neutral-200: var(--neutral-200);
+  --color-neutral-100: var(--neutral-100);
+  --color-neutral-50: var(--neutral-50);
 
   /* Surfaces aliases */
-  --color-surface-1: var(--color-neutral-950);
-  --color-surface-2: var(--color-neutral-900);
-  --color-surface-3: var(--color-neutral-800);
-  --color-surface-4: var(--color-neutral-700);
+  --color-surface-1: var(--neutral-950);
+  --color-surface-2: var(--neutral-900);
+  --color-surface-3: var(--neutral-800);
+  --color-surface-4: var(--neutral-700);
 
   /* Radius tokens */
   --radius-sm: 8px;
+  --radius-radius-sm: 8px;
   --radius-md: 12px;
+  --radius-radius-md: 12px;
   --radius-lg: 16px;
+  --radius-radius-lg: 16px;
   --radius-xl: 24px;
+  --radius-radius-xl: 24px;
   --radius-full: 999px;
+  --radius-radius-full: 999px;
 
   /* Shadow tokens */
-  --shadow-level-1: 0 2px 8px -2px rgba(0, 0, 0, 0.5);
-  --shadow-level-2: 0 8px 16px -4px rgba(0, 0, 0, 0.5);
-  --shadow-level-3: 0 16px 32px -8px rgba(0, 0, 0, 0.6);
-  --shadow-level-4: 0 0 32px rgba(99, 102, 241, 0.2);
+  --shadow-level-1: 0 2px 8px -2px rgba(0, 0, 0, var(--shadow-1-opacity));
+  --shadow-level-2: 0 8px 16px -4px rgba(0, 0, 0, var(--shadow-2-opacity));
+  --shadow-level-3: 0 16px 32px -8px rgba(0, 0, 0, var(--shadow-3-opacity));
+  --shadow-level-4: 0 0 32px var(--shadow-4-glow);
 
   /* Transition durations */
   --transition-duration-fast: 150ms;
@@ -54,26 +126,85 @@
 
   /* Keyframe Animations */
   --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-fade-up: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-marquee: marquee 30s linear infinite;
+  --animate-shimmer: shimmer 2.5s linear infinite;
+  --animate-glow-pulse: glow-pulse 2s ease-in-out infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-scan-line: scan-line 3s linear infinite;
+  --animate-gradient-shift: gradient-shift 6s ease infinite;
+  --animate-meteor: meteor 4s linear infinite;
+  --animate-count-in: count-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-border-glow: border-glow 3s ease-in-out infinite;
+  --animate-slide-down: slide-down 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-timeline-pulse: timeline-pulse 2.5s ease-in-out infinite;
 
   @keyframes fade-in {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   @keyframes marquee {
-    0% {
-      transform: translateX(0%);
-    }
-    100% {
-      transform: translateX(-50%);
-    }
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(-50%); }
+  }
+
+  @keyframes shimmer {
+    0% { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3), 0 0 40px rgba(99, 102, 241, 0.1); }
+    50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6), 0 0 80px rgba(99, 102, 241, 0.2); }
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-12px); }
+  }
+
+  @keyframes scan-line {
+    0% { transform: translateY(-100%); opacity: 0; }
+    10% { opacity: 0.4; }
+    90% { opacity: 0.4; }
+    100% { transform: translateY(400%); opacity: 0; }
+  }
+
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  @keyframes meteor {
+    0% { transform: rotate(215deg) translateX(0); opacity: 1; }
+    70% { opacity: 1; }
+    100% { transform: rotate(215deg) translateX(-500px); opacity: 0; }
+  }
+
+  @keyframes count-in {
+    from { opacity: 0; transform: translateY(16px) scale(0.9); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @keyframes border-glow {
+    0%, 100% { border-color: rgba(99, 102, 241, 0.3); }
+    50% { border-color: rgba(99, 102, 241, 0.8); }
+  }
+
+  @keyframes slide-down {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes timeline-pulse {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.55; }
   }
 }
 
@@ -144,14 +275,25 @@
 @utility bg-grid-pattern {
   background-size: 40px 40px;
   background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, var(--grid-line-color) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line-color) 1px, transparent 1px);
 }
 
 /* ─── Premium text stroke utility ───────────────────────────────── */
 @utility text-stroke-primary {
   -webkit-text-stroke: 1px var(--color-primary);
   color: transparent;
+}
+
+/* ─── Premium Glassmorphism Utilities ────────────────────────────── */
+@utility bg-glass {
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+@utility border-glass {
+  border-color: var(--glass-border);
 }
 
 /* ─── Fluid responsive typography scale ─────────────────────────── */
@@ -222,3 +364,93 @@
   line-height: 1.4;
 }
 
+/* ─── Premium Animation Utilities ───────────────────────────────── */
+@utility animate-shimmer {
+  animation: var(--animate-shimmer);
+  background-size: 200% auto;
+}
+
+@utility animate-glow-pulse {
+  animation: var(--animate-glow-pulse);
+}
+
+@utility animate-float {
+  animation: var(--animate-float);
+}
+
+@utility animate-scan-line {
+  animation: var(--animate-scan-line);
+}
+
+@utility animate-gradient-shift {
+  animation: var(--animate-gradient-shift);
+  background-size: 200% 200%;
+}
+
+@utility animate-fade-up {
+  animation: var(--animate-fade-up);
+}
+
+@utility animate-count-in {
+  animation: var(--animate-count-in);
+}
+
+@utility animate-border-glow {
+  animation: var(--animate-border-glow);
+}
+
+@utility animate-slide-down {
+  animation: var(--animate-slide-down);
+}
+
+@utility animate-timeline-pulse {
+  animation: var(--animate-timeline-pulse);
+}
+
+/* ─── Shimmer Text (animated gradient text) ─────────────────────── */
+@utility text-shimmer {
+  background-image: linear-gradient(
+    110deg,
+    var(--color-neutral-50) 25%,
+    var(--color-primary) 50%,
+    var(--color-secondary) 60%,
+    var(--color-neutral-50) 75%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 4s linear infinite;
+}
+
+/* ─── Neon Glow Border ───────────────────────────────────────────── */
+@utility border-neon {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.3), inset 0 0 12px rgba(99, 102, 241, 0.05);
+}
+
+/* ─── Noise Texture Overlay ──────────────────────────────────────── */
+@utility bg-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+}
+
+/* ─── Grain Overlay for CTA sections ────────────────────────────── */
+@utility bg-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='grain'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23grain)' opacity='0.025'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
+/* ─── Gradient Mesh Background ───────────────────────────────────── */
+@utility bg-mesh-primary {
+  background:
+    radial-gradient(ellipse 80% 80% at 50% -20%, rgba(99, 102, 241, 0.18), transparent),
+    radial-gradient(ellipse 60% 50% at 80% 100%, rgba(139, 92, 246, 0.12), transparent),
+    radial-gradient(ellipse 40% 40% at 10% 80%, rgba(99, 102, 241, 0.06), transparent);
+}
+
+/* ─── Section top gradient divider ──────────────────────────────── */
+@utility section-top-accent {
+  background: linear-gradient(to right, transparent, rgba(99, 102, 241, 0.35), rgba(139, 92, 246, 0.25), transparent);
+  height: 1px;
+}

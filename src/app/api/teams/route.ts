@@ -68,19 +68,53 @@ export async function GET(req: Request) {
     // Fetch rosters for each team
     const teamsWithRosters = await Promise.all(
       teams.map(async (team) => {
+        interface DbMemberJoin {
+          id: string;
+          role: "leader" | "member";
+          invitation_status: "pending" | "accepted" | "rejected";
+          user_id: string;
+          profiles: {
+            full_name: string;
+            university: string | null;
+          } | null;
+          users: {
+            email: string;
+          } | null;
+        }
+
         const { data: members } = await supabase
           .from("team_members")
-          .select("id, role, invitation_status, user_id, profiles(full_name, email)")
+          .select("id, role, invitation_status, user_id, profiles(full_name, university), users(email)")
           .eq("team_id", team.id);
 
-        return { ...team, members: members || [] };
+        const rawMembers = (members || []) as unknown as DbMemberJoin[];
+        const mappedMembers = rawMembers.map((m) => {
+          const prof = m.profiles;
+          const usr = m.users;
+          return {
+            id: m.id,
+            role: m.role,
+            invitation_status: m.invitation_status,
+            user_id: m.user_id,
+            profiles: prof
+              ? {
+                  full_name: prof.full_name,
+                  university: prof.university || "",
+                  email: usr?.email || "",
+                }
+              : null,
+          };
+        });
+
+        return { ...team, members: mappedMembers };
       })
     );
 
     return NextResponse.json({ success: true, data: teamsWithRosters });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
     return NextResponse.json(
-      { success: false, message: err.message || "Internal server error" },
+      { success: false, message },
       { status: 500 }
     );
   }
@@ -135,7 +169,10 @@ export async function POST(req: Request) {
         .eq("invitation_status", "accepted");
 
       const inSameCompetition = existingTeamMember?.some(
-        (m: any) => m.teams?.competition_id === parseResult.data.competition_id
+        (m) => {
+          const teamInfo = m.teams as unknown as { competition_id: string } | null;
+          return teamInfo?.competition_id === parseResult.data.competition_id;
+        }
       );
 
       if (inSameCompetition) {
@@ -220,29 +257,31 @@ export async function POST(req: Request) {
         );
       }
 
-      // Find user by email
-      const { data: targetUser } = await supabase
-        .from("users")
-        .select("id")
-        .eq("email", parseResult.data.email)
-        .single();
+      // Find user by email securely using RPC (bypasses RLS check for target user identification)
+      const { data: targetUserId, error: rpcError } = await supabase
+        .rpc("get_user_id_by_email", { target_email: parseResult.data.email });
 
-      if (!targetUser) {
+      if (rpcError || !targetUserId) {
         return NextResponse.json(
           { success: false, message: "User not found on platform. Ask them to sign up first!" },
           { status: 404 }
         );
       }
 
+      const verifiedUserId = targetUserId as unknown as string;
+
       // Check if target user is already in a team for this competition
       const { data: targetMembership } = await supabase
         .from("team_members")
         .select("id, team_id, teams(competition_id)")
-        .eq("user_id", targetUser.id)
+        .eq("user_id", verifiedUserId)
         .eq("invitation_status", "accepted");
 
       const targetInSameComp = targetMembership?.some(
-        (m: any) => m.teams?.competition_id === team.competition_id
+        (m) => {
+          const teamInfo = m.teams as unknown as { competition_id: string } | null;
+          return teamInfo?.competition_id === team.competition_id;
+        }
       );
 
       if (targetInSameComp) {
@@ -255,7 +294,7 @@ export async function POST(req: Request) {
       // Create pending invitation
       const { error: inviteError } = await supabase.from("team_members").insert({
         team_id: team.id,
-        user_id: targetUser.id,
+        user_id: verifiedUserId,
         role: "member",
         invitation_status: "pending",
       });
@@ -270,14 +309,7 @@ export async function POST(req: Request) {
         throw new Error(inviteError.message);
       }
 
-      // Trigger notification
-      await supabase.from("notifications").insert({
-        user_id: targetUser.id,
-        title: "Team Invitation",
-        message: `You have been invited to join the team "${team.name}" for "${team.competitions?.name || "competition"}".`,
-        type: "info",
-        action_url: "/teams",
-      });
+      // In-app notification is handled automatically via database trigger (tr_invitation_notification)
 
       return NextResponse.json({ success: true, message: "Invitation sent successfully." });
     }
@@ -317,14 +349,7 @@ export async function POST(req: Request) {
 
         if (error) throw new Error(error.message);
 
-        // Notify leader
-        await supabase.from("notifications").insert({
-          user_id: memberRecord.teams.leader_id,
-          title: "Invitation Accepted",
-          message: `Your invitation to join "${memberRecord.teams.name}" was accepted.`,
-          type: "success",
-          action_url: "/teams",
-        });
+        // In-app notification is handled automatically via database trigger (tr_invitation_accepted_notification)
       } else {
         // Delete or update to rejected
         const { error } = await supabase
@@ -339,9 +364,10 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ success: false, message: "Invalid action" }, { status: 400 });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Internal server error";
     return NextResponse.json(
-      { success: false, message: err.message || "Internal server error" },
+      { success: false, message },
       { status: 500 }
     );
   }

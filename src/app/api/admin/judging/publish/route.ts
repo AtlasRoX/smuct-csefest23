@@ -114,32 +114,7 @@ export async function POST(req: Request) {
             .update({ status: "finalist", updated_at: new Date().toISOString() })
             .eq("id", rank.team_id);
 
-          // Notify members if they weren't already marked as a finalist
-          if (!rank.is_finalist) {
-            const { data: members } = await supabase
-              .from("team_members")
-              .select("user_id, teams(name)")
-              .eq("team_id", rank.team_id)
-              .eq("invitation_status", "accepted");
-
-            if (members && members.length > 0) {
-              const teamData = members[0]?.teams as unknown;
-              let teamName = "your team";
-              if (Array.isArray(teamData) && teamData.length > 0) {
-                teamName = (teamData[0] as { name: string })?.name || "your team";
-              } else if (teamData && typeof teamData === "object" && "name" in teamData) {
-                teamName = (teamData as { name: string })?.name || "your team";
-              }
-              const notifications = members.map((m) => ({
-                user_id: m.user_id,
-                title: "Finalist Confirmed!",
-                message: `Congratulations! Your team "${teamName}" has been selected as a finalist for "${compRecord.name}".`,
-                type: "success",
-                action_url: "/dashboard",
-              }));
-              await supabase.from("notifications").insert(notifications);
-            }
-          }
+          // In-app notification for finalist selection is handled automatically via database trigger (tr_team_finalist_notification)
         } else {
           // Demote from finalist (set back to registered)
           // Update rankings table

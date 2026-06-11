@@ -215,14 +215,14 @@ export default function AdminCompetitionsPage() {
 
       {/* Messages */}
       {errorMsg && (
-        <div className="p-4 rounded-radius-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
           <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-4 rounded-radius-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
           <Check className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{successMsg}</span>
         </div>
@@ -253,7 +253,7 @@ export default function AdminCompetitionsPage() {
                     onChange={(e) => setFormData({ ...formData, type: e.target.value as Competition["type"] })}
                     disabled={formLoading}
                     required
-                    className="flex h-10 w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                    className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                   >
                     {["Showcase", "Programming", "Security", "Robotics", "Esports", "Custom"].map((t) => (
                       <option key={t} value={t}>
@@ -283,7 +283,7 @@ export default function AdminCompetitionsPage() {
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     disabled={formLoading}
                     required
-                    className="flex w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                    className="flex w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                   />
                 </div>
               </div>
@@ -307,7 +307,7 @@ export default function AdminCompetitionsPage() {
               </div>
 
               {/* Row 4: Team limits & Solo Toggles */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-4 rounded-radius-sm bg-neutral-950 border border-neutral-850 items-end">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-4 rounded-sm bg-neutral-950 border border-neutral-850 items-end">
                 <div className="flex flex-col space-y-1.5">
                   <label className="text-sm font-medium text-neutral-300 font-sans">Min Team Members</label>
                   <input
@@ -317,7 +317,7 @@ export default function AdminCompetitionsPage() {
                     onChange={(e) => setFormData({ ...formData, min_members: parseInt(e.target.value) || 1 })}
                     disabled={formLoading}
                     required
-                    className="flex h-10 w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
+                    className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
                   />
                 </div>
                 <div className="flex flex-col space-y-1.5">
@@ -329,7 +329,7 @@ export default function AdminCompetitionsPage() {
                     onChange={(e) => setFormData({ ...formData, max_members: parseInt(e.target.value) || 1 })}
                     disabled={formLoading}
                     required
-                    className="flex h-10 w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
+                    className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
                   />
                 </div>
                 <label className="flex items-center gap-3 py-2.5 cursor-pointer text-sm font-sans text-neutral-300">
@@ -363,7 +363,7 @@ export default function AdminCompetitionsPage() {
                     onChange={(e) => setFormData({ ...formData, eligibility: e.target.value as Competition["eligibility"] })}
                     disabled={formLoading}
                     required
-                    className="flex h-10 w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                    className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                   >
                     <option value="both">Both (Internal & External)</option>
                     <option value="internal">Internal (SMUCT only)</option>
@@ -379,7 +379,7 @@ export default function AdminCompetitionsPage() {
                     onChange={(e) => setFormData({ ...formData, entry_fee: parseFloat(e.target.value) || 0 })}
                     disabled={formLoading}
                     required
-                    className="flex h-10 w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
+                    className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
                   />
                 </div>
                 <div className="flex flex-col space-y-1.5">
@@ -389,7 +389,7 @@ export default function AdminCompetitionsPage() {
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as Competition["status"] })}
                     disabled={formLoading}
                     required
-                    className="flex h-10 w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                    className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                   >
                     <option value="draft">Draft</option>
                     <option value="published">Published (Listed on catalog)</option>
@@ -426,7 +426,7 @@ export default function AdminCompetitionsPage() {
               </div>
 
               {/* Row 7: Date/Time Timelines */}
-              <div className="p-4 rounded-radius-sm bg-neutral-950 border border-neutral-850 space-y-4">
+              <div className="p-4 rounded-sm bg-neutral-950 border border-neutral-850 space-y-4">
                 <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider font-sans">Timeline Configurations</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   <div className="flex flex-col space-y-1.5">
@@ -437,7 +437,7 @@ export default function AdminCompetitionsPage() {
                       onChange={(e) => setFormData({ ...formData, registration_start: e.target.value })}
                       disabled={formLoading}
                       required
-                      className="flex h-10 w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
+                      className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col space-y-1.5">
@@ -448,7 +448,7 @@ export default function AdminCompetitionsPage() {
                       onChange={(e) => setFormData({ ...formData, registration_end: e.target.value })}
                       disabled={formLoading}
                       required
-                      className="flex h-10 w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
+                      className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col space-y-1.5">
@@ -459,7 +459,7 @@ export default function AdminCompetitionsPage() {
                       onChange={(e) => setFormData({ ...formData, submission_start: e.target.value })}
                       disabled={formLoading}
                       required
-                      className="flex h-10 w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
+                      className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
                     />
                   </div>
                   <div className="flex flex-col space-y-1.5">
@@ -470,7 +470,7 @@ export default function AdminCompetitionsPage() {
                       onChange={(e) => setFormData({ ...formData, submission_end: e.target.value })}
                       disabled={formLoading}
                       required
-                      className="flex h-10 w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
+                      className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
                     />
                   </div>
                 </div>
@@ -485,7 +485,7 @@ export default function AdminCompetitionsPage() {
                   value={formData.payment_instructions}
                   onChange={(e) => setFormData({ ...formData, payment_instructions: e.target.value })}
                   disabled={formLoading}
-                  className="flex w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                  className="flex w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                 />
               </div>
 
@@ -507,7 +507,7 @@ export default function AdminCompetitionsPage() {
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-48 bg-neutral-900 rounded-radius-md" />
+                <div key={i} className="h-48 bg-neutral-900 rounded-md" />
               ))}
             </div>
           ) : competitions.length > 0 ? (
@@ -590,7 +590,7 @@ export default function AdminCompetitionsPage() {
               ))}
             </div>
           ) : (
-            <div className="py-16 text-center border border-dashed border-neutral-800 rounded-radius-md bg-neutral-900/10">
+            <div className="py-16 text-center border border-dashed border-neutral-800 rounded-md bg-neutral-900/10">
               <Trophy className="h-10 w-10 text-neutral-700 mb-4 mx-auto" />
               <h3 className="font-heading font-semibold text-neutral-300 mb-1">No Competitions Created</h3>
               <p className="text-xs text-neutral-500 font-sans max-w-xs mx-auto mb-4">

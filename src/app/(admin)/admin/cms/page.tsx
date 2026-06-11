@@ -415,14 +415,14 @@ export default function AdminCMSPage() {
 
       {/* Status Flashes */}
       {errorMsg && (
-        <div className="p-4 rounded-radius-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2 animate-fade-in">
+        <div className="p-4 rounded-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2 animate-fade-in">
           <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-4 rounded-radius-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2 animate-fade-in">
+        <div className="p-4 rounded-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2 animate-fade-in">
           <Check className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{successMsg}</span>
         </div>
@@ -917,7 +917,7 @@ export default function AdminCMSPage() {
                 <textarea
                   required
                   placeholder="Provide announcement details..."
-                  className="flex min-h-24 w-full rounded-radius-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                  className="flex min-h-24 w-full rounded-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                   value={activeAnnModal.content || ""}
                   onChange={(e) => setActiveAnnModal({ ...activeAnnModal, content: e.target.value })}
                   disabled={saving}
@@ -929,7 +929,7 @@ export default function AdminCMSPage() {
                 <div className="space-y-1.5">
                   <label className="font-semibold text-neutral-400">Priority Level</label>
                   <select
-                    className="flex h-10 w-full rounded-radius-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                    className="flex h-10 w-full rounded-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                     value={activeAnnModal.priority || "normal"}
                     onChange={(e) =>
                       setActiveAnnModal({
@@ -950,7 +950,7 @@ export default function AdminCMSPage() {
                 <div className="space-y-1.5">
                   <label className="font-semibold text-neutral-400">Category Type</label>
                   <select
-                    className="flex h-10 w-full rounded-radius-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                    className="flex h-10 w-full rounded-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                     value={activeAnnModal.type || "general"}
                     onChange={(e) =>
                       setActiveAnnModal({
@@ -974,7 +974,7 @@ export default function AdminCMSPage() {
                 <div className="space-y-1.5">
                   <label className="font-semibold text-neutral-400">Publish Status</label>
                   <select
-                    className="flex h-10 w-full rounded-radius-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                    className="flex h-10 w-full rounded-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                     value={activeAnnModal.status || "draft"}
                     onChange={(e) =>
                       setActiveAnnModal({
@@ -1052,7 +1052,7 @@ export default function AdminCMSPage() {
                 <textarea
                   required
                   placeholder="Provide news ticker alert text..."
-                  className="flex min-h-20 w-full rounded-radius-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                  className="flex min-h-20 w-full rounded-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                   value={activeTickerModal.message || ""}
                   onChange={(e) => setActiveTickerModal({ ...activeTickerModal, message: e.target.value })}
                   disabled={saving}
@@ -1150,7 +1150,7 @@ export default function AdminCMSPage() {
                 <textarea
                   required
                   placeholder="Provide accordion expansion answer text..."
-                  className="flex min-h-24 w-full rounded-radius-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                  className="flex min-h-24 w-full rounded-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                   value={activeFaqModal.answer || ""}
                   onChange={(e) => setActiveFaqModal({ ...activeFaqModal, answer: e.target.value })}
                   disabled={saving}

@@ -4,18 +4,13 @@ import * as React from "react";
 import Link from "next/link";
 import {
   Trophy,
-  Award,
   AlertCircle,
   Clock,
-  ExternalLink,
   ChevronLeft,
-  ChevronRight,
-  ShieldCheck,
   Star,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
 import { createClient } from "@/lib/supabase/client";
 
 interface CompetitionItem {
@@ -124,9 +119,7 @@ export default function PublicFinalistsPage() {
     );
   }
 
-  const activeComp = competitions.find((c) => c.id === selectedCompId);
   const finalistsList = leaderboard.filter((l) => l.is_finalist);
-  const nonFinalistsList = leaderboard.filter((l) => !l.is_finalist);
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100 pb-16">
@@ -161,7 +154,7 @@ export default function PublicFinalistsPage() {
 
         {/* Error Notification */}
         {errorMsg && (
-          <div className="p-4 rounded-radius-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2 max-w-xl mx-auto">
+          <div className="p-4 rounded-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2 max-w-xl mx-auto">
             <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
             <span>{errorMsg}</span>
           </div>
@@ -175,7 +168,7 @@ export default function PublicFinalistsPage() {
                 <button
                   key={c.id}
                   onClick={() => setSelectedCompId(c.id)}
-                  className={`py-2.5 px-4 rounded-radius-sm text-xs font-semibold tracking-wide font-sans transition-all border outline-none ${
+                  className={`py-2.5 px-4 rounded-sm text-xs font-semibold tracking-wide font-sans transition-all border outline-none ${
                     selectedCompId === c.id
                       ? "bg-accent/15 border-accent text-accent"
                       : "bg-neutral-900 border-neutral-850 text-neutral-400 hover:text-neutral-200 hover:border-neutral-800"
@@ -189,8 +182,8 @@ export default function PublicFinalistsPage() {
             {/* Leaderboard content */}
             {dataLoading ? (
               <div className="space-y-4 animate-pulse">
-                <div className="h-20 bg-neutral-900 w-full rounded-radius-md" />
-                <div className="h-40 bg-neutral-900 w-full rounded-radius-md" />
+                <div className="h-20 bg-neutral-900 w-full rounded-md" />
+                <div className="h-40 bg-neutral-900 w-full rounded-md" />
               </div>
             ) : leaderboard.length > 0 ? (
               <div className="space-y-8">

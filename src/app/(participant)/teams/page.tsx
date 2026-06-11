@@ -2,15 +2,19 @@
 
 import * as React from "react";
 import { Plus, Users, UserPlus, ShieldAlert, Check, X, AlertCircle } from "lucide-react";
+import useSWR from "swr";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import { COMPETITIONS_CATALOG } from "@/constants/content";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 interface Competition {
+  id: string;
   name: string;
   type: string;
+  eligibility: string;
   entry_fee: number;
 }
 
@@ -51,10 +55,7 @@ interface Invitation {
 
 export default function TeamsPage() {
   const [activeTab, setActiveTab] = React.useState<"teams" | "invites">("teams");
-  const [teams, setTeams] = React.useState<Team[]>([]);
-  const [invites, setInvites] = React.useState<Invitation[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+  const [mutationError, setMutationError] = React.useState<string | null>(null);
 
   // Form states
   const [showCreateForm, setShowCreateForm] = React.useState(false);
@@ -66,40 +67,36 @@ export default function TeamsPage() {
   const [inviteEmails, setInviteEmails] = React.useState<{ [key: string]: string }>({});
   const [inviteLoading, setInviteLoading] = React.useState<{ [key: string]: boolean }>({});
 
-  const loadData = React.useCallback(async () => {
-    setLoading(true);
-    setErrorMsg(null);
-    try {
-      // Fetch teams
-      const teamsRes = await fetch("/api/teams");
-      const teamsData = await teamsRes.json();
-      if (teamsData.success) {
-        setTeams(teamsData.data);
-      }
+  // Setup SWR hooks for fetching
+  const {
+    data: teamsRes,
+    error: teamsError,
+    isLoading: teamsLoading,
+    mutate: mutateTeams,
+  } = useSWR<{ success: boolean; data: Team[] }>("/api/teams", fetcher);
 
-      // Fetch invitations
-      const invitesRes = await fetch("/api/teams?mode=invitations");
-      const invitesData = await invitesRes.json();
-      if (invitesData.success) {
-        setInvites(invitesData.data);
-      }
-    } catch (err: unknown) {
-      setErrorMsg("Failed to load roster data.");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const {
+    data: invitesRes,
+    error: invitesError,
+    isLoading: invitesLoading,
+    mutate: mutateInvites,
+  } = useSWR<{ success: boolean; data: Invitation[] }>("/api/teams?mode=invitations", fetcher);
 
-  React.useEffect(() => {
-    loadData();
-  }, [loadData]);
+  const { data: compsRes } = useSWR<{ success: boolean; data: Competition[] }>("/api/public/competitions", fetcher);
+
+  const teams = React.useMemo(() => (teamsRes?.success ? teamsRes.data : []), [teamsRes]);
+  const invites = React.useMemo(() => (invitesRes?.success ? invitesRes.data : []), [invitesRes]);
+  const dbCompetitions = React.useMemo(() => (compsRes?.success ? compsRes.data : []), [compsRes]);
+  const loading = teamsLoading || invitesLoading;
+
+  const errorMsg = mutationError || (teamsError || invitesError ? "Failed to load roster data." : null);
 
   const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTeamName || !newTeamCompId) return;
 
     setCreateLoading(true);
-    setErrorMsg(null);
+    setMutationError(null);
 
     try {
       const res = await fetch("/api/teams?action=create", {
@@ -118,10 +115,10 @@ export default function TeamsPage() {
       setNewTeamName("");
       setNewTeamCompId("");
       setShowCreateForm(false);
-      await loadData();
+      await mutateTeams();
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Failed to create team.";
-      setErrorMsg(errMsg);
+      setMutationError(errMsg);
     } finally {
       setCreateLoading(false);
     }
@@ -132,7 +129,7 @@ export default function TeamsPage() {
     if (!email) return;
 
     setInviteLoading((prev) => ({ ...prev, [teamId]: true }));
-    setErrorMsg(null);
+    setMutationError(null);
 
     try {
       const res = await fetch("/api/teams?action=invite", {
@@ -150,17 +147,17 @@ export default function TeamsPage() {
 
       // Clear input
       setInviteEmails((prev) => ({ ...prev, [teamId]: "" }));
-      await loadData();
+      await mutateTeams();
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Failed to send invitation.";
-      setErrorMsg(errMsg);
+      setMutationError(errMsg);
     } finally {
       setInviteLoading((prev) => ({ ...prev, [teamId]: false }));
     }
   };
 
   const handleRespondInvite = async (inviteId: string, status: "accepted" | "rejected") => {
-    setErrorMsg(null);
+    setMutationError(null);
     try {
       const res = await fetch("/api/teams?action=respond", {
         method: "POST",
@@ -175,10 +172,10 @@ export default function TeamsPage() {
         throw new Error(data.message || "Response action failed.");
       }
 
-      await loadData();
+      await Promise.all([mutateTeams(), mutateInvites()]);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Response action failed.";
-      setErrorMsg(errMsg);
+      setMutationError(errMsg);
     }
   };
 
@@ -203,7 +200,7 @@ export default function TeamsPage() {
       </div>
 
       {errorMsg && (
-        <div className="p-4 rounded-radius-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
           <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{errorMsg}</span>
         </div>
@@ -233,10 +230,10 @@ export default function TeamsPage() {
                   onChange={(e) => setNewTeamCompId(e.target.value)}
                   disabled={createLoading}
                   required
-                  className="flex h-10 w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                  className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                 >
                   <option value="">Select Competition</option>
-                  {COMPETITIONS_CATALOG.map((c) => (
+                  {dbCompetitions.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name} ({c.eligibility})
                     </option>
@@ -288,8 +285,8 @@ export default function TeamsPage() {
 
       {loading ? (
         <div className="py-12 text-center animate-pulse space-y-4">
-          <div className="h-10 bg-neutral-900 w-full rounded-radius-sm" />
-          <div className="h-10 bg-neutral-900 w-full rounded-radius-sm" />
+          <div className="h-10 bg-neutral-900 w-full rounded-sm" />
+          <div className="h-10 bg-neutral-900 w-full rounded-sm" />
         </div>
       ) : (
         <div className="space-y-6">
@@ -299,11 +296,6 @@ export default function TeamsPage() {
               {teams.length > 0 ? (
                 <div className="space-y-6">
                   {teams.map((team) => {
-                    const isLeader = team.members.some(
-                      (m: TeamMember) => m.role === "leader" && m.user_id === team.leader_id
-                    );
-                    const isUserLeader = team.leader_id === team.members.find((m: TeamMember) => m.role === "leader")?.user_id;
-
                     return (
                       <Card key={team.id} variant="default" className="border-neutral-800/60 p-6 space-y-6">
                         <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4 pb-4 border-b border-neutral-800/60">
@@ -328,7 +320,7 @@ export default function TeamsPage() {
                             {team.members.map((member: TeamMember) => (
                               <div
                                 key={member.id}
-                                className="p-3 rounded-radius-sm bg-neutral-950 border border-neutral-850 flex items-center justify-between gap-3 text-sm font-sans"
+                                className="p-3 rounded-sm bg-neutral-950 border border-neutral-850 flex items-center justify-between gap-3 text-sm font-sans"
                               >
                                 <div className="space-y-0.5">
                                   <div className="font-semibold text-neutral-200">{member.profiles?.full_name || "Unknown"}</div>
@@ -373,7 +365,7 @@ export default function TeamsPage() {
                   })}
                 </div>
               ) : (
-                <div className="py-16 text-center border border-dashed border-neutral-800 rounded-radius-md bg-neutral-900/10">
+                <div className="py-16 text-center border border-dashed border-neutral-800 rounded-md bg-neutral-900/10">
                   <Users className="h-10 w-10 text-neutral-700 mb-4 mx-auto" />
                   <h3 className="font-heading font-semibold text-neutral-300 mb-1">No Active Teams</h3>
                   <p className="text-xs text-neutral-500 font-sans max-w-xs mx-auto leading-relaxed">
@@ -420,11 +412,11 @@ export default function TeamsPage() {
                   ))}
                 </div>
               ) : (
-                <div className="py-16 text-center border border-dashed border-neutral-800 rounded-radius-md bg-neutral-900/10">
+                <div className="py-16 text-center border border-dashed border-neutral-800 rounded-md bg-neutral-900/10">
                   <ShieldAlert className="h-10 w-10 text-neutral-700 mb-4 mx-auto" />
                   <h3 className="font-heading font-semibold text-neutral-300 mb-1">No Pending Invitations</h3>
                   <p className="text-xs text-neutral-500 font-sans max-w-xs mx-auto">
-                    You don't have any incoming team invitations right now.
+                    You don&apos;t have any incoming team invitations right now.
                   </p>
                 </div>
               )}

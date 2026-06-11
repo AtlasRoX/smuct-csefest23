@@ -188,23 +188,7 @@ export async function POST(req: Request) {
       throw new Error(`Failed to update team state: ${teamUpdateErr.message}`);
     }
 
-    // 7. Notify team leader and members
-    const { data: teamMembers } = await supabase
-      .from("team_members")
-      .select("user_id")
-      .eq("team_id", team_id)
-      .eq("invitation_status", "accepted");
-
-    if (teamMembers) {
-      const notifications = teamMembers.map((m) => ({
-        user_id: m.user_id,
-        title: "Proposal Submitted",
-        message: `Your team "${teamRecord.name}" successfully submitted the proposal "${title}".`,
-        type: "success",
-        action_url: "/submissions",
-      }));
-      await supabase.from("notifications").insert(notifications);
-    }
+    // 7. In-app notification is handled automatically via database trigger (tr_submission_inserted_notification)
 
     return NextResponse.json({
       success: true,

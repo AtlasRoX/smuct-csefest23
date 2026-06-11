@@ -176,42 +176,7 @@ export async function POST(req: Request) {
       { status, notes, team_status: teamStatus }
     );
 
-    // 8. Notify all accepted team members
-    const { data: members } = await supabase
-      .from("team_members")
-      .select("user_id")
-      .eq("team_id", prevPayment.team_id)
-      .eq("invitation_status", "accepted");
-
-    if (members && members.length > 0) {
-      let titleMsg = "Payment Verification Status";
-      let detailMsg = `Your team payment status has been updated to ${status.toUpperCase()}.`;
-      let typeMsg: "info" | "success" | "warning" | "error" = "info";
-
-      if (status === "approved") {
-        titleMsg = "Payment Confirmed!";
-        detailMsg = `Great news! Your team payment (TXID: ${prevPayment.transaction_id}) has been verified. Your team is now registered.`;
-        typeMsg = "success";
-      } else if (status === "rejected") {
-        titleMsg = "Payment Rejected";
-        detailMsg = `Your payment proof was rejected. ${notes ? `Reason: ${notes}` : "Please contact support."}`;
-        typeMsg = "error";
-      } else if (status === "resubmission_required") {
-        titleMsg = "Payment Resubmission Required";
-        detailMsg = `We could not verify your payment. Please resubmit your transaction details. ${notes ? `Details: ${notes}` : ""}`;
-        typeMsg = "warning";
-      }
-
-      const notifications = members.map((m) => ({
-        user_id: m.user_id,
-        title: titleMsg,
-        message: detailMsg,
-        type: typeMsg,
-        action_url: "/payments",
-      }));
-
-      await supabase.from("notifications").insert(notifications);
-    }
+    // 8. In-app notification is handled automatically via database trigger (tr_payment_notification)
 
     return NextResponse.json({
       success: true,

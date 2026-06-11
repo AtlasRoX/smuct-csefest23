@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Hackathon 4.0 | CSE FEST 2026</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed": "#351000",
+                        "inverse-primary": "#4d44e3",
+                        "secondary-fixed-dim": "#ddb7ff",
+                        "surface": "#13121b",
+                        "on-secondary-fixed": "#2c0051",
+                        "primary": "#c3c0ff",
+                        "on-surface-variant": "#c7c4d8",
+                        "on-surface": "#e4e1ee",
+                        "on-primary-fixed": "#0f0069",
+                        "surface-container-high": "#2a2933",
+                        "on-secondary-fixed-variant": "#6900b3",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "background": "#13121b",
+                        "primary-fixed": "#e2dfff",
+                        "on-error": "#690005",
+                        "surface-container-highest": "#35343e",
+                        "primary-container": "#4f46e5",
+                        "inverse-surface": "#e4e1ee",
+                        "on-secondary-container": "#d6a9ff",
+                        "surface-variant": "#35343e",
+                        "on-primary": "#1d00a5",
+                        "surface-tint": "#c3c0ff",
+                        "surface-dim": "#13121b",
+                        "error": "#ffb4ab",
+                        "on-error-container": "#ffdad6",
+                        "tertiary-fixed-dim": "#ffb695",
+                        "secondary-fixed": "#f0dbff",
+                        "on-tertiary-container": "#ffd2be",
+                        "outline-variant": "#464555",
+                        "tertiary-container": "#a44100",
+                        "secondary": "#ddb7ff",
+                        "on-primary-container": "#dad7ff",
+                        "tertiary-fixed": "#ffdbcc",
+                        "secondary-container": "#6f00be",
+                        "outline": "#918fa1",
+                        "inverse-on-surface": "#302f39",
+                        "error-container": "#93000a",
+                        "surface-container-low": "#1b1b24",
+                        "surface-bright": "#393842",
+                        "surface-container": "#1f1f28",
+                        "on-secondary": "#490080",
+                        "on-background": "#e4e1ee",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "tertiary": "#ffb695",
+                        "on-tertiary": "#571f00",
+                        "surface-container-lowest": "#0e0d16"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "gutter": "24px",
+                        "max-width": "1280px",
+                        "margin-mobile": "16px",
+                        "margin-desktop": "64px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Space Grotesk"],
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Space Grotesk"],
+                        "headline-xl": ["Space Grotesk"],
+                        "data-display": ["Geist Mono"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "headline-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "data-display": ["14px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #13121b;
+            background-image: 
+                radial-gradient(circle at 50% -20%, rgba(77, 68, 227, 0.15) 0%, transparent 50%),
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+            color: #e4e1ee;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glow-primary {
+            box-shadow: 0 0 20px rgba(77, 68, 227, 0.4);
+        }
+        .glow-secondary {
+            box-shadow: 0 0 20px rgba(221, 183, 255, 0.4);
+        }
+        @keyframes pulse-cyan {
+            0%, 100% { background-color: rgba(6, 182, 212, 0.2); }
+            50% { background-color: rgba(6, 182, 212, 0.5); }
+        }
+        .animate-pulse-cyan {
+            animation: pulse-cyan 2s infinite ease-in-out;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="font-body-md text-body-md overflow-x-hidden">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 bg-surface/60 backdrop-blur-xl border-b border-white/20 shadow-[0_0_15px_rgba(77,68,227,0.3)]">
+<div class="flex items-center gap-4">
+<img alt="CSE FEST 2026 Logo" class="h-10 md:h-12 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDqlw6CDeWxQ8kNLAdrKonlbUD4COw7KjdlceluWnMfegQ1ijGwHPTSmmW0xb3hrNUn9KV2F_KJqE7NbgkADXBfW7IsHMfUEPm-yKsJEURU16HrTnXPA3Iv-QELeB0kiUFXXMB_260al9ZQNCNqyFKWn5nhTvo22PS1EU4m2-W8OqE2fw0rGpOU33uRabdRED8seEpGWd2BSBMNq76AE6zulCOmMWmoZN6y2Q5vKiTB1EN3Cw_3rQQI_61j_DBCrceUKljCbOIO38VY"/>
+<span class="hidden md:block font-headline-lg text-headline-lg font-bold text-primary tracking-tight">CSE FEST 2026</span>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-primary border-b-2 border-primary pb-1 font-label-sm text-label-sm uppercase" href="#">Hackathons</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-label-sm text-label-sm uppercase" href="#">CTF</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-label-sm text-label-sm uppercase" href="#">Robotics</a>
+<a class="text-on-surface-variant hover:text-on-surface transition-colors font-label-sm text-label-sm uppercase" href="#">Workshops</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="hidden md:flex items-center gap-2 bg-primary-container text-on-primary-container px-6 py-2 rounded-lg font-label-sm text-label-sm uppercase hover:glow-primary transition-all active:scale-95 duration-200">
+                Register Now
+            </button>
+<span class="material-symbols-outlined text-on-surface cursor-pointer text-3xl">account_circle</span>
+</div>
+</header>
+<!-- Main Layout Container -->
+<main class="max-w-max-width mx-auto pt-32 pb-20 px-margin-mobile md:px-margin-desktop flex flex-col lg:flex-row gap-10">
+<!-- Left Column (70%) -->
+<section class="flex-1 space-y-12">
+<!-- Hero Header -->
+<div class="relative rounded-2xl overflow-hidden glass p-8 md:p-12">
+<div class="absolute top-0 right-0 p-6">
+<div class="flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/20 border border-cyan-400/30 animate-pulse-cyan">
+<span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+<span class="text-[10px] font-data-display uppercase tracking-widest text-cyan-400">Registrations Open</span>
+</div>
+</div>
+<div class="space-y-6 max-w-2xl">
+<h1 class="font-headline-xl text-headline-xl text-on-surface tracking-tighter">HACKATHON 4.0</h1>
+<p class="text-on-surface-variant text-lg leading-relaxed">
+                        Push the boundaries of innovation in our flagship 36-hour technical marathon. Solve real-world challenges using cutting-edge AI, Blockchain, and IoT frameworks.
+                    </p>
+<div class="flex flex-wrap gap-4 pt-4">
+<button class="bg-primary-container text-on-primary-container px-8 py-4 rounded-xl font-headline-lg-mobile text-headline-lg-mobile hover:glow-primary transition-all active:scale-95 duration-200">
+                            Register Your Team
+                        </button>
+<button class="border border-secondary text-secondary px-8 py-4 rounded-xl font-headline-lg-mobile text-headline-lg-mobile hover:bg-secondary/10 transition-all">
+                            View Handbook
+                        </button>
+</div>
+</div>
+</div>
+<!-- Tabbed Navigation Content -->
+<div class="space-y-8">
+<!-- Tabs Navigation -->
+<div class="flex items-center gap-2 overflow-x-auto hide-scrollbar border-b border-outline-variant">
+<button class="px-6 py-4 border-b-2 border-primary text-primary font-label-sm text-label-sm uppercase whitespace-nowrap">Overview</button>
+<button class="px-6 py-4 text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm uppercase whitespace-nowrap transition-colors">Rules</button>
+<button class="px-6 py-4 text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm uppercase whitespace-nowrap transition-colors">Timeline</button>
+<button class="px-6 py-4 text-on-surface-variant hover:text-on-surface font-label-sm text-label-sm uppercase whitespace-nowrap transition-colors">Prizes</button>
+</div>
+<!-- Overview Section -->
+<div class="space-y-8" id="overview">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="glass p-6 rounded-xl space-y-4">
+<span class="material-symbols-outlined text-primary text-4xl">terminal</span>
+<h3 class="font-headline-lg text-headline-lg-mobile text-on-surface">Technical Tracks</h3>
+<p class="text-on-surface-variant text-sm">Focused on Web3 infrastructure, distributed systems, and generative AI applications for sustainable urban living.</p>
+</div>
+<div class="glass p-6 rounded-xl space-y-4">
+<span class="material-symbols-outlined text-secondary text-4xl">groups</span>
+<h3 class="font-headline-lg text-headline-lg-mobile text-on-surface">Mentorship</h3>
+<p class="text-on-surface-variant text-sm">Access to industry experts from leading tech firms during the 36-hour build phase for technical guidance.</p>
+</div>
+</div>
+<div class="space-y-4">
+<h2 class="font-headline-lg text-headline-lg text-primary tracking-tight">Key Highlights</h2>
+<ul class="space-y-4">
+<li class="flex items-start gap-4">
+<span class="material-symbols-outlined text-cyan-400 mt-1">check_circle</span>
+<div>
+<strong class="text-on-surface block">Cloud Credits</strong>
+<span class="text-on-surface-variant text-sm">Every participant receives $200 in GCP/AWS credits for project deployment.</span>
+</div>
+</li>
+<li class="flex items-start gap-4">
+<span class="material-symbols-outlined text-cyan-400 mt-1">check_circle</span>
+<div>
+<strong class="text-on-surface block">Recruitment Fast-track</strong>
+<span class="text-on-surface-variant text-sm">Top 10 teams get direct interview opportunities with festival sponsors.</span>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<!-- Timeline Section -->
+<div class="pt-12 space-y-10" id="timeline">
+<h2 class="font-headline-lg text-headline-lg text-primary tracking-tight">Competition Roadmap</h2>
+<div class="relative space-y-8">
+<div class="absolute left-4 top-2 bottom-2 w-px bg-outline-variant"></div>
+<div class="relative flex items-start gap-8 pl-12 group">
+<div class="absolute left-0 w-8 h-8 rounded-full glass border-primary border-2 flex items-center justify-center bg-background z-10">
+<div class="w-3 h-3 rounded-full bg-primary"></div>
+</div>
+<div class="space-y-1">
+<span class="font-data-display text-xs text-primary uppercase">Phase 01</span>
+<h4 class="font-headline-lg text-headline-lg-mobile text-on-surface">Registration Phase</h4>
+<p class="text-on-surface-variant text-sm">January 15 – March 15, 2026. Submit your team and project abstract.</p>
+</div>
+</div>
+<div class="relative flex items-start gap-8 pl-12 group">
+<div class="absolute left-0 w-8 h-8 rounded-full glass border-outline-variant border-2 flex items-center justify-center bg-background z-10">
+<div class="w-3 h-3 rounded-full bg-outline-variant"></div>
+</div>
+<div class="space-y-1">
+<span class="font-data-display text-xs text-on-surface-variant uppercase">Phase 02</span>
+<h4 class="font-headline-lg text-headline-lg-mobile text-on-surface">Preliminary Round</h4>
+<p class="text-on-surface-variant text-sm">March 20, 2026. Top 50 teams selected based on innovation and feasibility.</p>
+</div>
+</div>
+<div class="relative flex items-start gap-8 pl-12 group">
+<div class="absolute left-0 w-8 h-8 rounded-full glass border-outline-variant border-2 flex items-center justify-center bg-background z-10">
+<div class="w-3 h-3 rounded-full bg-outline-variant"></div>
+</div>
+<div class="space-y-1">
+<span class="font-data-display text-xs text-on-surface-variant uppercase">Phase 03</span>
+<h4 class="font-headline-lg text-headline-lg-mobile text-on-surface">The Grand Finale</h4>
+<p class="text-on-surface-variant text-sm">March 28-30, 2026. 36-hour onsite hackathon at SMUCT Campus.</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Prizes Section -->
+<div class="pt-12 space-y-8" id="prizes">
+<h2 class="font-headline-lg text-headline-lg text-primary tracking-tight">Reward Pool</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- 1st Prize -->
+<div class="glass p-8 rounded-2xl border-t-4 border-t-yellow-500/50 flex flex-col items-center text-center space-y-4 hover:-translate-y-2 transition-transform">
+<span class="material-symbols-outlined text-yellow-500 text-5xl" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
+<div>
+<h5 class="font-label-sm text-label-sm uppercase text-on-surface-variant">Champion</h5>
+<div class="font-headline-xl text-headline-lg text-on-surface">$1,500</div>
+</div>
+<p class="text-xs text-on-surface-variant">Incubation support + Premium Swag Kit</p>
+</div>
+<!-- 2nd Prize -->
+<div class="glass p-8 rounded-2xl border-t-4 border-t-slate-400/50 flex flex-col items-center text-center space-y-4 hover:-translate-y-2 transition-transform">
+<span class="material-symbols-outlined text-slate-400 text-5xl" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+<div>
+<h5 class="font-label-sm text-label-sm uppercase text-on-surface-variant">Runner Up</h5>
+<div class="font-headline-xl text-headline-lg text-on-surface">$750</div>
+</div>
+<p class="text-xs text-on-surface-variant">Cloud Credits + Tech Vouchers</p>
+</div>
+<!-- 3rd Prize -->
+<div class="glass p-8 rounded-2xl border-t-4 border-t-amber-700/50 flex flex-col items-center text-center space-y-4 hover:-translate-y-2 transition-transform">
+<span class="material-symbols-outlined text-amber-700 text-5xl" style="font-variation-settings: 'FILL' 1;">military_tech</span>
+<div>
+<h5 class="font-label-sm text-label-sm uppercase text-on-surface-variant">2nd Runner Up</h5>
+<div class="font-headline-xl text-headline-lg text-on-surface">$250</div>
+</div>
+<p class="text-xs text-on-surface-variant">Tech Vouchers + Certificates</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Right Column (30% Sticky Sidebar) -->
+<aside class="w-full lg:w-80 space-y-6">
+<div class="sticky top-28 space-y-6">
+<!-- Metadata Card -->
+<div class="glass rounded-2xl p-8 space-y-8">
+<h3 class="font-headline-lg text-headline-lg-mobile text-on-surface border-b border-outline-variant pb-4">Competition Brief</h3>
+<div class="space-y-6">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">payments</span>
+</div>
+<div>
+<div class="text-[10px] uppercase tracking-widest text-on-surface-variant font-data-display">Entry Fee</div>
+<div class="text-on-surface font-semibold">Free of Cost</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">groups_3</span>
+</div>
+<div>
+<div class="text-[10px] uppercase tracking-widest text-on-surface-variant font-data-display">Team Size</div>
+<div class="text-on-surface font-semibold">3-4 Members</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">school</span>
+</div>
+<div>
+<div class="text-[10px] uppercase tracking-widest text-on-surface-variant font-data-display">Eligibility</div>
+<div class="text-on-surface font-semibold">SMUCT Students</div>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-error">event_busy</span>
+</div>
+<div>
+<div class="text-[10px] uppercase tracking-widest text-error font-data-display">Deadline</div>
+<div class="text-on-surface font-semibold">March 15, 2026</div>
+</div>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary font-label-sm text-label-sm uppercase py-4 rounded-xl hover:glow-primary transition-all">
+                        Apply to Participate
+                    </button>
+<p class="text-center text-[10px] text-on-surface-variant font-data-display">
+                        * Only registered student IDs from SMUCT are eligible for prizes.
+                    </p>
+</div>
+<!-- Support Card -->
+<div class="glass rounded-2xl p-6 flex items-center gap-4 hover:bg-white/5 transition-colors cursor-pointer">
+<span class="material-symbols-outlined text-primary">help_center</span>
+<div>
+<h4 class="font-label-sm text-label-sm text-on-surface">Need Help?</h4>
+<p class="text-xs text-on-surface-variant">Talk to our coordinators</p>
+</div>
+</div>
+</div>
+</aside>
+</main>
+<!-- Footer -->
+<footer class="w-full py-8 px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row justify-between items-center border-t border-outline-variant bg-surface-container-lowest/50 backdrop-blur-sm mt-20">
+<div class="flex flex-col gap-2 mb-6 md:mb-0">
+<span class="font-headline-lg text-primary text-2xl tracking-tighter">CSE FEST</span>
+<p class="font-label-sm text-label-sm text-outline uppercase tracking-widest opacity-70">© 2026 CSE FEST. ENGINEERED FOR EXCELLENCE.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-8">
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-sm text-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">API Documentation</a>
+</div>
+</footer>
+<script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('nav a, #timeline-nav, [id^="tab-"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                // Simplified for this demo - logic to switch tab content could be added here
+            });
+        });
+
+        // Hover interactions for prize cards
+        const prizeCards = document.querySelectorAll('#prizes > div > div');
+        prizeCards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.borderColor = 'rgba(77, 68, 227, 0.5)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.borderColor = '';
+            });
+        });
+    </script>
+</body></html>

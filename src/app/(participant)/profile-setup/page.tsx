@@ -5,23 +5,21 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Terminal, Upload, AlertCircle, ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { Terminal, Upload, AlertCircle, ArrowLeft, ArrowRight, Check, X, ShieldCheck, Fingerprint, GraduationCap, Lock, Info, HelpCircle, Shield, CheckCircle2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
 
-// Skills checklist (no hardcoded strings in renders)
-const AVAILABLE_SKILLS = [
-  "React / Next.js",
-  "Node.js / Express",
-  "Python / Django",
-  "Embedded Systems / IoT",
-  "Robotics / Arduino",
-  "UI/UX Design",
-  "Database (SQL/NoSQL)",
-  "Cybersecurity / CTF",
-];
+import { createClient } from "@/lib/supabase/client";
+
+
+// Normalizes a URL by prepending https:// if no protocol is present
+function normalizeUrl(val: string | undefined): string {
+  if (!val || val.trim() === "") return "";
+  const trimmed = val.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
 
 const wizardSchema = z.object({
   // Step 1: Personal
@@ -34,60 +32,83 @@ const wizardSchema = z.object({
   semester: z.string().min(1, "Semester is required"),
   student_id: z.string().min(2, "Student ID is required"),
   // Step 4: Professional
-  github: z.string().url("Please enter a valid GitHub profile URL").optional().or(z.literal("")),
-  portfolio: z.string().url("Please enter a valid portfolio URL").optional().or(z.literal("")),
-  skills: z.array(z.string()).min(1, "Select at least one skill"),
-  bio: z.string().max(250, "Bio must be under 250 characters").optional().or(z.literal("")),
+  github: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .transform((val) => normalizeUrl(val))
+    .pipe(
+      z.string().refine(
+        (val) => val === "" || z.string().url().safeParse(val).success,
+        "Please enter a valid online profile URL (e.g. github.com/username)"
+      )
+    ),
+  portfolio: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .transform((val) => normalizeUrl(val))
+    .pipe(
+      z.string().refine(
+        (val) => val === "" || z.string().url().safeParse(val).success,
+        "Please enter a valid portfolio URL (e.g. mysite.com)"
+      )
+    ),
+  skills: z.string().optional().or(z.literal("")),
+  bio: z.string().max(500, "Bio must be under 500 characters").optional().or(z.literal("")),
   tshirt_size: z.string().min(1, "T-shirt size is required"),
 });
 
-type WizardFormData = z.infer<typeof wizardSchema>;
+type WizardFormData = z.input<typeof wizardSchema>;
 
 export default function ProfileSetupWizard() {
   const router = useRouter();
   const [step, setStep] = React.useState(1);
   const [loading, setLoading] = React.useState(false);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+  const [userEmail, setUserEmail] = React.useState<string>("");
 
-  // File Upload State (Base64 data)
+  // File Upload State (Base64 data for API processing)
   const [idFront, setIdFront] = React.useState<string | null>(null);
   const [idBack, setIdBack] = React.useState<string | null>(null);
   const [idFrontError, setIdFrontError] = React.useState<string | null>(null);
   const [idBackError, setIdBackError] = React.useState<string | null>(null);
+
+  // Drag and drop hover states
+  const [dragActiveFront, setDragActiveFront] = React.useState(false);
+  const [dragActiveBack, setDragActiveBack] = React.useState(false);
+
+  // Retrieve user email from Supabase session
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+    };
+    fetchUser();
+  }, []);
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
-    formState: { errors, isValid },
+    trigger,
+    formState: { errors },
   } = useForm<WizardFormData>({
     resolver: zodResolver(wizardSchema),
     mode: "all",
     defaultValues: {
-      skills: [],
+      skills: "",
     },
   });
 
-  const selectedSkills = watch("skills") || [];
 
-  const handleSkillToggle = (skill: string) => {
-    if (selectedSkills.includes(skill)) {
-      setValue(
-        "skills",
-        selectedSkills.filter((s) => s !== skill),
-        { shouldValidate: true }
-      );
-    } else {
-      setValue("skills", [...selectedSkills, skill], { shouldValidate: true });
-    }
-  };
 
-  // Base64 File Loader Converter
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "front" | "back") => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  // Convert uploaded file to Base64
+  const processFile = (file: File, type: "front" | "back") => {
     // Validate size limit (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       const msg = "File exceeds the 5MB size limit. Please upload a smaller image.";
@@ -118,13 +139,51 @@ export default function ProfileSetupWizard() {
     reader.readAsDataURL(file);
   };
 
-  const nextStep = () => {
-    if (step === 3 && (!idFront || !idBack)) {
-      if (!idFront) setIdFrontError("Student ID front card image is required.");
-      if (!idBack) setIdBackError("Student ID back card image is required.");
-      return;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "front" | "back") => {
+    const file = e.target.files?.[0];
+    if (file) processFile(file, type);
+  };
+
+  // Drag handlers
+  const handleDrag = (e: React.DragEvent, type: "front" | "back", status: boolean) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (type === "front") setDragActiveFront(status);
+    else setDragActiveBack(status);
+  };
+
+  const handleDrop = (e: React.DragEvent, type: "front" | "back") => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (type === "front") setDragActiveFront(false);
+    else setDragActiveBack(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file, type);
+  };
+
+  const nextStep = async () => {
+    // Validate current fields before advancing step
+    let isValid = false;
+    if (step === 1) {
+      isValid = await trigger(["full_name", "phone", "gender"]);
+    } else if (step === 2) {
+      isValid = await trigger(["university", "department", "semester", "student_id"]);
+    } else if (step === 3) {
+      if (!idFront || !idBack) {
+        if (!idFront) setIdFrontError("Student ID front card image is required.");
+        if (!idBack) setIdBackError("Student ID back card image is required.");
+        return;
+      }
+      isValid = true;
+    } else if (step === 4) {
+      isValid = await trigger(["github", "portfolio", "skills", "bio", "tshirt_size"]);
     }
-    setStep((prev) => Math.min(prev + 1, 5));
+
+    if (isValid) {
+      setErrorMsg(null);
+      setStep((prev) => Math.min(prev + 1, 5));
+    }
   };
 
   const prevStep = () => {
@@ -141,7 +200,11 @@ export default function ProfileSetupWizard() {
       const profileRes = await fetch("/api/profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          github: normalizeUrl(data.github) || "",
+          portfolio: normalizeUrl(data.portfolio) || "",
+        }),
       });
       const profileData = await profileRes.json();
       if (!profileData.success) {
@@ -163,318 +226,683 @@ export default function ProfileSetupWizard() {
       }
 
       router.push("/dashboard");
-    } catch (err: any) {
-      setErrorMsg(err.message || "An unexpected error occurred during profile setup.");
+      router.refresh();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "An unexpected error occurred during profile setup.";
+      setErrorMsg(message);
     } finally {
       setLoading(false);
     }
   };
 
+  const stepsConfig = [
+    { id: 1, label: "Identity", icon: Fingerprint },
+    { id: 2, label: "Academic", icon: GraduationCap },
+    { id: 3, label: "Verification", icon: ShieldCheck },
+    { id: 4, label: "Technical", icon: Terminal },
+    { id: 5, label: "Review", icon: CheckCircle2 },
+  ];
+
   return (
-    <div className="min-h-screen bg-neutral-950 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
-      {/* Header */}
-      <div className="mx-auto w-full max-w-xl flex items-center justify-between mb-8">
-        <div className="flex items-center gap-2">
-          <Terminal className="h-6 w-6 text-accent" />
-          <span className="font-heading font-bold text-lg tracking-wider text-neutral-50">
-            Profile Completion
+    <div className="w-full space-y-8 py-2">
+      {/* Top Header */}
+      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-neutral-850 pb-5">
+        <div>
+          <h1 className="text-h3 font-heading font-bold text-neutral-50 flex items-center gap-2.5">
+            <Terminal className="h-6 w-6 text-primary animate-pulse" />
+            <span>Delegate Profile Setup</span>
+          </h1>
+          <p className="text-sm text-neutral-400 font-sans mt-1">
+            Complete your official festival registration wizard to unlock competition entries and team setups.
+          </p>
+        </div>
+        <div className="shrink-0">
+          <span className="font-mono text-xs text-neutral-400 bg-neutral-900 border border-neutral-850 px-3 py-1.5 rounded">
+            Wizard Step {step} of 5
           </span>
         </div>
-        <span className="text-xs font-mono font-medium text-neutral-400">Step {step} of 5</span>
       </div>
 
-      {/* Progress Bar */}
-      <div className="mx-auto w-full max-w-xl h-1 bg-neutral-900 rounded-full mb-8 overflow-hidden">
-        <div
-          className="bg-accent h-full transition-all duration-300"
-          style={{ width: `${(step / 5) * 100}%` }}
-        />
-      </div>
-
-      {/* Steps Panels */}
-      <Card className="mx-auto w-full max-w-xl bg-neutral-900/60 border border-neutral-800/80 p-8">
-        <CardContent className="p-0 space-y-6">
-          {errorMsg && (
-            <div className="p-4 rounded-radius-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
-              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
-
-          {/* Step 1: Personal Details */}
-          {step === 1 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-heading font-semibold text-neutral-200">Personal Details</h2>
-              <Input
-                label="Full Name"
-                placeholder="John Doe"
-                error={errors.full_name?.message}
-                {...register("full_name")}
-              />
-              <Input
-                label="Phone Number"
-                placeholder="+8801700000000"
-                error={errors.phone?.message}
-                {...register("phone")}
-              />
-              <div className="flex flex-col space-y-1.5">
-                <label className="text-sm font-medium text-neutral-300 font-sans">Gender</label>
-                <select
-                  className="flex h-10 w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
-                  {...register("gender")}
+      {/* Horizontal Stepper */}
+      <div className="bg-neutral-900/40 border border-neutral-850 rounded-xl p-5 md:p-6 shadow-sm">
+        <div className="flex items-center justify-between max-w-4xl mx-auto">
+          {stepsConfig.map((item, idx) => {
+            const StepIcon = item.icon;
+            const isCompleted = step > item.id;
+            const isActive = step === item.id;
+            return (
+              <React.Fragment key={item.id}>
+                {/* Step Item */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (item.id < step) {
+                      setStep(item.id);
+                    }
+                  }}
+                  disabled={item.id >= step}
+                  className="flex items-center gap-2.5 outline-none focus:outline-none text-left disabled:cursor-not-allowed group"
                 >
-                  <option value="">Select Gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                </select>
-                {errors.gender && (
-                  <span className="text-xs text-error font-medium">{errors.gender.message}</span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Step 2: Academic Details */}
-          {step === 2 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-heading font-semibold text-neutral-200">Academic Details</h2>
-              <Input
-                label="University"
-                placeholder="Shanto-Mariam University of Creative Technology"
-                error={errors.university?.message}
-                {...register("university")}
-              />
-              <Input
-                label="Department"
-                placeholder="Computer Science & Engineering"
-                error={errors.department?.message}
-                {...register("department")}
-              />
-              <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label="Semester"
-                  placeholder="8th"
-                  error={errors.semester?.message}
-                  {...register("semester")}
-                />
-                <Input
-                  label="Student ID"
-                  placeholder="201071000"
-                  error={errors.student_id?.message}
-                  {...register("student_id")}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Step 3: Student ID Verification (Cloudinary upload placeholders) */}
-          {step === 3 && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-heading font-semibold text-neutral-200">Student ID Upload</h2>
-              <p className="text-xs text-neutral-400 font-sans leading-relaxed">
-                Please upload clean, high-resolution photos of your Student ID card. File size must be under 5MB. Format supported: JPG, JPEG, PNG.
-              </p>
-
-              {/* Front Side Upload */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-neutral-300 font-sans">ID Card Front Side</label>
-                <div className="relative border-2 border-dashed border-neutral-800 rounded-radius-md p-6 flex flex-col items-center justify-center bg-neutral-950 hover:border-neutral-700 transition-colors">
-                  {idFront ? (
-                    <div className="relative max-h-40 w-full overflow-hidden flex items-center justify-center">
-                      <img src={idFront} alt="ID Front preview" className="max-h-36 rounded-radius-sm object-cover" />
-                    </div>
-                  ) : (
-                    <div className="text-center space-y-2">
-                      <Upload className="h-8 w-8 text-neutral-600 mx-auto" />
-                      <div className="text-xs text-neutral-500 font-sans">Drag and drop or click to upload front image</div>
-                    </div>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleFileChange(e, "front")}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                  />
-                </div>
-                {idFrontError && <span className="text-xs text-error font-medium">{idFrontError}</span>}
-              </div>
-
-              {/* Back Side Upload */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-neutral-300 font-sans">ID Card Back Side</label>
-                <div className="relative border-2 border-dashed border-neutral-800 rounded-radius-md p-6 flex flex-col items-center justify-center bg-neutral-950 hover:border-neutral-700 transition-colors">
-                  {idBack ? (
-                    <div className="relative max-h-40 w-full overflow-hidden flex items-center justify-center">
-                      <img src={idBack} alt="ID Back preview" className="max-h-36 rounded-radius-sm object-cover" />
-                    </div>
-                  ) : (
-                    <div className="text-center space-y-2">
-                      <Upload className="h-8 w-8 text-neutral-600 mx-auto" />
-                      <div className="text-xs text-neutral-500 font-sans">Drag and drop or click to upload back image</div>
-                    </div>
-                  )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleFileChange(e, "back")}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                  />
-                </div>
-                {idBackError && <span className="text-xs text-error font-medium">{idBackError}</span>}
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Professional Info */}
-          {step === 4 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-heading font-semibold text-neutral-200">Professional Info</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="GitHub Profile (URL)"
-                  placeholder="https://github.com/username"
-                  error={errors.github?.message}
-                  {...register("github")}
-                />
-                <Input
-                  label="Portfolio Website (URL)"
-                  placeholder="https://portfolio.com"
-                  error={errors.portfolio?.message}
-                  {...register("portfolio")}
-                />
-              </div>
-
-              <div className="flex flex-col space-y-1.5">
-                <label className="text-sm font-medium text-neutral-300 font-sans">Skills & Interests</label>
-                <div className="flex flex-wrap gap-2 pt-1.5">
-                  {AVAILABLE_SKILLS.map((skill) => {
-                    const isSelected = selectedSkills.includes(skill);
-                    return (
-                      <button
-                        key={skill}
-                        type="button"
-                        onClick={() => handleSkillToggle(skill)}
-                        className={`px-3 py-1.5 rounded-radius-full text-xs font-semibold border transition-all ${
-                          isSelected
-                            ? "bg-accent/15 border-accent text-accent"
-                            : "bg-neutral-950 border-neutral-800 text-neutral-400 hover:border-neutral-700"
-                        }`}
-                      >
-                        {skill}
-                      </button>
-                    );
-                  })}
-                </div>
-                {errors.skills && (
-                  <span className="text-xs text-error font-medium">{errors.skills.message}</span>
-                )}
-              </div>
-
-              <div className="flex flex-col space-y-1.5">
-                <label className="text-sm font-medium text-neutral-300 font-sans">Short Bio</label>
-                <textarea
-                  placeholder="Tell us about yourself..."
-                  className="flex min-h-[80px] w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
-                  {...register("bio")}
-                />
-                {errors.bio && (
-                  <span className="text-xs text-error font-medium">{errors.bio.message}</span>
-                )}
-              </div>
-
-              <div className="flex flex-col space-y-1.5">
-                <label className="text-sm font-medium text-neutral-300 font-sans">T-Shirt Size</label>
-                <select
-                  className="flex h-10 w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
-                  {...register("tshirt_size")}
-                >
-                  <option value="">Select Size</option>
-                  <option value="S">S</option>
-                  <option value="M">M</option>
-                  <option value="L">L</option>
-                  <option value="XL">XL</option>
-                  <option value="XXL">XXL</option>
-                </select>
-                {errors.tshirt_size && (
-                  <span className="text-xs text-error font-medium">{errors.tshirt_size.message}</span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Step 5: Review */}
-          {step === 5 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-heading font-semibold text-neutral-200">Review Roster Data</h2>
-              <p className="text-xs text-neutral-400 font-sans leading-relaxed">
-                Review your profile details below. Once submitted, your profile is locked for student verification check.
-              </p>
-
-              <div className="border border-neutral-800 bg-neutral-950 p-4 rounded-radius-sm text-sm font-sans space-y-3">
-                <div className="grid grid-cols-2 border-b border-neutral-900 pb-2">
-                  <span className="text-neutral-500">Full Name:</span>
-                  <span className="text-neutral-200 font-medium">{watch("full_name")}</span>
-                </div>
-                <div className="grid grid-cols-2 border-b border-neutral-900 pb-2">
-                  <span className="text-neutral-500">University:</span>
-                  <span className="text-neutral-200 font-medium">{watch("university")}</span>
-                </div>
-                <div className="grid grid-cols-2 border-b border-neutral-900 pb-2">
-                  <span className="text-neutral-500">Student ID:</span>
-                  <span className="text-neutral-200 font-medium font-mono">{watch("student_id")}</span>
-                </div>
-                <div className="grid grid-cols-2 border-b border-neutral-900 pb-2">
-                  <span className="text-neutral-500">T-Shirt Size:</span>
-                  <span className="text-neutral-200 font-medium">{watch("tshirt_size")}</span>
-                </div>
-                <div className="flex flex-col gap-1 border-b border-neutral-900 pb-2">
-                  <span className="text-neutral-500">Selected Skills:</span>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {selectedSkills.map((s) => (
-                      <Badge key={s} variant="neutral">
-                        {s}
-                      </Badge>
-                    ))}
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center border text-xs transition-all duration-200 shrink-0 ${
+                      isActive
+                        ? "border-primary bg-primary text-white font-bold shadow-[0_0_10px_rgba(99,102,241,0.4)]"
+                        : isCompleted
+                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-400 group-hover:border-primary group-hover:text-primary group-hover:bg-primary/5 cursor-pointer"
+                        : "border-neutral-800 bg-neutral-950 text-neutral-600"
+                    }`}
+                  >
+                    {isCompleted ? <Check className="h-4 w-4" /> : item.id}
                   </div>
+                  <div className="hidden md:block">
+                    <p
+                      className={`text-xxs font-heading font-semibold uppercase tracking-wider transition-colors ${
+                        isActive
+                          ? "text-primary"
+                          : isCompleted
+                          ? "text-emerald-400 group-hover:text-primary cursor-pointer"
+                          : "text-neutral-500"
+                      }`}
+                    >
+                      {item.label}
+                    </p>
+                  </div>
+                </button>
+                {/* Connector Line */}
+                {idx < stepsConfig.length - 1 && (
+                  <div
+                    className={`grow h-0.5 mx-4 transition-colors duration-200 ${
+                      step > item.id ? "bg-emerald-500/40" : "bg-neutral-850"
+                    }`}
+                  />
+                )}
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Form Area */}
+        <div className="lg:col-span-8 bg-neutral-900/40 border border-neutral-850 rounded-xl p-6 md:p-8 flex flex-col min-h-[480px] justify-between">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 grow flex flex-col justify-between">
+            <div className="space-y-6">
+              <AnimatePresence mode="wait">
+                {errorMsg && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="p-4 rounded-lg bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2"
+                  >
+                    <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
+                    <span>{errorMsg}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <AnimatePresence mode="wait">
+                {step === 1 && (
+                  <motion.div
+                    key="step-1"
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="space-y-5"
+                  >
+                    <div className="border-b border-neutral-850/60 pb-3">
+                      <h1 className="text-xl font-heading font-extrabold text-neutral-200">Identity Details</h1>
+                      <p className="text-xs text-neutral-400 font-sans mt-1">Let&apos;s start with your basic identification for your official festival pass.</p>
+                    </div>
+
+                    <Input
+                      label="Full Name (As per NID/Passport)"
+                      placeholder="e.g. Abdullah Al Mamun"
+                      error={errors.full_name?.message}
+                      className="h-11 border-neutral-850 bg-neutral-950/40"
+                      {...register("full_name")}
+                    />
+
+                    <div className="relative">
+                      <Input
+                        label="University Email Address"
+                        value={userEmail}
+                        readOnly
+                        disabled
+                        className="pl-10 h-11 border-neutral-850/30 bg-neutral-900/50 text-neutral-400 select-all cursor-not-allowed"
+                      />
+                      <Lock className="absolute left-3.5 top-[38px] h-4.5 w-4.5 text-neutral-600 pointer-events-none" />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input
+                        label="Phone Number"
+                        placeholder="+880 1XXX-XXXXXX"
+                        error={errors.phone?.message}
+                        className="h-11 border-neutral-850 bg-neutral-950/40"
+                        {...register("phone")}
+                      />
+
+                      <div className="flex flex-col space-y-1.5 w-full">
+                        <label className="text-sm font-medium text-neutral-300 font-sans select-none">
+                          Gender
+                        </label>
+                        <div className="grid grid-cols-2 gap-2 h-11">
+                          {(["male", "female"] as const).map((g) => {
+                            const watched = watch("gender");
+                            const isSelected = watched === g;
+                            return (
+                              <button
+                                key={g}
+                                type="button"
+                                onClick={() => setValue("gender", g, { shouldValidate: true })}
+                                className={`h-full rounded-sm border text-sm font-medium font-sans transition-all duration-150 capitalize tracking-wide ${
+                                  isSelected
+                                    ? "border-primary bg-primary/10 text-primary shadow-[0_0_0_1px_var(--color-primary)]"
+                                    : "border-neutral-850 bg-neutral-950/40 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200"
+                                }`}
+                              >
+                                {g === "male" ? "♂ Male" : "♀ Female"}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <input type="hidden" {...register("gender")} />
+                        {errors.gender && (
+                          <span className="text-xs text-error font-sans font-medium">{errors.gender.message}</span>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {step === 2 && (
+                  <motion.div
+                    key="step-2"
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="space-y-5"
+                  >
+                    <div className="border-b border-neutral-850/60 pb-3">
+                      <h1 className="text-xl font-heading font-extrabold text-neutral-200">Academic Records</h1>
+                      <p className="text-xs text-neutral-400 font-sans mt-1">Provide your current university status to check registration eligibility.</p>
+                    </div>
+
+                    <Input
+                      label="University Name"
+                      placeholder="e.g. Shanto-Mariam University of Creative Technology"
+                      error={errors.university?.message}
+                      className="h-11 border-neutral-850 bg-neutral-950/40"
+                      {...register("university")}
+                    />
+
+                    <Input
+                      label="Department"
+                      placeholder="e.g. Computer Science & Engineering"
+                      error={errors.department?.message}
+                      className="h-11 border-neutral-850 bg-neutral-950/40"
+                      {...register("department")}
+                    />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Input
+                        label="Semester"
+                        placeholder="e.g. 8th"
+                        error={errors.semester?.message}
+                        className="h-11 border-neutral-850 bg-neutral-950/40"
+                        {...register("semester")}
+                      />
+
+                      <Input
+                        label="Student ID"
+                        placeholder="e.g. 201071000"
+                        error={errors.student_id?.message}
+                        className="h-11 border-neutral-850 bg-neutral-950/40"
+                        {...register("student_id")}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+
+                {step === 3 && (
+                  <motion.div
+                    key="step-3"
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="space-y-5"
+                  >
+                    <div className="border-b border-neutral-850/60 pb-3">
+                      <h1 className="text-xl font-heading font-extrabold text-neutral-200">Student ID Verification</h1>
+                      <p className="text-xs text-neutral-400 font-sans mt-1">Upload clear images of your Student ID card. Limits: Max 5MB, JPG/PNG only.</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      {/* Front Card Dropzone */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-mono font-bold tracking-wider text-neutral-400 uppercase select-none">ID Card Front Side</label>
+                        <div
+                          onDragOver={(e) => handleDrag(e, "front", true)}
+                          onDragLeave={(e) => handleDrag(e, "front", false)}
+                          onDrop={(e) => handleDrop(e, "front")}
+                          className={`relative h-36 border-2 border-dashed rounded-lg flex flex-col items-center justify-center bg-neutral-950/50 transition-all duration-150 ${
+                            dragActiveFront ? "border-primary bg-primary/5 shadow-[0_0_15px_rgba(99,102,241,0.2)]" : "border-neutral-800 hover:border-neutral-700"
+                          }`}
+                        >
+                          {idFront ? (
+                            <div className="relative w-full h-full p-2 flex items-center justify-center">
+                              <img src={idFront} alt="ID Front preview" className="max-h-full rounded object-contain" />
+                              <button
+                                type="button"
+                                onClick={() => setIdFront(null)}
+                                className="absolute top-1.5 right-1.5 p-1 bg-neutral-900 border border-neutral-800 rounded-full text-neutral-400 hover:text-neutral-100 transition-colors"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="text-center p-3 space-y-1.5 pointer-events-none">
+                              <Upload className="h-6 w-6 text-neutral-500 mx-auto" />
+                              <div className="text-[11px] text-neutral-500 font-sans">
+                                Drop Front Side, or <span className="text-primary font-semibold">Browse</span>
+                              </div>
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/jpg"
+                            onChange={(e) => handleFileChange(e, "front")}
+                            className="absolute inset-0 opacity-0 cursor-pointer"
+                          />
+                        </div>
+                        {idFrontError && <span className="text-xs text-error font-sans font-medium">{idFrontError}</span>}
+                      </div>
+
+                      {/* Back Card Dropzone */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-mono font-bold tracking-wider text-neutral-400 uppercase select-none">ID Card Back Side</label>
+                        <div
+                          onDragOver={(e) => handleDrag(e, "back", true)}
+                          onDragLeave={(e) => handleDrag(e, "back", false)}
+                          onDrop={(e) => handleDrop(e, "back")}
+                          className={`relative h-36 border-2 border-dashed rounded-lg flex flex-col items-center justify-center bg-neutral-950/50 transition-all duration-150 ${
+                            dragActiveBack ? "border-primary bg-primary/5 shadow-[0_0_15px_rgba(99,102,241,0.2)]" : "border-neutral-800 hover:border-neutral-700"
+                          }`}
+                        >
+                          {idBack ? (
+                            <div className="relative w-full h-full p-2 flex items-center justify-center">
+                              <img src={idBack} alt="ID Back preview" className="max-h-full rounded object-contain" />
+                              <button
+                                type="button"
+                                onClick={() => setIdBack(null)}
+                                className="absolute top-1.5 right-1.5 p-1 bg-neutral-900 border border-neutral-800 rounded-full text-neutral-400 hover:text-neutral-100 transition-colors"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="text-center p-3 space-y-1.5 pointer-events-none">
+                              <Upload className="h-6 w-6 text-neutral-500 mx-auto" />
+                              <div className="text-[11px] text-neutral-500 font-sans">
+                                Drop Back Side, or <span className="text-primary font-semibold">Browse</span>
+                              </div>
+                            </div>
+                          )}
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/jpg"
+                            onChange={(e) => handleFileChange(e, "back")}
+                            className="absolute inset-0 opacity-0 cursor-pointer"
+                          />
+                        </div>
+                        {idBackError && <span className="text-xs text-error font-sans font-medium">{idBackError}</span>}
+                      </div>
+                    </div>
+
+                    {(idFront || idBack) && (
+                      <div className="space-y-2 pt-2">
+                        <label className="text-[10px] font-mono font-bold tracking-widest text-neutral-500 uppercase">Uploaded Attachments</label>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {idFront && (
+                            <div className="bg-neutral-900/50 border border-neutral-850 rounded-lg p-2.5 flex items-center gap-3">
+                              <div className="w-12 h-10 bg-neutral-950 rounded overflow-hidden shrink-0 flex items-center justify-center border border-neutral-850">
+                                <img src={idFront} alt="Thumbnail Front" className="h-full w-full object-cover" />
+                              </div>
+                              <div className="grow min-w-0">
+                                <p className="text-xs font-semibold text-neutral-200 truncate">id_card_front.png</p>
+                                <p className="text-[9px] font-mono text-emerald-400 font-bold">READY • VERIFIABLE</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setIdFront(null)}
+                                className="text-neutral-500 hover:text-error transition-colors p-1"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          )}
+                          {idBack && (
+                            <div className="bg-neutral-900/50 border border-neutral-850 rounded-lg p-2.5 flex items-center gap-3">
+                              <div className="w-12 h-10 bg-neutral-950 rounded overflow-hidden shrink-0 flex items-center justify-center border border-neutral-850">
+                                <img src={idBack} alt="Thumbnail Back" className="h-full w-full object-cover" />
+                              </div>
+                              <div className="grow min-w-0">
+                                <p className="text-xs font-semibold text-neutral-200 truncate">id_card_back.png</p>
+                                <p className="text-[9px] font-mono text-emerald-400 font-bold">READY • VERIFIABLE</p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => setIdBack(null)}
+                                className="text-neutral-500 hover:text-error transition-colors p-1"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+
+                {step === 4 && (
+                  <motion.div
+                    key="step-4"
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="space-y-5"
+                  >
+                    <div className="border-b border-neutral-850/60 pb-3">
+                      <h1 className="text-xl font-heading font-extrabold text-neutral-200">Professional Roster</h1>
+                      <p className="text-xs text-neutral-400 font-sans mt-1">Highlight your coding profiles, skills, and size details.</p>
+                    </div>
+
+                    {/* Online Profile URL */}
+                    <div className="flex flex-col space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-neutral-300 font-sans select-none">Online Profile</label>
+                        <span className="text-[10px] font-sans text-neutral-500 bg-neutral-900 border border-neutral-850 px-2 py-0.5 rounded">Optional</span>
+                      </div>
+                      <Input
+                        type="url"
+                        placeholder="e.g. https://github.com/username or https://linkedin.com/in/username"
+                        className="h-10 border-neutral-850 bg-neutral-950/40 placeholder:text-neutral-600 font-mono text-sm"
+                        {...register("github")}
+                      />
+                      {errors.github && (
+                        <span className="text-xs text-error font-sans font-medium">{errors.github.message}</span>
+                      )}
+                    </div>
+
+                    {/* Skills — freeform text */}
+                    <div className="flex flex-col space-y-1.5">
+                      <label className="text-sm font-medium text-neutral-300 font-sans select-none">Skills & Tech Stack</label>
+                      <textarea
+                        placeholder="Tell us in plain English — e.g. I work with React, Node.js, and Python. I've also built IoT projects with Arduino and have experience in CTF challenges."
+                        rows={3}
+                        className="flex w-full rounded-sm border border-neutral-850 bg-neutral-950/40 px-3 py-2.5 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans placeholder:text-neutral-600 transition-colors resize-none leading-relaxed"
+                        {...register("skills")}
+                      />
+                      <p className="text-[11px] text-neutral-600 font-sans">Describe your tech stack and experience in your own words. No need to list — just write naturally.</p>
+                      {errors.skills && (
+                        <span className="text-xs text-error font-sans font-medium">{errors.skills.message}</span>
+                      )}
+                    </div>
+
+                    {/* Bio — optional */}
+                    <div className="flex flex-col space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-neutral-300 font-sans select-none">Short Biography</label>
+                        <span className="text-[10px] font-sans text-neutral-500 bg-neutral-900 border border-neutral-850 px-2 py-0.5 rounded">Optional</span>
+                      </div>
+                      <textarea
+                        placeholder="A quick intro about yourself — your interests, goals, or what brings you to CSE Fest 2026."
+                        rows={3}
+                        className="flex w-full rounded-sm border border-neutral-850 bg-neutral-950/40 px-3 py-2.5 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans placeholder:text-neutral-600 transition-colors resize-none leading-relaxed"
+                        {...register("bio")}
+                      />
+                      {errors.bio && (
+                        <span className="text-xs text-error font-sans font-medium">{errors.bio.message}</span>
+                      )}
+                    </div>
+
+                    {/* T-Shirt Size — button toggle */}
+                    <div className="flex flex-col space-y-1.5">
+                      <label className="text-sm font-medium text-neutral-300 font-sans select-none">Festival T-Shirt Size</label>
+                      <div className="grid grid-cols-5 gap-2">
+                        {(["S", "M", "L", "XL", "XXL"] as const).map((size) => {
+                          const isSelected = watch("tshirt_size") === size;
+                          return (
+                            <button
+                              key={size}
+                              type="button"
+                              onClick={() => setValue("tshirt_size", size, { shouldValidate: true })}
+                              className={`h-11 rounded-sm border text-sm font-bold font-mono transition-all duration-150 ${
+                                isSelected
+                                  ? "border-primary bg-primary/10 text-primary shadow-[0_0_0_1px_var(--color-primary)]"
+                                  : "border-neutral-850 bg-neutral-950/40 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200"
+                              }`}
+                            >
+                              {size}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <input type="hidden" {...register("tshirt_size")} />
+                      {errors.tshirt_size && (
+                        <span className="text-xs text-error font-sans font-medium">{errors.tshirt_size.message}</span>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+
+                {step === 5 && (
+                  <motion.div
+                    key="step-5"
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    className="space-y-5"
+                  >
+                    <div className="border-b border-neutral-850/60 pb-3">
+                      <h1 className="text-xl font-heading font-extrabold text-neutral-200">Confirm Profile Details</h1>
+                      <p className="text-xs text-neutral-400 font-sans mt-1">Verify details before submission. Information is locked for verification review.</p>
+                    </div>
+
+                    <div className="bg-neutral-900/30 border border-neutral-850 rounded-lg p-5 text-sm space-y-3 font-sans">
+                      <div className="grid grid-cols-2 border-b border-neutral-850/40 pb-2">
+                        <span className="text-neutral-500">Full Name</span>
+                        <span className="text-neutral-200 font-bold text-right truncate">{watch("full_name")}</span>
+                      </div>
+                      <div className="grid grid-cols-2 border-b border-neutral-850/40 pb-2">
+                        <span className="text-neutral-500">Contact Phone</span>
+                        <span className="text-neutral-200 font-mono font-semibold text-right">{watch("phone")}</span>
+                      </div>
+                      <div className="grid grid-cols-2 border-b border-neutral-850/40 pb-2">
+                        <span className="text-neutral-500">University</span>
+                        <span className="text-neutral-200 font-bold text-right truncate">{watch("university")}</span>
+                      </div>
+                      <div className="grid grid-cols-2 border-b border-neutral-850/40 pb-2">
+                        <span className="text-neutral-500">Department</span>
+                        <span className="text-neutral-200 font-semibold text-right truncate">{watch("department")}</span>
+                      </div>
+                      <div className="grid grid-cols-2 border-b border-neutral-850/40 pb-2">
+                        <span className="text-neutral-500">Semester & ID</span>
+                        <span className="text-neutral-200 font-mono text-right">{watch("semester")} Semester / ID: {watch("student_id")}</span>
+                      </div>
+                      <div className="grid grid-cols-2 border-b border-neutral-850/40 pb-2">
+                        <span className="text-neutral-500">T-Shirt Size</span>
+                        <span className="text-neutral-200 font-bold text-right">{watch("tshirt_size")}</span>
+                      </div>
+                      <div className="space-y-1 pt-1">
+                        <span className="text-neutral-500 block">Skills & Tech Stack</span>
+                        <p className="text-neutral-300 text-xs font-sans leading-relaxed mt-1">{watch("skills") || <span className="text-neutral-600 italic">Not provided</span>}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div className="flex justify-between items-center pt-6 border-t border-neutral-850 mt-8">
+              <Button
+                variant="secondary"
+                type="button"
+                onClick={prevStep}
+                disabled={step === 1 || loading}
+                className="gap-2 px-4 h-10 text-xs font-bold font-sans cursor-pointer active:scale-98"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back</span>
+              </Button>
+
+              {step < 5 ? (
+                <Button
+                  type="button"
+                  onClick={nextStep}
+                  className="bg-primary hover:bg-primary/95 text-white gap-2 px-5 h-10 text-xs font-bold font-sans cursor-pointer active:scale-98"
+                >
+                  <span>Continue</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  isLoading={loading}
+                  className="bg-primary hover:bg-primary/95 text-white gap-2 px-6 h-10 text-xs font-bold font-sans cursor-pointer active:scale-98 hover:shadow-[0_0_15px_rgba(99,102,241,0.3)]"
+                >
+                  <span>Submit Profile</span>
+                  <Check className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </form>
+        </div>
+
+        {/* Right Sidebar Column */}
+        <aside className="lg:col-span-4 flex flex-col justify-between h-full space-y-6">
+          <div className="bg-primary/5 border border-neutral-850/60 rounded-xl p-6 md:p-8 space-y-6 grow">
+            <div className="w-12 h-12 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center mb-4">
+              <Info className="h-5 w-5 text-primary" />
+            </div>
+
+            <AnimatePresence mode="wait">
+              {step === 1 && (
+                <motion.div
+                  key="info-1"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4 font-sans"
+                >
+                  <h3 className="text-md font-bold text-neutral-200">Why Identity?</h3>
+                  <p className="text-xs text-neutral-400 leading-relaxed">
+                    Your name and gender details are mapped directly onto the printed Delegate Badges and certificates. Please double-check spelling.
+                  </p>
+                  <div className="bg-neutral-900/60 border border-neutral-850 rounded-lg p-3 space-y-2 mt-4">
+                    <div className="flex gap-2">
+                      <Shield className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <div className="space-y-0.5">
+                        <h4 className="text-[10px] font-bold text-primary uppercase tracking-wider">Encrypted Storage</h4>
+                        <p className="text-[10px] text-neutral-500 leading-tight">All personal records are encrypted and kept strictly confidential.</p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {step === 2 && (
+                <motion.div
+                  key="info-2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4 font-sans"
+                >
+                  <h3 className="text-md font-bold text-neutral-200">Academic Check</h3>
+                  <p className="text-xs text-neutral-400 leading-relaxed">
+                    CSE Fest 2026 hosts contests targeting specific student demographics (e.g. internal university vs national level external hackathons).
+                  </p>
+                  <p className="text-xs text-neutral-400 leading-relaxed">
+                    Providing your accurate department and registration ID allows instant verification rules to be met.
+                  </p>
+                </motion.div>
+              )}
+
+              {step === 3 && (
+                <motion.div
+                  key="info-3"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4 font-sans"
+                >
+                  <h3 className="text-md font-bold text-neutral-200">Verification Tips</h3>
+                  <p className="text-xs text-neutral-400 leading-relaxed">
+                    Please upload high-resolution photos of your physical student ID card. 
+                  </p>
+                  <ul className="text-xs text-neutral-400 list-disc pl-4 space-y-1.5 leading-relaxed">
+                    <li>Avoid heavy glare or shadows on text.</li>
+                    <li>Ensure registration/roll number is legible.</li>
+                    <li>Expired cards will be flagged by admins.</li>
+                  </ul>
+                </motion.div>
+              )}
+
+              {step === 4 && (
+                <motion.div
+                  key="info-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4 font-sans"
+                >
+                  <h3 className="text-md font-bold text-neutral-200">Build Your Roster</h3>
+                  <p className="text-xs text-neutral-400 leading-relaxed">
+                    Connecting GitHub and portfolio profiles enables prospective team organizers to view your coding accomplishments.
+                  </p>
+                  <p className="text-xs text-neutral-400 leading-relaxed">
+                    T-shirt size is final and cannot be modified once delegate packages are queued for manufacturing.
+                  </p>
+                </motion.div>
+              )}
+
+              {step === 5 && (
+                <motion.div
+                  key="info-5"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="space-y-4 font-sans"
+                >
+                  <h3 className="text-md font-bold text-neutral-200">Final Verification</h3>
+                  <p className="text-xs text-neutral-400 leading-relaxed">
+                    Once submitted, details are queued for verification. Approvals generally take under 24 hours.
+                  </p>
+                  <p className="text-xs text-neutral-400 leading-relaxed">
+                    You can register for draft status events in the meantime, but team publications require verified profiles.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="space-y-3 pt-4 border-t border-neutral-850/60 font-sans">
+            <div className="p-3 bg-neutral-900/50 border border-neutral-850 rounded-lg">
+              <div className="flex items-start gap-2.5">
+                <HelpCircle className="h-4 w-4 text-neutral-500 shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Need Assistance?</h4>
+                  <p className="text-[10px] text-neutral-500 leading-tight mt-0.5">Contact the registration helpline at register@csefest2026.com</p>
                 </div>
               </div>
             </div>
-          )}
-
-          {/* Navigation Controls */}
-          <div className="flex justify-between items-center pt-6 border-t border-neutral-800/60 mt-6">
-            <Button
-              variant="secondary"
-              type="button"
-              onClick={prevStep}
-              disabled={step === 1 || loading}
-              className="gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              <span>Back</span>
-            </Button>
-
-            {step < 5 ? (
-              <Button variant="primary" type="button" onClick={nextStep} className="gap-2">
-                <span>Continue</span>
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button
-                variant="primary"
-                type="button"
-                onClick={handleSubmit(onSubmit)}
-                isLoading={loading}
-                className="gap-2"
-              >
-                <span>Submit Profile</span>
-                <Check className="h-4 w-4" />
-              </Button>
-            )}
           </div>
-        </CardContent>
-      </Card>
+        </aside>
+      </div>
     </div>
   );
 }

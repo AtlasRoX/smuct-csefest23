@@ -14,7 +14,7 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
         ref={ref}
         className={twMerge(
           clsx(
-            "rounded-radius-md border border-neutral-800/80 p-6 shadow-level-1",
+            "rounded-md border border-neutral-800/80 p-6 shadow-level-1",
             {
               // Default: Card Background (neutral-900 Surface 2)
               "bg-neutral-900 text-neutral-50": variant === "default",

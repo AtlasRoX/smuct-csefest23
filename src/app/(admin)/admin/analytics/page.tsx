@@ -77,17 +77,17 @@ export default function AdminAnalyticsPage() {
     return (
       <div className="space-y-8 animate-pulse">
         <div className="space-y-2">
-          <div className="h-8 bg-neutral-900 w-1/4 rounded-radius-sm" />
-          <div className="h-4 bg-neutral-900 w-1/3 rounded-radius-sm" />
+          <div className="h-8 bg-neutral-900 w-1/4 rounded-sm" />
+          <div className="h-4 bg-neutral-900 w-1/3 rounded-sm" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-28 bg-neutral-900 rounded-radius-md" />
+            <div key={i} className="h-28 bg-neutral-900 rounded-md" />
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="h-72 bg-neutral-900 rounded-radius-md" />
-          <div className="h-72 bg-neutral-900 rounded-radius-md" />
+          <div className="h-72 bg-neutral-900 rounded-md" />
+          <div className="h-72 bg-neutral-900 rounded-md" />
         </div>
       </div>
     );
@@ -96,7 +96,7 @@ export default function AdminAnalyticsPage() {
   if (analyticsErr || !analytics) {
     return (
       <div className="py-12 text-center">
-        <div className="p-4 rounded-radius-sm bg-error/10 border border-error/20 max-w-md mx-auto text-error text-sm font-sans font-medium">
+        <div className="p-4 rounded-sm bg-error/10 border border-error/20 max-w-md mx-auto text-error text-sm font-sans font-medium">
           <p>Failed to load analytics dashboard. Please try again.</p>
           <Button variant="secondary" className="mt-4 text-xs" onClick={() => window.location.reload()}>
             Retry
@@ -129,7 +129,7 @@ export default function AdminAnalyticsPage() {
                 ৳{analytics.summary.totalRevenue.toLocaleString()}
               </h4>
             </div>
-            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-radius-sm">
+            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-sm">
               <Banknote className="h-6 w-6 text-success" />
             </div>
           </CardContent>
@@ -146,7 +146,7 @@ export default function AdminAnalyticsPage() {
                 {analytics.summary.averageTeamsPerComp}
               </h4>
             </div>
-            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-radius-sm">
+            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-sm">
               <Users className="h-6 w-6 text-accent" />
             </div>
           </CardContent>
@@ -163,7 +163,7 @@ export default function AdminAnalyticsPage() {
                 {analytics.summary.verifiedRatio}%
               </h4>
             </div>
-            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-radius-sm">
+            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-sm">
               <Percent className="h-6 w-6 text-secondary" />
             </div>
           </CardContent>
@@ -304,7 +304,7 @@ export default function AdminAnalyticsPage() {
             <div className="space-y-1.5">
               <label className="font-semibold text-neutral-400">Export Category</label>
               <select
-                className="flex h-10 w-full rounded-radius-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                className="flex h-10 w-full rounded-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                 value={exportType}
                 onChange={(e) => setExportType(e.target.value as "teams" | "payments" | "rankings")}
               >
@@ -318,7 +318,7 @@ export default function AdminAnalyticsPage() {
             <div className="space-y-1.5">
               <label className="font-semibold text-neutral-400">Refine by Competition (Optional)</label>
               <select
-                className="flex h-10 w-full rounded-radius-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                className="flex h-10 w-full rounded-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                 value={selectedCompId}
                 onChange={(e) => setSelectedCompId(e.target.value)}
               >

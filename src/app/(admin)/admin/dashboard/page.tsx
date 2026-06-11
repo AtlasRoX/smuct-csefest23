@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import {
   Users,
-  UserCheck,
   Clock,
   ShieldCheck,
   ArrowRight,
@@ -139,13 +138,40 @@ export default function AdminDashboardPage() {
         // 6. Fetch recent pending student verifications
         const { data: verifs, error: verifErr } = await supabase
           .from("student_verifications")
-          .select("*, profiles:user_id(full_name, university, student_id)")
+          .select("*")
           .eq("status", "pending")
           .order("created_at", { ascending: false })
           .limit(3);
 
         if (verifErr) throw verifErr;
-        setPendingVerifications((verifs as unknown as VerificationItem[]) || []);
+
+        if (verifs && verifs.length > 0) {
+          const userIds = verifs.map((v) => v.user_id);
+          const { data: profilesData, error: profilesErr } = await supabase
+            .from("profiles")
+            .select("id, full_name, university, student_id")
+            .in("id", userIds);
+
+          if (profilesErr) throw profilesErr;
+
+          const mergedVerifs = verifs.map((v) => {
+            const profile = profilesData?.find((p) => p.id === v.user_id) || null;
+            return {
+              ...v,
+              profiles: profile
+                ? {
+                    full_name: profile.full_name || "",
+                    university: profile.university || "",
+                    student_id: profile.student_id || "",
+                  }
+                : null,
+            };
+          });
+
+          setPendingVerifications(mergedVerifs as unknown as VerificationItem[]);
+        } else {
+          setPendingVerifications([]);
+        }
 
         // 7. Fetch audit logs from the new API route
         const logsRes = await fetch("/api/admin/audit-logs");
@@ -193,17 +219,17 @@ export default function AdminDashboardPage() {
     return (
       <div className="space-y-8 animate-pulse">
         <div className="space-y-2">
-          <div className="h-8 bg-neutral-900 w-1/4 rounded-radius-sm" />
-          <div className="h-4 bg-neutral-900 w-1/3 rounded-radius-sm" />
+          <div className="h-8 bg-neutral-900 w-1/4 rounded-sm" />
+          <div className="h-4 bg-neutral-900 w-1/3 rounded-sm" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-28 bg-neutral-900 rounded-radius-md" />
+            <div key={i} className="h-28 bg-neutral-900 rounded-md" />
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 h-72 bg-neutral-900 rounded-radius-md" />
-          <div className="h-72 bg-neutral-900 rounded-radius-md" />
+          <div className="lg:col-span-2 h-72 bg-neutral-900 rounded-md" />
+          <div className="h-72 bg-neutral-900 rounded-md" />
         </div>
       </div>
     );
@@ -212,7 +238,7 @@ export default function AdminDashboardPage() {
   if (errorMsg) {
     return (
       <div className="py-12 text-center">
-        <div className="p-4 rounded-radius-sm bg-error/10 border border-error/20 max-w-md mx-auto text-error text-sm font-sans font-medium">
+        <div className="p-4 rounded-sm bg-error/10 border border-error/20 max-w-md mx-auto text-error text-sm font-sans font-medium">
           <p>{errorMsg}</p>
           <Button variant="secondary" className="mt-4 text-xs" onClick={() => window.location.reload()}>
             Retry Loading
@@ -245,7 +271,7 @@ export default function AdminDashboardPage() {
                 {stats.totalUsers}
               </h4>
             </div>
-            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-radius-sm">
+            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-sm">
               <Users className="h-6 w-6 text-accent" />
             </div>
           </CardContent>
@@ -262,7 +288,7 @@ export default function AdminDashboardPage() {
                 ৳{stats.totalRevenue.toLocaleString()}
               </h4>
             </div>
-            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-radius-sm">
+            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-sm">
               <Banknote className="h-6 w-6 text-success" />
             </div>
           </CardContent>
@@ -286,7 +312,7 @@ export default function AdminDashboardPage() {
                 )}
               </div>
             </div>
-            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-radius-sm">
+            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-sm">
               <Clock className="h-6 w-6 text-warning" />
             </div>
           </CardContent>
@@ -303,7 +329,7 @@ export default function AdminDashboardPage() {
                 {stats.selectedSubmissions} <span className="text-xs text-neutral-500 font-sans font-normal">/ {stats.totalSubmissions}</span>
               </h4>
             </div>
-            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-radius-sm">
+            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-sm">
               <FileCode className="h-6 w-6 text-secondary" />
             </div>
           </CardContent>
@@ -354,7 +380,7 @@ export default function AdminDashboardPage() {
                 ))}
               </div>
             ) : (
-              <div className="py-12 border border-dashed border-neutral-800 rounded-radius-md text-center bg-neutral-900/10 space-y-3">
+              <div className="py-12 border border-dashed border-neutral-800 rounded-md text-center bg-neutral-900/10 space-y-3">
                 <ShieldCheck className="h-10 w-10 text-neutral-700 mx-auto" />
                 <h3 className="font-heading font-semibold text-sm text-neutral-300">Queue is Empty</h3>
                 <p className="text-xs text-neutral-500 font-sans max-w-sm mx-auto leading-relaxed">

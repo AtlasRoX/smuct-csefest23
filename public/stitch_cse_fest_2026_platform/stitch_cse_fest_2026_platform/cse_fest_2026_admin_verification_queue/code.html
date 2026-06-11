@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Verification Terminal | CSE Fest 2026 Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&amp;family=Inter:wght@300..700&amp;family=Geist+Mono:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #13121b;
+            color: #e4e1ee;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .bg-grid-pattern {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(195, 192, 255, 0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(195, 192, 255, 0.05) 1px, transparent 1px);
+        }
+
+        .glass-panel {
+            background: rgba(31, 31, 40, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .pulse-live {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.95); }
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        /* Custom Scrollbar for technical feel */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 2px; }
+
+        .scanline {
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(to right, transparent, #c3c0ff, transparent);
+            position: absolute;
+            top: 0;
+            left: 0;
+            animation: scan 4s linear infinite;
+            opacity: 0.2;
+            pointer-events: none;
+        }
+
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#ffdbcc",
+                        "inverse-surface": "#e4e1ee",
+                        "surface-variant": "#35343e",
+                        "on-surface": "#e4e1ee",
+                        "on-background": "#e4e1ee",
+                        "surface-container": "#1f1f28",
+                        "surface-container-highest": "#35343e",
+                        "inverse-on-surface": "#302f39",
+                        "error-container": "#93000a",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "on-tertiary": "#571f00",
+                        "surface": "#13121b",
+                        "on-error": "#690005",
+                        "on-tertiary-container": "#ffd2be",
+                        "on-surface-variant": "#c7c4d8",
+                        "surface-container-high": "#2a2933",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "secondary-fixed-dim": "#ddb7ff",
+                        "on-primary-container": "#dad7ff",
+                        "inverse-primary": "#4d44e3",
+                        "error": "#ffb4ab",
+                        "secondary-container": "#6f00be",
+                        "outline-variant": "#464555",
+                        "tertiary-fixed-dim": "#ffb695",
+                        "on-primary": "#1d00a5",
+                        "surface-bright": "#393842",
+                        "primary-fixed": "#e2dfff",
+                        "on-secondary-container": "#d6a9ff",
+                        "surface-dim": "#13121b",
+                        "secondary-fixed": "#f0dbff",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-lowest": "#0e0d16",
+                        "tertiary-container": "#a44100",
+                        "surface-tint": "#c3c0ff",
+                        "surface-container-low": "#1b1b24",
+                        "on-secondary-fixed": "#2c0051",
+                        "primary-container": "#4f46e5",
+                        "on-secondary-fixed-variant": "#6900b3",
+                        "tertiary": "#ffb695",
+                        "secondary": "#ddb7ff",
+                        "on-secondary": "#490080",
+                        "primary": "#c3c0ff",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "background": "#13121b",
+                        "outline": "#918fa1",
+                        "on-tertiary-fixed": "#351000",
+                        "on-primary-fixed": "#0f0069"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "64px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "max-width": "1280px",
+                        "unit": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-xl": ["Space Grotesk"],
+                        "data-display": ["Geist Mono"],
+                        "headline-lg-mobile": ["Space Grotesk"],
+                        "body-md": ["Inter"],
+                        "label-sm": ["Inter"],
+                        "headline-lg": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "data-display": ["14px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "fontWeight": "600"}]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-surface">
+<div class="bg-grid-pattern fixed inset-0 z-0"></div>
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/60 backdrop-blur-xl border-b border-white/20 shadow-[0_0_15px_rgba(195,192,255,0.1)] flex justify-between items-center px-margin-desktop h-16 w-full">
+<div class="flex items-center gap-4">
+<img alt="CSE Fest Logo" class="h-8" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCNLQWOWn8bJhVtXuYjcxz3Jng969cpkCXecZARswxMXilgScajF8VTrKKsS-Wlb910i0QAjIxR1xKtXp2UtOJ5VTBrf1bmNfakQaSqn0yuWs_jnijAWhk209jaiINM1F-UILMoq4KNq0b0Vt4s94o28AQZlTY2TDJhavak_PMC0qlQT8u76yV7BX77uyahHhC-xTDgtqRoV_qtc_DCqohkfJK3Xn-7ydcR8daAPT2cq58JatJGjXgVlVHJlUYj3u3Kn2n4-I-QvP9b"/>
+<h1 class="font-headline-lg text-headline-lg font-bold text-primary tracking-tight">CSE Fest 2026 Admin</h1>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:flex items-center bg-surface-container-high/50 border border-outline-variant px-4 py-1.5 rounded-lg">
+<span class="material-symbols-outlined text-on-surface-variant text-sm mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md text-on-surface placeholder:text-on-surface-variant/50 w-64" placeholder="Search system logs..." type="text"/>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors active:scale-95">
+<span class="material-symbols-outlined">monitor_heart</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors active:scale-95 relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-0 right-0 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors active:scale-95">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary-container flex items-center justify-center border border-primary/30">
+<img alt="Administrator Avatar" class="rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6VNhnsk_dp34Xm5QkvfnUAbU9e6Fu7eECmsFjMQkZS1Ro15kVn2L9aIyDMgl5JW8aXjePAxVWIvcHOU3AbRy3zS_eF8o8JszvyIZzR9GAGbpcdFoW6jzZJGfMvhokZ8fiIE1pyM9KQkzTaoe1XFzG2Q3V2oMZgUi5t0V9CeHxWsCHLNBHhi5_7NBIhNB1y3f7sPZKtpA9sdploHE4nUZK2AVw1bPGryHmtZUM-xPOyKQwlubBr6gNqQJZnBvQabQEJb3HXVhVu3zQ"/>
+</div>
+</div>
+</div>
+</header>
+<!-- SideNavBar -->
+<aside class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 bg-surface-container/80 backdrop-blur-md border-r border-white/10 flex flex-col py-6 z-40">
+<div class="px-6 mb-8">
+<h2 class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest mb-1">Command Hub</h2>
+<p class="font-body-md text-body-md text-primary font-semibold">Technical Oversight</p>
+</div>
+<nav class="flex-1 px-4 space-y-2">
+<!-- Verification Queue (Active) -->
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary border-r-4 border-primary transition-all duration-300" href="#">
+<span class="material-symbols-outlined" data-weight="fill">fact_check</span>
+<span class="font-body-md text-body-md font-medium">Verification Queue</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-white/5 hover:text-primary transition-all duration-300" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-body-md text-body-md">Participant Management</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-white/5 hover:text-primary transition-all duration-300" href="#">
+<span class="material-symbols-outlined">terminal</span>
+<span class="font-body-md text-body-md">Event Oversight</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-white/5 hover:text-primary transition-all duration-300" href="#">
+<span class="material-symbols-outlined">database</span>
+<span class="font-body-md text-body-md">System Logs</span>
+</a>
+</nav>
+<div class="px-4 mt-auto space-y-4">
+<button class="w-full bg-primary-container text-on-primary-container py-3 rounded-lg font-bold flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(79,70,229,0.3)] hover:scale-[1.02] transition-transform">
+<span class="material-symbols-outlined">analytics</span>
+                Generate Report
+            </button>
+<div class="border-t border-white/5 pt-4">
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">
+<span class="material-symbols-outlined text-sm">help</span>
+                    Support
+                </a>
+<a class="flex items-center gap-3 px-4 py-2 text-on-surface-variant hover:text-primary transition-colors text-sm" href="#">
+<span class="material-symbols-outlined text-sm">description</span>
+                    Documentation
+                </a>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 mt-16 p-gutter relative z-10 min-h-[calc(100vh-64px)] pb-12">
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
+<div>
+<div class="flex items-center gap-3 mb-2">
+<span class="w-2.5 h-2.5 rounded-full bg-primary pulse-live"></span>
+<span class="font-data-display text-data-display text-primary tracking-widest uppercase">Live Terminal Stream</span>
+</div>
+<h2 class="font-headline-xl text-headline-xl text-on-surface">Verification Terminal</h2>
+</div>
+<div class="flex gap-3">
+<div class="flex bg-surface-container-low border border-outline-variant rounded-lg p-1">
+<button class="px-4 py-1.5 rounded-md text-sm font-medium bg-primary text-on-primary shadow-lg">Pending</button>
+<button class="px-4 py-1.5 rounded-md text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Flagged</button>
+<button class="px-4 py-1.5 rounded-md text-sm font-medium text-on-surface-variant hover:text-on-surface transition-colors">Verified</button>
+</div>
+<button class="bg-surface-container-high border border-outline-variant text-on-surface px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-xl">filter_list</span>
+                    Filters
+                </button>
+</div>
+</div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-8">
+<div class="glass-panel p-6 rounded-xl border-l-4 border-l-primary relative overflow-hidden">
+<div class="scanline"></div>
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">hourglass_empty</span>
+<span class="font-data-display text-xs text-primary/60">+12.5% vs yesterday</span>
+</div>
+<h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1">Total Pending</h3>
+<p class="font-headline-lg text-headline-lg font-bold text-on-surface">142</p>
+</div>
+<div class="glass-panel p-6 rounded-xl border-l-4 border-l-secondary relative overflow-hidden">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-secondary bg-secondary/10 p-2 rounded-lg">timer</span>
+<span class="font-data-display text-xs text-secondary/60">-2m review latency</span>
+</div>
+<h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1">Avg Review Time</h3>
+<p class="font-headline-lg text-headline-lg font-bold text-on-surface">4m 32s</p>
+</div>
+<div class="glass-panel p-6 rounded-xl border-l-4 border-l-error relative overflow-hidden">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-error bg-error/10 p-2 rounded-lg">priority_high</span>
+<span class="font-data-display text-xs text-error/60">Requires Senior Review</span>
+</div>
+<h3 class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1">High Priority Flags</h3>
+<p class="font-headline-lg text-headline-lg font-bold text-on-surface">18</p>
+</div>
+</div>
+<div class="flex flex-col lg:flex-row gap-gutter">
+<!-- Data Table Container -->
+<div class="flex-1 glass-panel rounded-xl overflow-hidden border border-white/5">
+<div class="p-4 border-b border-white/10 bg-surface-container-low/50 flex justify-between items-center">
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Active Queue Matrix</span>
+<div class="flex gap-2">
+<button class="p-1 hover:bg-white/10 rounded"><span class="material-symbols-outlined text-sm">refresh</span></button>
+<button class="p-1 hover:bg-white/10 rounded"><span class="material-symbols-outlined text-sm">more_vert</span></button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-high/30">
+<th class="px-6 py-4 font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Participant</th>
+<th class="px-6 py-4 font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Type</th>
+<th class="px-6 py-4 font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Team ID</th>
+<th class="px-6 py-4 font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Queue Time</th>
+<th class="px-6 py-4 font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">Priority</th>
+<th class="px-6 py-4 font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant text-right">Action</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-white/5 font-data-display text-data-display">
+<!-- Row 1 -->
+<tr class="hover:bg-primary/5 transition-colors group cursor-pointer" onclick="selectRow(1)">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container-highest border border-white/10 flex items-center justify-center text-xs">RJ</div>
+<div>
+<p class="font-body-md text-on-surface font-semibold">Rayhan Jamil</p>
+<p class="text-[10px] text-on-surface-variant">ID: #2026-X49</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">badge</span>
+                                        ID Card
+                                    </span>
+</td>
+<td class="px-6 py-4 text-primary">TEAM-NULL-04</td>
+<td class="px-6 py-4 text-on-surface-variant">14m ago</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded bg-secondary/10 text-secondary border border-secondary/20 text-[10px] uppercase font-bold tracking-tighter">Normal</span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2">
+<button class="p-2 hover:bg-success/20 text-success rounded-lg transition-colors border border-transparent hover:border-success/30"><span class="material-symbols-outlined">check_circle</span></button>
+<button class="p-2 hover:bg-error/20 text-error rounded-lg transition-colors border border-transparent hover:border-error/30"><span class="material-symbols-outlined">cancel</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 2 (Flagged) -->
+<tr class="hover:bg-primary/5 transition-colors group cursor-pointer bg-error/5" onclick="selectRow(2)">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container-highest border border-white/10 flex items-center justify-center text-xs">AS</div>
+<div>
+<p class="font-body-md text-on-surface font-semibold">Anika Sharma</p>
+<p class="text-[10px] text-on-surface-variant">ID: #2026-Y12</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">article</span>
+                                        Project Proposal
+                                    </span>
+</td>
+<td class="px-6 py-4 text-primary">TEAM-CYBER-09</td>
+<td class="px-6 py-4 text-on-surface-variant">2h 15m ago</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded bg-error/20 text-error border border-error/30 text-[10px] uppercase font-bold tracking-tighter">CRITICAL</span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2">
+<button class="p-2 hover:bg-success/20 text-success rounded-lg transition-colors"><span class="material-symbols-outlined">check_circle</span></button>
+<button class="p-2 hover:bg-error/20 text-error rounded-lg transition-colors"><span class="material-symbols-outlined">cancel</span></button>
+</div>
+</td>
+</tr>
+<!-- Row 3 (Warning) -->
+<tr class="hover:bg-primary/5 transition-colors group cursor-pointer" onclick="selectRow(3)">
+<td class="px-6 py-4">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded bg-surface-container-highest border border-white/10 flex items-center justify-center text-xs">MK</div>
+<div>
+<p class="font-body-md text-on-surface font-semibold">Mehedi Khan</p>
+<p class="text-[10px] text-on-surface-variant">ID: #2026-A01</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4">
+<span class="flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">badge</span>
+                                        ID Card
+                                    </span>
+</td>
+<td class="px-6 py-4 text-primary">TEAM-ROOT-42</td>
+<td class="px-6 py-4 text-on-surface-variant">5m ago</td>
+<td class="px-6 py-4">
+<span class="px-2 py-1 rounded bg-tertiary/20 text-tertiary border border-tertiary/30 text-[10px] uppercase font-bold tracking-tighter">Urgent</span>
+</td>
+<td class="px-6 py-4 text-right">
+<div class="flex justify-end gap-2">
+<button class="p-2 hover:bg-success/20 text-success rounded-lg transition-colors"><span class="material-symbols-outlined">check_circle</span></button>
+<button class="p-2 hover:bg-error/20 text-error rounded-lg transition-colors"><span class="material-symbols-outlined">cancel</span></button>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Detail Preview Panel -->
+<div class="w-full lg:w-96 glass-panel rounded-xl overflow-hidden flex flex-col border border-white/5 sticky top-24 h-[calc(100vh-160px)]" id="detailPanel">
+<div class="p-4 border-b border-white/10 bg-surface-container-low/50 flex justify-between items-center">
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-on-surface-variant">Asset Preview</span>
+<span class="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">FOCUS: #2026-X49</span>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-6">
+<!-- Image Preview Area -->
+<div class="aspect-[3/4] bg-surface-container-highest rounded-lg border border-white/10 relative group overflow-hidden">
+<img class="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-700" data-alt="A high-resolution close-up of a futuristic student identification card featuring holographic security elements and a digital biometric portrait. The card is rendered with a sleek, dark aesthetic consistent with the CSE Fest 2026 brand, using deep indigo and cyan light accents. The composition is sharp and clinical, emphasizing technical details and administrative clarity within a dark-mode user interface environment." id="previewImage" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxZaYZHTAFh6szut_3BGGd_R_JiEbLpXj2rv5kTYNwgE0CdGi7wxaPGqQ4VxmDQxjrolzXa7xRdnC9LUrCFoegTL2d3ha2JbZxQw1WPRSFeUqUOXpXe7-02HF52YVcFgsIdUVrNEYEq8avxoFNoEkTRaqSWA0J75CO0NBfxYCxThKZwAvdp0FnJf7cY-Y4IHUIvqQ_Nugb9Ls0lzId-wRDN1e7CdgjJ3I34_y5-4h1yTWOtDDhpVXChYWREUa_IQ5FqJgso7bEju8Z"/>
+<div class="absolute inset-0 bg-gradient-to-t from-surface to-transparent opacity-40"></div>
+<div class="absolute bottom-4 left-4 right-4 flex justify-between items-center">
+<span class="bg-surface/80 backdrop-blur-md px-2 py-1 rounded text-[10px] font-mono border border-white/10">IMG_SOURCE: ENCRYPTED_S3</span>
+<button class="p-1.5 bg-primary rounded-lg shadow-lg hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-on-primary text-sm">fullscreen</span>
+</button>
+</div>
+</div>
+<!-- Metadata -->
+<div class="space-y-4">
+<div>
+<h4 class="font-label-sm text-[10px] text-on-surface-variant uppercase mb-2">OCR Extraction Results</h4>
+<div class="bg-surface-container-low p-3 rounded-lg border border-white/5 font-data-display text-xs space-y-1">
+<p><span class="text-on-surface-variant">Name:</span> <span class="text-primary">RAYHAN JAMIL</span></p>
+<p><span class="text-on-surface-variant">ID:</span> <span class="text-on-surface">20-43251-1</span></p>
+<p><span class="text-on-surface-variant">Dept:</span> <span class="text-on-surface">Computer Science</span></p>
+<p><span class="text-on-surface-variant">Validation:</span> <span class="text-success">98% Match</span></p>
+</div>
+</div>
+<div>
+<h4 class="font-label-sm text-[10px] text-on-surface-variant uppercase mb-2">Reviewer Notes</h4>
+<textarea class="w-full bg-surface/50 border border-outline-variant rounded-lg p-3 text-sm text-on-surface focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-on-surface-variant/40" placeholder="Add verification comments..." rows="3"></textarea>
+</div>
+</div>
+</div>
+<div class="p-4 bg-surface-container-highest/50 border-t border-white/10 flex gap-3">
+<button class="flex-1 bg-error/10 hover:bg-error text-error hover:text-on-error py-2.5 rounded-lg font-bold text-sm transition-all border border-error/20">Reject</button>
+<button class="flex-[2] bg-primary text-on-primary py-2.5 rounded-lg font-bold text-sm shadow-[0_0_15px_rgba(79,70,229,0.3)] hover:scale-[1.02] active:scale-95 transition-all">Approve Submission</button>
+</div>
+</div>
+</div>
+</main>
+<!-- Footer -->
+<footer class="fixed bottom-0 right-0 w-[calc(100%-16rem)] bg-surface-container-lowest border-t border-white/5 flex justify-between items-center px-gutter py-2 z-30">
+<div class="flex items-center gap-4">
+<span class="font-label-sm text-label-sm uppercase tracking-widest text-primary">System Status: Optimal</span>
+<div class="w-1.5 h-1.5 rounded-full bg-primary"></div>
+<span class="font-data-display text-data-display text-on-surface-variant">© 2026 CSE Fest Technical Committee</span>
+</div>
+<div class="flex gap-6 font-data-display text-data-display">
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">Security Policy</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">API Docs</a>
+<span class="text-on-surface-variant/30">v2.4.0-stable</span>
+</div>
+</footer>
+<script>
+        function selectRow(id) {
+            // Visual feedback for row selection
+            const rows = document.querySelectorAll('tbody tr');
+            rows.forEach(row => row.classList.remove('bg-primary/10', 'border-primary/20'));
+            
+            const selectedRow = event.currentTarget;
+            selectedRow.classList.add('bg-primary/10');
+            
+            // Simulating content update in detail panel
+            const previewId = document.querySelector('#detailPanel .bg-primary\\/10');
+            if(id === 1) {
+                previewId.innerText = "FOCUS: #2026-X49";
+            } else if(id === 2) {
+                previewId.innerText = "FOCUS: #2026-Y12";
+                previewId.classList.replace('text-primary', 'text-error');
+            } else if(id === 3) {
+                previewId.innerText = "FOCUS: #2026-A01";
+            }
+        }
+
+        // Add a subtle mouse move effect to cards
+        document.querySelectorAll('.glass-panel').forEach(card => {
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+            });
+        });
+    </script>
+</body></html>

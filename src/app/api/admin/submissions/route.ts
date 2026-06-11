@@ -166,38 +166,7 @@ export async function POST(req: Request) {
       { status, team_status: teamStatus }
     );
 
-    // 8. Notify all active team members
-    const { data: members } = await supabase
-      .from("team_members")
-      .select("user_id")
-      .eq("team_id", prevSubmission.team_id)
-      .eq("invitation_status", "accepted");
-
-    if (members && members.length > 0) {
-      let titleMsg = "Project Under Review";
-      let detailMsg = `Your project proposal "${prevSubmission.title}" is now under review by organizers.`;
-      let typeMsg: "info" | "success" | "error" = "info";
-
-      if (status === "selected") {
-        titleMsg = "Project Proposal Selected!";
-        detailMsg = `Congratulations! Your project proposal "${prevSubmission.title}" has been selected for the next phase.`;
-        typeMsg = "success";
-      } else if (status === "rejected") {
-        titleMsg = "Project Proposal Rejected";
-        detailMsg = `Your project proposal "${prevSubmission.title}" was not selected. Check rulebooks or contact organizers.`;
-        typeMsg = "error";
-      }
-
-      const notifications = members.map((m) => ({
-        user_id: m.user_id,
-        title: titleMsg,
-        message: detailMsg,
-        type: typeMsg,
-        action_url: "/submissions",
-      }));
-
-      await supabase.from("notifications").insert(notifications);
-    }
+    // 8. In-app notification is handled automatically via database trigger (tr_submission_notification)
 
     return NextResponse.json({
       success: true,

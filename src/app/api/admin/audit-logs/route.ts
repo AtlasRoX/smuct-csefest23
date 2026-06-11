@@ -43,7 +43,7 @@ export async function GET() {
     // 4. Fetch admin profiles in memory to avoid RLS join warnings
     const adminIds = Array.from(new Set((logs || []).map((l) => l.admin_id).filter((id): id is string => !!id)));
     
-    let profilesMap: Record<string, string> = {};
+    const profilesMap: Record<string, string> = {};
     if (adminIds.length > 0) {
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")

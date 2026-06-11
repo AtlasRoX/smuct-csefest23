@@ -81,9 +81,10 @@ export async function POST(req: Request) {
       success: true,
       message: "Student ID documents uploaded successfully. Verification status is now pending review.",
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Upload operation failed.";
     return NextResponse.json(
-      { success: false, message: err.message || "Upload operation failed." },
+      { success: false, message },
       { status: 500 }
     );
   }

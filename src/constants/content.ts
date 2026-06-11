@@ -66,7 +66,7 @@ export const CONTACT_DETAILS = {
   facebook: "https://facebook.com/smuct.csefest",
   linkedin: "https://linkedin.com/school/smuct",
   address: "Plot 3, Sector 15, Uttara, Dhaka, Bangladesh",
-  mapsUrl: "https://maps.google.com/?q=Shanto-Mariam+University+of+Creative+Technology",
+  mapsUrl: "https://maps.app.goo.gl/GQY48WmKwuSSwanCA",
 };
 
 export const COMPETITIONS_CATALOG = [

@@ -2,105 +2,255 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowLeft, Trophy, Search, Star } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, Search, Eye, Sparkles } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import useSWR from "swr";
 import { Navbar } from "@/components/shared/Navbar";
 import { Footer } from "@/components/shared/Footer";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { COMPETITIONS_CATALOG } from "@/constants/content";
+
+const fetcher = (url: string) => fetch(url).then((res) => res.json());
+
+interface Competition {
+  id: string;
+  name: string;
+  type: string;
+  shortDescription: string;
+  teamSize: string;
+  fee: string;
+  eligibility: string;
+  prizePool: string;
+  coverImageUrl?: string;
+}
+
+const COMPETITION_IMAGES: Record<string, string> = {
+  "software-showcase": "https://lh3.googleusercontent.com/aida-public/AB6AXuA_sDktpXuLP2tISJMUZEcQ4oGKbCVVcNP5a4utyyZtBi7Ej5u04f-4z15P1MSAZHG8G8J9yzcTIF94AFSvEBinOXDgHJIpfKIbbfkfS2_u0W5K67FkveR-wyc-XJE8vD1tSGcEBbIGbeq0R6AV1mMs28BeNO-UsyX8SkyjMjJOpiGZ-xlsU_wH-MS-jk_Z1QZCqMbMKyZyxFvICAe7am_VuNLiyEbf-tNGuGlWK3etefYWmooKxmObEtTAvN5Hubc_mi35Al7BYaR0",
+  "iot-showcase": "https://lh3.googleusercontent.com/aida-public/AB6AXuDFVUDWSPAEANjIsD2sxQTMsSZSJj4cJAypasue8WYXlBnLth68CUXTAW9au4ZEgd0YnZJe98SL3qfoadNI6H8qz2p79RCO2DMqmKbkkmkU-lOLpu3ptXY9NL7rbI0l2VBvBkcfxxO03eYlgeeEtMtJYeTUx1ylzt11k6XFat5qFOY6YlmWPcfDW0I0o8szghnvKWfSD3DphEy9cR__yalRVd7gpHHK9rg69Re-Er7oNXMSgPC_GNxebMseXt9TiJ3PMLzj2uXx9Tji",
+  "idea-showcase": "https://lh3.googleusercontent.com/aida-public/AB6AXuCKGHlmkgO9OUf-RDdwzqJtbmiRD5dk84Y8R5IZD8mghvMKlxjfQayu_ChlNaTxFZTqY9iG1Bl_cKKCYN-YHo4T_y8_ylysu_sgUKIfy6uMPzuEqCK7v9xcs8ShtpUjZXzjWJ3m7PnUdt1GoDjHaXT1Vk2Fh28fgfpENV_PML4DqznU68jk7VTa5R_6PYyGxM-rIseMyI4hWN-y0ngIhMMTI0UUIi-9LBCHA1NYQX4i-OEPf7MIwGpMN2mgAfro5D3uIUSgd33mKpMp",
+};
 
 export default function CompetitionsListingPage() {
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [categoryFilter, setCategoryFilter] = React.useState<"all" | "external" | "internal">("all");
 
-  const filteredCompetitions = COMPETITIONS_CATALOG.filter((comp) =>
-    comp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    comp.shortDescription.toLowerCase().includes(searchQuery.toLowerCase())
+  const { data, error, isLoading } = useSWR<{ success: boolean; data: Competition[] }>(
+    "/api/public/competitions",
+    fetcher
   );
 
+  const competitionsList = React.useMemo(() => (data?.success ? data.data : []), [data]);
+
+  const filteredCompetitions = React.useMemo(() => {
+    return competitionsList.filter((comp) => {
+      const matchesSearch =
+        comp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        comp.shortDescription.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = categoryFilter === "all" || comp.eligibility === categoryFilter;
+      return matchesSearch && matchesCategory;
+    });
+  }, [competitionsList, searchQuery, categoryFilter]);
+
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-background text-on-background selection:bg-primary/30 bg-grid-pattern">
       <Navbar />
 
-      <main className="flex-1 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 w-full">
-        {/* Back navigation */}
-        <div className="mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm text-neutral-400 hover:text-neutral-50 transition-colors">
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Home</span>
-          </Link>
-        </div>
-
-        {/* Headings & Search filter */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
-          <div className="space-y-3">
-            <h1 className="text-h2 font-bold font-heading text-neutral-50">Competitions Directory</h1>
-            <p className="text-sm sm:text-base text-neutral-400 font-sans max-w-xl">
-              Explore external showcases and internal challenges. Register your team to demonstrate your engineering skills.
-            </p>
+      <main className="grow pt-10 pb-20 px-4 md:px-16 max-w-[1280px] mx-auto w-full">
+        {/* Header Section */}
+        <header className="mb-12 relative">
+          <div className="absolute top-0 right-0 w-[20vw] h-[20vw] bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
+          <div className="mb-6">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-sm text-neutral-400 hover:text-neutral-50 transition-colors group"
+            >
+              <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Back to Home</span>
+            </Link>
           </div>
-          <div className="w-full md:max-w-sm">
-            <div className="relative">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="h-[2px] w-12 bg-primary" />
+            <span className="font-sans text-xs font-bold text-primary tracking-widest uppercase">
+              Competitions Directory
+            </span>
+          </div>
+          <h1 className="font-heading text-4xl font-extrabold text-neutral-100 mb-4">Command the Arena.</h1>
+          <p className="text-neutral-400 max-w-2xl font-sans text-sm leading-relaxed">
+            Browse our curated selection of technical challenges, from algorithmic combat to robotic precision. Register
+            your team and secure your place in the CSE Fest 2026 Hall of Fame.
+          </p>
+        </header>
+
+        {/* Filter Dashboard */}
+        <div className="bg-neutral-900/60 backdrop-blur-md border border-neutral-850 p-6 rounded-xl mb-12 flex flex-col md:flex-row gap-6 items-center justify-between">
+          <div className="flex flex-wrap gap-2 items-center">
+            <button
+              onClick={() => setCategoryFilter("all")}
+              className={`px-5 py-2.5 rounded-lg text-xs font-bold font-sans transition-all ${
+                categoryFilter === "all"
+                  ? "bg-primary text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]"
+                  : "bg-neutral-900/40 text-neutral-400 hover:bg-neutral-800/40 border border-neutral-850"
+              }`}
+            >
+              All Events
+            </button>
+            <button
+              onClick={() => setCategoryFilter("external")}
+              className={`px-5 py-2.5 rounded-lg text-xs font-bold font-sans transition-all ${
+                categoryFilter === "external"
+                  ? "bg-primary text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]"
+                  : "bg-neutral-900/40 text-neutral-400 hover:bg-neutral-800/40 border border-neutral-850"
+              }`}
+            >
+              External Showcases
+            </button>
+            <button
+              onClick={() => setCategoryFilter("internal")}
+              className={`px-5 py-2.5 rounded-lg text-xs font-bold font-sans transition-all ${
+                categoryFilter === "internal"
+                  ? "bg-primary text-white shadow-[0_0_10px_rgba(99,102,241,0.3)]"
+                  : "bg-neutral-900/40 text-neutral-400 hover:bg-neutral-800/40 border border-neutral-850"
+              }`}
+            >
+              SMUCT-Only
+            </button>
+          </div>
+
+          <div className="h-10 w-px bg-neutral-850 hidden md:block" />
+
+          <div className="flex items-center gap-4 w-full md:w-auto">
+            <div className="relative grow md:w-64">
               <Input
-                placeholder="Search competitions..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-9 h-10 border-neutral-850 bg-neutral-950/40"
+                placeholder="Search events..."
               />
-              <Search className="absolute left-3.5 top-3 h-4 w-4 text-neutral-500" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-[10px] font-bold text-neutral-500 uppercase font-sans">Status:</span>
+              <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 px-3 py-1 rounded-full">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span className="text-[10px] font-bold text-primary uppercase font-sans">Open</span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Competitions Grid */}
-        {filteredCompetitions.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCompetitions.map((comp) => (
-              <Card key={comp.id} hoverable variant="default" className="flex flex-col justify-between">
-                <CardHeader>
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="p-2 bg-neutral-950 border border-neutral-800 rounded-radius-sm">
-                      <Trophy className="h-4 w-4 text-accent" />
+        {/* Cards Grid */}
+        <AnimatePresence mode="wait">
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-[400px] bg-neutral-900/40 border border-neutral-850 rounded-xl animate-pulse" />
+              ))}
+            </div>
+          ) : filteredCompetitions.length > 0 ? (
+            <motion.div
+              key="grid"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25 }}
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            >
+              {filteredCompetitions.map((comp) => {
+                const coverImage =
+                  comp.coverImageUrl ||
+                  COMPETITION_IMAGES[comp.id] ||
+                  "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=600";
+                return (
+                  <div
+                    key={comp.id}
+                    className="relative bg-neutral-900/40 rounded-xl flex flex-col group border border-neutral-850 transition-all duration-normal hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] overflow-hidden"
+                  >
+                    {/* Cover image header */}
+                    <div className="relative h-48 overflow-hidden rounded-t-xl">
+                      <div className="absolute inset-0 bg-linear-to-t from-neutral-950/90 to-transparent z-10" />
+                      <Image
+                        src={coverImage}
+                        alt={comp.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        sizes="(max-width: 768px) 100vw, 380px"
+                      />
+                      <div className="absolute top-4 right-4 z-20">
+                        <span className="bg-primary/20 backdrop-blur-md border border-primary/40 text-primary px-3 py-1 rounded-full text-[10px] font-bold font-sans">
+                          {comp.teamSize.toUpperCase()}
+                        </span>
+                      </div>
                     </div>
-                    <Badge variant="accent" className="capitalize">
-                      {comp.eligibility}
-                    </Badge>
+
+                    {/* Content */}
+                    <div className="p-6 grow flex flex-col justify-between">
+                      <div>
+                        <div className="flex justify-between items-start mb-3 gap-2">
+                          <h3 className="font-heading font-extrabold text-xl text-neutral-100 group-hover:text-neutral-50 transition-colors">
+                            {comp.name}
+                          </h3>
+                          <Badge variant="accent" className="text-[9px] font-mono shrink-0 uppercase">
+                            {comp.eligibility}
+                          </Badge>
+                        </div>
+                        <p className="text-neutral-400 text-xs sm:text-sm mb-6 line-clamp-3 leading-relaxed font-sans">
+                          {comp.shortDescription}
+                        </p>
+                      </div>
+
+                      <div className="mt-auto space-y-4">
+                        <div className="flex justify-between items-center py-3 border-y border-neutral-850">
+                          <span className="text-[10px] font-bold text-neutral-500 uppercase font-sans">Prize Pool</span>
+                          <span className="font-mono text-secondary text-sm font-extrabold">{comp.prizePool}</span>
+                        </div>
+                        <div className="flex gap-3">
+                          <Link href="/register" className="grow">
+                            <Button className="w-full bg-primary hover:bg-primary/95 text-white py-2.5 h-auto rounded-lg text-xs font-bold font-sans">
+                              Register
+                            </Button>
+                          </Link>
+                          <Link href={`/competitions/${comp.id}`}>
+                            <Button
+                              variant="secondary"
+                              className="px-3 border border-neutral-800 hover:border-neutral-700 bg-neutral-900/40 text-neutral-400 hover:text-neutral-200 py-2.5 h-auto rounded-lg"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <CardTitle className="mb-2 text-lg font-heading">{comp.name}</CardTitle>
-                  <CardDescription className="text-sm text-neutral-400 font-sans line-clamp-2 leading-relaxed">
-                    {comp.shortDescription}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="mt-4 border-t border-neutral-800/60 pt-4 font-sans text-sm space-y-2.5">
-                  <div className="flex justify-between">
-                    <span className="text-neutral-500">Eligibility:</span>
-                    <span className="text-neutral-300 font-medium capitalize">{comp.eligibility} Only</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-neutral-500">Prize Pool:</span>
-                    <span className="text-accent font-semibold">{comp.prizePool}</span>
-                  </div>
-                  <div className="pt-6">
-                    <Link href={`/competitions/${comp.id}`}>
-                      <Button variant="secondary" className="w-full justify-center">
-                        Explore Details
-                      </Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="py-24 text-center rounded-radius-md border border-neutral-800 bg-neutral-900/10">
-            <Star className="h-8 w-8 text-neutral-600 mx-auto mb-4" />
-            <h3 className="font-heading font-semibold text-neutral-300 mb-2">No Competitions Found</h3>
-            <p className="text-sm text-neutral-500 font-sans">
-              We couldn't find any competitions matching your search term.
-            </p>
-          </div>
-        )}
+                );
+              })}
+            </motion.div>
+          ) : (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="py-20 text-center rounded-xl border border-dashed border-neutral-800 bg-neutral-900/10 backdrop-blur-sm max-w-xl mx-auto flex flex-col items-center justify-center space-y-4 relative z-10"
+            >
+              <div className="w-16 h-16 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center text-neutral-500">
+                <Sparkles className="h-8 w-8 text-neutral-600 animate-pulse" />
+              </div>
+              <h3 className="font-heading font-extrabold text-lg text-neutral-300">No Challenges Found</h3>
+              <p className="text-xs sm:text-sm text-neutral-500 font-sans max-w-sm leading-relaxed">
+                We couldn&apos;t find any active showcases matching &quot;{searchQuery}&quot;. Clear search filters and
+                view all active listings.
+              </p>
+              <div className="pt-2">
+                <Button variant="secondary" onClick={() => { setSearchQuery(""); setCategoryFilter("all"); }} className="font-semibold text-xs py-2 h-auto">
+                  Clear Search
+                </Button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </main>
 
       <Footer />

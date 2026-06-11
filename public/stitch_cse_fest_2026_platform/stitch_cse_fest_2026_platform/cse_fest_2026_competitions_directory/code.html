@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Competitions Directory | CSE Fest 2026</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600&amp;family=Geist+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "secondary-fixed-dim": "#ddb7ff",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "on-error-container": "#ffdad6",
+                        "background": "#13121b",
+                        "primary-container": "#4f46e5",
+                        "surface-container-high": "#2a2933",
+                        "inverse-primary": "#4d44e3",
+                        "on-tertiary-fixed": "#351000",
+                        "on-surface": "#e4e1ee",
+                        "tertiary-fixed-dim": "#ffb695",
+                        "on-background": "#e4e1ee",
+                        "secondary-container": "#6f00be",
+                        "surface-container-highest": "#35343e",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "on-tertiary-container": "#ffd2be",
+                        "on-primary": "#1d00a5",
+                        "surface-variant": "#35343e",
+                        "inverse-surface": "#e4e1ee",
+                        "outline-variant": "#464555",
+                        "error-container": "#93000a",
+                        "inverse-on-surface": "#302f39",
+                        "surface-tint": "#c3c0ff",
+                        "surface-container-low": "#1b1b24",
+                        "surface": "#13121b",
+                        "error": "#ffb4ab",
+                        "secondary": "#ddb7ff",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "surface-bright": "#393842",
+                        "surface-dim": "#13121b",
+                        "tertiary-fixed": "#ffdbcc",
+                        "on-secondary": "#490080",
+                        "surface-container": "#1f1f28",
+                        "on-primary-fixed": "#0f0069",
+                        "surface-container-lowest": "#0e0d16",
+                        "secondary-fixed": "#f0dbff",
+                        "on-primary-container": "#dad7ff",
+                        "on-secondary-container": "#d6a9ff",
+                        "on-tertiary": "#571f00",
+                        "tertiary-container": "#a44100",
+                        "tertiary": "#ffb695",
+                        "primary-fixed": "#e2dfff",
+                        "primary": "#c3c0ff",
+                        "on-error": "#690005",
+                        "outline": "#918fa1",
+                        "on-surface-variant": "#c7c4d8",
+                        "on-secondary-fixed": "#2c0051",
+                        "on-secondary-fixed-variant": "#6900b3"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "unit": "4px",
+                        "max-width": "1280px",
+                        "gutter": "24px",
+                        "margin-desktop": "64px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Space Grotesk"],
+                        "body-md": ["Inter"],
+                        "data-display": ["Geist Mono"],
+                        "label-sm": ["Inter"],
+                        "headline-xl": ["Space Grotesk"],
+                        "headline-lg": ["Space Grotesk"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "data-display": ["14px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                        "label-sm": ["12px", {"lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "headline-xl": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .bg-grid-pattern {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(195, 192, 255, 0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(195, 192, 255, 0.05) 1px, transparent 1px);
+        }
+
+        .glass-panel {
+            background: rgba(27, 27, 36, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(199, 196, 216, 0.1);
+        }
+
+        .competition-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .competition-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            padding: 1px;
+            border-radius: inherit;
+            background: conic-gradient(from 0deg at 50% 50%, transparent, rgba(195, 192, 255, 0.2), transparent);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .competition-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0 20px rgba(79, 70, 229, 0.15);
+        }
+
+        .btn-primary-glow:hover {
+            box-shadow: 0 0 15px #4f46e5;
+        }
+
+        @keyframes pulse-cyan {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .pulse-live {
+            animation: pulse-cyan 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md selection:bg-primary/30 min-h-screen flex flex-col bg-grid-pattern">
+<!-- TopNavBar (Shared Component) -->
+<nav class="fixed top-0 w-full z-50 bg-surface/60 backdrop-blur-xl border-b border-outline-variant/20 shadow-sm">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 max-w-max-width mx-auto">
+<div class="flex items-center gap-6">
+<img alt="CSE Fest 2026 Logo" class="h-10 w-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA3fmZkVtz4Q91n9gx9C4WGD2kvNlNNeJs1ik15PZCpoZ8sZTscXOb4FChck5v9_dbaXyMVdbl5NL75GAHb3uIg4PfynYj9ifozGgVeyOKu0uE4y7fsutU3J5_mgBagV7KcLU8LpH1fHonzP2etKwArrZ5xs52NkR_5kKHkIgj6-rbtsY5ztAj7x6kzWzHErcKVTyFnYe0MsvM44tY0Jwq0C8KbYsTzQChBwGxJMFrlbO2pEq0KzSVAS9-NGZom_MsrqLr_7Vw4Ciq2"/>
+<div class="hidden md:flex items-center gap-8">
+<a class="font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Events</a>
+<a class="font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Schedule</a>
+<a class="font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Leaderboard</a>
+<a class="font-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Sponsors</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden lg:flex items-center bg-surface-container rounded-full px-4 py-2 border border-outline-variant/20 focus-within:border-primary transition-all">
+<span class="material-symbols-outlined text-on-surface-variant text-sm" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md text-on-surface placeholder:text-on-surface-variant/50 w-48 ml-2" placeholder="Search events..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="material-symbols-outlined p-2 text-on-surface-variant hover:bg-primary/10 rounded-full transition-all" data-icon="dark_mode">dark_mode</button>
+<button class="material-symbols-outlined p-2 text-on-surface-variant hover:bg-primary/10 rounded-full transition-all" data-icon="notifications">notifications</button>
+<button class="bg-primary text-on-primary font-label-sm px-6 py-2 rounded-full font-bold transition-all hover:shadow-[0_0_15px_rgba(79,70,229,0.4)]">Register Now</button>
+</div>
+</div>
+</div>
+</nav>
+<main class="flex-grow pt-24 pb-20 px-margin-mobile md:px-margin-desktop max-w-max-width mx-auto w-full">
+<!-- Header Section -->
+<header class="mb-12">
+<div class="flex items-center gap-2 mb-2">
+<div class="h-[2px] w-12 bg-primary"></div>
+<span class="font-label-sm text-primary tracking-widest uppercase">Competitions Directory</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface mb-4">Command the Arena.</h1>
+<p class="text-on-surface-variant max-w-2xl font-body-md">
+                Browse our curated selection of technical challenges, from algorithmic combat to robotic precision. Register your team and secure your place in the CSE Fest 2026 Hall of Fame.
+            </p>
+</header>
+<!-- Filter Dashboard -->
+<div class="glass-panel p-6 rounded-xl mb-12 flex flex-col md:flex-row gap-6 items-center justify-between">
+<div class="flex flex-wrap gap-2 items-center">
+<button class="px-5 py-2 rounded-lg bg-primary-container text-on-primary-container font-label-sm shadow-[0_0_10px_rgba(79,70,229,0.3)]">All Events</button>
+<button class="px-5 py-2 rounded-lg bg-surface-container-highest text-on-surface-variant font-label-sm hover:bg-surface-variant transition-colors border border-outline-variant/10">External Showcases</button>
+<button class="px-5 py-2 rounded-lg bg-surface-container-highest text-on-surface-variant font-label-sm hover:bg-surface-variant transition-colors border border-outline-variant/10">SMUCT-Only</button>
+</div>
+<div class="h-10 w-px bg-outline-variant/20 hidden md:block"></div>
+<div class="flex items-center gap-4 w-full md:w-auto">
+<div class="flex items-center gap-2">
+<span class="font-label-sm text-on-surface-variant/60">STATUS:</span>
+<button class="flex items-center gap-2 bg-primary/10 border border-primary/20 px-3 py-1 rounded-full">
+<span class="w-2 h-2 rounded-full bg-primary pulse-live"></span>
+<span class="font-label-sm text-primary">Open</span>
+</button>
+<button class="flex items-center gap-2 bg-surface-container-highest border border-outline-variant/10 px-3 py-1 rounded-full opacity-50 grayscale">
+<span class="font-label-sm text-on-surface-variant">Closed</span>
+</button>
+</div>
+<button class="material-symbols-outlined p-2 glass-panel rounded-lg text-on-surface-variant" data-icon="filter_list">filter_list</button>
+</div>
+</div>
+<!-- Cards Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<!-- Card 1: Hackathon 4.0 -->
+<div class="competition-card bg-surface-container-low rounded-xl flex flex-col group border border-outline-variant/10">
+<div class="relative h-48 overflow-hidden rounded-t-xl">
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent z-10"></div>
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="A futuristic dark room filled with programmers in front of glowing dual-monitor setups, neon blue and violet ambient lighting, digital matrix lines overlaying the atmosphere, cinematic wide shot in a high-tech studio environment for a hacking competition." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_sDktpXuLP2tISJMUZEcQ4oGKbCVVcNP5a4utyyZtBi7Ej5u04f-4z15P1MSAZHG8G8J9yzcTIF94AFSvEBinOXDgHJIpfKIbbfkfS2_u0W5K67FkveR-wyc-XJE8vD1tSGcEBbIGbeq0R6AV1mMs28BeNO-UsyX8SkyjMjJOpiGZ-xlsU_wH-MS-jk_Z1QZCqMbMKyZyxFvICAe7am_VuNLiyEbf-tNGuGlWK3etefYWmooKxmObEtTAvN5Hubc_mi35Al7BYaR0"/>
+<div class="absolute top-4 right-4 z-20">
+<span class="bg-primary/20 backdrop-blur-md border border-primary/40 text-primary px-3 py-1 rounded-full font-label-sm">TEAM 4-6</span>
+</div>
+</div>
+<div class="p-6 flex-grow flex flex-col">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-lg text-2xl text-on-surface">Hackathon 4.0</h3>
+<span class="font-data-display text-primary bg-primary/10 px-2 py-0.5 rounded text-xs border border-primary/20">INTERNAL</span>
+</div>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-3">
+                        A 36-hour grueling code-marathon where you build disruptive solutions for the next billion users. Architecture, scalability, and impact.
+                    </p>
+<div class="mt-auto space-y-4">
+<div class="flex justify-between items-center py-3 border-y border-outline-variant/10">
+<span class="font-label-sm text-on-surface-variant/60">PRIZE POOL</span>
+<span class="font-data-display text-secondary text-lg font-bold tracking-tight">$2,500.00</span>
+</div>
+<div class="flex gap-3">
+<button class="flex-grow bg-primary text-on-primary py-2.5 rounded-lg font-label-sm font-bold btn-primary-glow transition-all">Register</button>
+<button class="px-3 border border-outline-variant/30 rounded-lg hover:bg-surface-variant/40 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 2: CP Contest -->
+<div class="competition-card bg-surface-container-low rounded-xl flex flex-col group border border-outline-variant/10">
+<div class="relative h-48 overflow-hidden rounded-t-xl">
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent z-10"></div>
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="A clean top-down view of a mechanical keyboard with RGB backlighting reflecting on a glossy desk, intricate code structures displayed on a high-definition monitor in the background, sharp focus, professional tech aesthetic with cold blue and emerald accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC3x-P5v3zhTUGw49oZ5h3g0_p3xByz3PhKS0Thx2OIg9_dja7_6n3vYLiGXHFdWfJ_RsXEZ58177T7aal8m-hGnYmdPoxyhEcORKXr8VTrRrASQmdysKKD1ebJxKBuoP3wfYrQ7uMXlP6Bofxj4ffj39ZFPMUZyP2g36fX0h_BdDCkZ6oIEfyfT53aQtc4be4ar-2fRXYK3C7u4CLI1ZbEePpXeu6dWpV6SCsmBH1RAcIAe1wypFWjaaGCZZ-fFzjZCeDLoJDEEgj5"/>
+<div class="absolute top-4 right-4 z-20">
+<span class="bg-primary/20 backdrop-blur-md border border-primary/40 text-primary px-3 py-1 rounded-full font-label-sm">INDIVIDUAL</span>
+</div>
+</div>
+<div class="p-6 flex-grow flex flex-col">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-lg text-2xl text-on-surface">CP Contest</h3>
+<span class="font-data-display text-secondary bg-secondary/10 px-2 py-0.5 rounded text-xs border border-secondary/20">GLOBAL</span>
+</div>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-3">
+                        Master your algorithms. 5 hours, 10 problems, one champion. Are you fast enough to beat the runtime limits?
+                    </p>
+<div class="mt-auto space-y-4">
+<div class="flex justify-between items-center py-3 border-y border-outline-variant/10">
+<span class="font-label-sm text-on-surface-variant/60">PRIZE POOL</span>
+<span class="font-data-display text-secondary text-lg font-bold tracking-tight">$1,200.00</span>
+</div>
+<div class="flex gap-3">
+<button class="flex-grow bg-primary text-on-primary py-2.5 rounded-lg font-label-sm font-bold btn-primary-glow transition-all">Register</button>
+<button class="px-3 border border-outline-variant/30 rounded-lg hover:bg-surface-variant/40 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 3: Robo-Race -->
+<div class="competition-card bg-surface-container-low rounded-xl flex flex-col group border border-outline-variant/10">
+<div class="relative h-48 overflow-hidden rounded-t-xl">
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent z-10"></div>
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="A sophisticated macro shot of a sleek robotic arm and wheels on a high-tech laboratory floor, sparks flying in the distance, neon cyan and orange workshop lighting, industrial futuristic setting with depth of field, high contrast metallic textures." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFVUDWSPAEANjIsD2sxQTMsSZSJj4cJAypasue8WYXlBnLth68CUXTAW9au4ZEgd0YnZJe98SL3qfoadNI6H8qz2p79RCO2DMqmKbkkmkU-lOLpu3ptXY9NL7rbI0l2VBvBkcfxxO03eYlgeeEtMtJYeTUx1ylzt11k6XFat5qFOY6YlmWPcfDW0I0o8szghnvKWfSD3DphEy9cR__yalRVd7gpHHK9rg69Re-Er7oNXMSgPC_GNxebMseXt9TiJ3PMLzj2uXx9Tji"/>
+<div class="absolute top-4 right-4 z-20">
+<span class="bg-primary/20 backdrop-blur-md border border-primary/40 text-primary px-3 py-1 rounded-full font-label-sm">TEAM 2-3</span>
+</div>
+</div>
+<div class="p-6 flex-grow flex flex-col">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-lg text-2xl text-on-surface">Robo-Race</h3>
+<span class="font-data-display text-primary bg-primary/10 px-2 py-0.5 rounded text-xs border border-primary/20">INTERNAL</span>
+</div>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-3">
+                        Precision engineering meets autonomous logic. Build a bot to navigate the treacherous neon-grid track in record time.
+                    </p>
+<div class="mt-auto space-y-4">
+<div class="flex justify-between items-center py-3 border-y border-outline-variant/10">
+<span class="font-label-sm text-on-surface-variant/60">PRIZE POOL</span>
+<span class="font-data-display text-secondary text-lg font-bold tracking-tight">$3,000.00</span>
+</div>
+<div class="flex gap-3">
+<button class="flex-grow bg-primary text-on-primary py-2.5 rounded-lg font-label-sm font-bold btn-primary-glow transition-all">Register</button>
+<button class="px-3 border border-outline-variant/30 rounded-lg hover:bg-surface-variant/40 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 4: UI/UX Design Challenge -->
+<div class="competition-card bg-surface-container-low rounded-xl flex flex-col group border border-outline-variant/10">
+<div class="relative h-48 overflow-hidden rounded-t-xl">
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent z-10"></div>
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="A minimalist digital art installation featuring glowing, generative geometric shapes suspended in a vast gallery space, illuminated by high-key, soft white lighting. Deep blacks and pristine whites with vibrant violet accents. The mood is serene yet technologically advanced." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCKGHlmkgO9OUf-RDdwzqJtbmiRD5dk84Y8R5IZD8mghvMKlxjfQayu_ChlNaTxFZTqY9iG1Bl_cKKCYN-YHo4T_y8_ylysu_sgUKIfy6uMPzuEqCK7v9xcs8ShtpUjZXzjWJ3m7PnUdt1GoDjHaXT1Vk2Fh28fgfpENV_PML4DqznU68jk7VTa5R_6PYyGxM-rIseMyI4hWN-y0ngIhMMTI0UUIi-9LBCHA1NYQX4i-OEPf7MIwGpMN2mgAfro5D3uIUSgd33mKpMp"/>
+<div class="absolute top-4 right-4 z-20">
+<span class="bg-primary/20 backdrop-blur-md border border-primary/40 text-primary px-3 py-1 rounded-full font-label-sm">TEAM 1-2</span>
+</div>
+</div>
+<div class="p-6 flex-grow flex flex-col">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-lg text-2xl text-on-surface">UI/UX Challenge</h3>
+<span class="font-data-display text-secondary bg-secondary/10 px-2 py-0.5 rounded text-xs border border-secondary/20">GLOBAL</span>
+</div>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-3">
+                        Designing for the decentralized future. Create a seamless dashboard for neural-link interfaces and win the favor of the judges.
+                    </p>
+<div class="mt-auto space-y-4">
+<div class="flex justify-between items-center py-3 border-y border-outline-variant/10">
+<span class="font-label-sm text-on-surface-variant/60">PRIZE POOL</span>
+<span class="font-data-display text-secondary text-lg font-bold tracking-tight">$1,500.00</span>
+</div>
+<div class="flex gap-3">
+<button class="flex-grow bg-primary text-on-primary py-2.5 rounded-lg font-label-sm font-bold btn-primary-glow transition-all">Register</button>
+<button class="px-3 border border-outline-variant/30 rounded-lg hover:bg-surface-variant/40 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Card 5: CTF Cyber-Ops -->
+<div class="competition-card bg-surface-container-low rounded-xl flex flex-col group border border-outline-variant/10">
+<div class="relative h-48 overflow-hidden rounded-t-xl">
+<div class="absolute inset-0 bg-gradient-to-t from-surface-container-low to-transparent z-10"></div>
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" data-alt="A dark screen displaying green terminal text and scrolling digital codes, glitch effects, hooded silhouette in a low-lit server room with blinking red and blue lights, high-tech cybersecurity theme, dramatic shadows and sharp focus on lines of code." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXo_a4U2ixnicimpAlZJ1ggIe62e24X3QlrEw_H2u727Hv9R3KT21_EDCzJMbpIJLIajUbkpkhQQ2vGNnixbebVjvfnwiRV9Gy8HkM1rbn0MbPwRmq2gCNR28aWyNcKFo2Cq8oYG9dfIdDTu5fJxlWnbo-8PqfIg3NUVj5-ha1vSfEqMj6PzFg9PnBi_RPZqjV4tZgq2rdNhU4-qz9XkZ6Mge7PbHc-TuszSUIII1Y2XWMyT-hUBhDWAvKiccV3uMdra7YBq_ZM7nr"/>
+<div class="absolute top-4 right-4 z-20">
+<span class="bg-primary/20 backdrop-blur-md border border-primary/40 text-primary px-3 py-1 rounded-full font-label-sm">TEAM 4</span>
+</div>
+</div>
+<div class="p-6 flex-grow flex flex-col">
+<div class="flex justify-between items-start mb-3">
+<h3 class="font-headline-lg text-2xl text-on-surface">CTF Cyber-Ops</h3>
+<span class="font-data-display text-primary bg-primary/10 px-2 py-0.5 rounded text-xs border border-primary/20">INTERNAL</span>
+</div>
+<p class="text-on-surface-variant text-sm mb-6 line-clamp-3">
+                        Infiltrate, exploit, and secure. A Jeopardy-style Capture The Flag event that tests your reverse engineering and pwn skills.
+                    </p>
+<div class="mt-auto space-y-4">
+<div class="flex justify-between items-center py-3 border-y border-outline-variant/10">
+<span class="font-label-sm text-on-surface-variant/60">PRIZE POOL</span>
+<span class="font-data-display text-secondary text-lg font-bold tracking-tight">$2,000.00</span>
+</div>
+<div class="flex gap-3">
+<button class="flex-grow bg-primary text-on-primary py-2.5 rounded-lg font-label-sm font-bold btn-primary-glow transition-all">Register</button>
+<button class="px-3 border border-outline-variant/30 rounded-lg hover:bg-surface-variant/40 transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant" data-icon="visibility">visibility</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Empty State / More coming soon placeholder -->
+<div class="glass-panel rounded-xl flex flex-col items-center justify-center p-8 border-dashed border-2 border-outline-variant/30">
+<div class="w-16 h-16 rounded-full bg-surface-container-highest flex items-center justify-center mb-4">
+<span class="material-symbols-outlined text-on-surface-variant text-4xl" data-icon="more_horiz">more_horiz</span>
+</div>
+<h3 class="font-headline-lg text-xl text-on-surface mb-2">More Coming Soon</h3>
+<p class="text-on-surface-variant text-center text-sm font-label-sm">
+                    We're finalizing details for several more technical segments. Stay tuned!
+                </p>
+<button class="mt-6 font-label-sm text-primary hover:underline transition-all">Notify Me</button>
+</div>
+</div>
+</main>
+<!-- Footer (Shared Component) -->
+<footer class="w-full mt-auto bg-surface-container-lowest border-t border-outline-variant/10">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop py-margin-mobile max-w-max-width mx-auto gap-8">
+<div class="flex flex-col items-center md:items-start">
+<span class="font-headline-lg text-headline-lg font-black text-on-surface">CSE FEST 2026</span>
+<p class="font-label-sm text-on-surface-variant/60 mt-2">© 2026 Department of Computer Science &amp; Engineering. All Rights Reserved.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-6">
+<a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">University Portal</a>
+<a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Department Site</a>
+</div>
+<div class="flex gap-4">
+<button class="p-2 glass-panel rounded-full text-on-surface-variant hover:text-primary transition-all material-symbols-outlined" data-icon="language">language</button>
+<button class="p-2 glass-panel rounded-full text-on-surface-variant hover:text-primary transition-all material-symbols-outlined" data-icon="alternate_email">alternate_email</button>
+</div>
+</div>
+</footer>
+<script>
+        // Micro-interactions and subtle hover effects
+        document.querySelectorAll('.competition-card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                card.style.setProperty('--mouse-x', `${x}px`);
+                card.style.setProperty('--mouse-y', `${y}px`);
+                
+                // Dynamic border glow effect could be added here
+            });
+        });
+
+        // Search bar interaction
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('ring-1', 'ring-primary/50', 'shadow-[0_0_15px_rgba(79,70,229,0.2)]');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.remove('ring-1', 'ring-primary/50', 'shadow-[0_0_15px_rgba(79,70,229,0.2)]');
+        });
+    </script>
+</body></html>

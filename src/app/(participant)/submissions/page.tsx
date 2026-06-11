@@ -193,9 +193,9 @@ export default function SubmissionsPage() {
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-10 bg-neutral-900 w-1/3 rounded-radius-sm" />
-        <div className="h-24 bg-neutral-900 w-full rounded-radius-md" />
-        <div className="h-64 bg-neutral-900 w-full rounded-radius-md" />
+        <div className="h-10 bg-neutral-900 w-1/3 rounded-sm" />
+        <div className="h-24 bg-neutral-900 w-full rounded-md" />
+        <div className="h-64 bg-neutral-900 w-full rounded-md" />
       </div>
     );
   }
@@ -222,14 +222,14 @@ export default function SubmissionsPage() {
 
       {/* Messages */}
       {errorMsg && (
-        <div className="p-4 rounded-radius-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
           <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-4 rounded-radius-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
           <Check className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{successMsg}</span>
         </div>
@@ -249,7 +249,7 @@ export default function SubmissionsPage() {
                   <select
                     value={selectedTeamId}
                     onChange={(e) => setSelectedTeamId(e.target.value)}
-                    className="flex h-10 w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                    className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                   >
                     {teams.map((t) => (
                       <option key={t.id} value={t.id}>
@@ -262,7 +262,7 @@ export default function SubmissionsPage() {
             </Card>
 
             {subLoading ? (
-              <div className="h-48 bg-neutral-900/40 rounded-radius-md animate-pulse" />
+              <div className="h-48 bg-neutral-900/40 rounded-md animate-pulse" />
             ) : submission ? (
               /* Submission details */
               <Card variant="default" className="border-success/20 bg-success/5">
@@ -344,7 +344,7 @@ export default function SubmissionsPage() {
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             disabled={formLoading}
-                            className="flex w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                            className="flex w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                           />
                         </div>
                         <Button variant="primary" type="submit" isLoading={formLoading}>
@@ -389,7 +389,7 @@ export default function SubmissionsPage() {
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         disabled={formLoading}
-                        className="flex w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                        className="flex w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                       />
                     </div>
                     <Button variant="primary" type="submit" isLoading={formLoading} className="gap-2">
@@ -457,7 +457,7 @@ export default function SubmissionsPage() {
         </div>
       ) : (
         /* Empty State */
-        <div className="py-16 text-center border border-dashed border-neutral-800 rounded-radius-md bg-neutral-900/10 space-y-4">
+        <div className="py-16 text-center border border-dashed border-neutral-800 rounded-md bg-neutral-900/10 space-y-4">
           <Users className="h-10 w-10 text-neutral-700 mx-auto" />
           <div className="space-y-1 max-w-sm mx-auto">
             <h3 className="font-heading font-semibold text-sm text-neutral-300">No Roster Memberships</h3>

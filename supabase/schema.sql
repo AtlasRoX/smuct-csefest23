@@ -22,6 +22,12 @@ CREATE TABLE IF NOT EXISTS public.users (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- public.admins
+CREATE TABLE IF NOT EXISTS public.admins (
+  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- public.profiles
 CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -239,9 +245,19 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 3. Sync User Profile Trigger
--- Automatically populates users & profiles on auth signup
+-- 3. Functions & Sync Triggers
 
+-- Helper to check if a user is an admin bypassing RLS
+CREATE OR REPLACE FUNCTION public.is_admin(user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.admins WHERE id = user_id
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- Automatically populates users & profiles on auth signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
@@ -261,9 +277,55 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
+-- Trigger to sync user role when added/removed from public.admins
+CREATE OR REPLACE FUNCTION public.sync_admin_role()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF (TG_OP = 'INSERT') THEN
+    UPDATE public.users
+    SET role = 'admin'
+    WHERE id = NEW.id;
+  ELSIF (TG_OP = 'DELETE') THEN
+    UPDATE public.users
+    SET role = 'participant'
+    WHERE id = OLD.id;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER tr_sync_admin_role
+AFTER INSERT OR DELETE ON public.admins
+FOR EACH ROW
+EXECUTE FUNCTION public.sync_admin_role();
+
+-- Trigger to enforce consistency on user updates (ensures role matches admin table membership)
+CREATE OR REPLACE FUNCTION public.check_user_role_consistency()
+RETURNS TRIGGER AS $$
+DECLARE
+  exists_in_admins BOOLEAN;
+BEGIN
+  SELECT EXISTS (SELECT 1 FROM public.admins WHERE id = NEW.id) INTO exists_in_admins;
+
+  IF exists_in_admins THEN
+    NEW.role := 'admin';
+  ELSE
+    NEW.role := 'participant';
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER tr_check_user_role_consistency
+BEFORE INSERT OR UPDATE ON public.users
+FOR EACH ROW
+EXECUTE FUNCTION public.check_user_role_consistency();
+
 -- 4. Enable Row Level Security (RLS)
 
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.student_verifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.competitions ENABLE ROW LEVEL SECURITY;
@@ -284,40 +346,31 @@ ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- USERS Table Policies
 CREATE POLICY "Users can view their own record" ON public.users FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Admins can view all records" ON public.users FOR SELECT USING (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-);
-CREATE POLICY "Admins can update user roles" ON public.users FOR UPDATE USING (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Admins can view all records" ON public.users FOR SELECT USING (public.is_admin(auth.uid()));
+CREATE POLICY "Admins can update user roles" ON public.users FOR UPDATE USING (public.is_admin(auth.uid()));
+
+-- ADMINS Table Policies
+CREATE POLICY "Admins can view all admin records" ON public.admins FOR SELECT USING (public.is_admin(auth.uid()));
 
 -- PROFILES Table Policies
 CREATE POLICY "Users can read own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Admins can read all profiles" ON public.profiles FOR SELECT USING (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Admins can read all profiles" ON public.profiles FOR SELECT USING (public.is_admin(auth.uid()));
 
 -- STUDENT_VERIFICATIONS Table Policies
 CREATE POLICY "Users can read own verification" ON public.student_verifications FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can create own verification" ON public.student_verifications FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Admins can read/write all verifications" ON public.student_verifications USING (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Admins can read/write all verifications" ON public.student_verifications USING (public.is_admin(auth.uid()));
 
 -- COMPETITIONS Table Policies
 CREATE POLICY "Public read active competitions" ON public.competitions FOR SELECT USING (status != 'draft');
-CREATE POLICY "Admins can do everything on competitions" ON public.competitions USING (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Admins can do everything on competitions" ON public.competitions USING (public.is_admin(auth.uid()));
 
 -- TEAMS Table Policies
 CREATE POLICY "Anyone can read teams" ON public.teams FOR SELECT USING (true);
 CREATE POLICY "Team leader can create team" ON public.teams FOR INSERT WITH CHECK (auth.uid() = leader_id);
 CREATE POLICY "Team leader can update team details" ON public.teams FOR UPDATE USING (auth.uid() = leader_id);
-CREATE POLICY "Admins can do everything on teams" ON public.teams USING (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Admins can do everything on teams" ON public.teams USING (public.is_admin(auth.uid()));
 
 -- TEAM_MEMBERS Table Policies
 CREATE POLICY "Anyone can read team members" ON public.team_members FOR SELECT USING (true);
@@ -342,9 +395,7 @@ CREATE POLICY "Team members can create/edit own submissions" ON public.submissio
     WHERE team_id = submissions.team_id AND user_id = auth.uid() AND invitation_status = 'accepted'
   )
 );
-CREATE POLICY "Admins can read/write all submissions" ON public.submissions USING (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Admins can read/write all submissions" ON public.submissions USING (public.is_admin(auth.uid()));
 
 -- PAYMENTS Table Policies
 CREATE POLICY "Team members can read own team payments" ON public.payments FOR SELECT USING (
@@ -359,9 +410,7 @@ CREATE POLICY "Team members can submit payments" ON public.payments FOR INSERT W
     WHERE team_id = payments.team_id AND user_id = auth.uid() AND invitation_status = 'accepted'
   )
 );
-CREATE POLICY "Admins can review payments" ON public.payments USING (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Admins can review payments" ON public.payments USING (public.is_admin(auth.uid()));
 
 -- SCORES Table Policies
 CREATE POLICY "Team members can view own team scores" ON public.scores FOR SELECT USING (
@@ -370,44 +419,29 @@ CREATE POLICY "Team members can view own team scores" ON public.scores FOR SELEC
     WHERE team_id = scores.team_id AND user_id = auth.uid() AND invitation_status = 'accepted'
   )
 );
-CREATE POLICY "Admins can read/write scores" ON public.scores USING (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Admins can read/write scores" ON public.scores USING (public.is_admin(auth.uid()));
 
 -- RANKINGS Table Policies
 CREATE POLICY "Public read if rankings are public" ON public.rankings FOR SELECT USING (is_public = true);
-CREATE POLICY "Admins can read/write all rankings" ON public.rankings USING (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Admins can read/write all rankings" ON public.rankings USING (public.is_admin(auth.uid()));
 
 -- NOTIFICATIONS Table Policies
 CREATE POLICY "Users can read/write own notifications" ON public.notifications USING (auth.uid() = user_id);
 
 -- CMS Tables Public Read, Admin Write Policies
 CREATE POLICY "Public read announcements" ON public.announcements FOR SELECT USING (status = 'published');
-CREATE POLICY "Admin write announcements" ON public.announcements USING (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Admin write announcements" ON public.announcements USING (public.is_admin(auth.uid()));
 
 CREATE POLICY "Public read ticker items" ON public.ticker_items FOR SELECT USING (active = true);
-CREATE POLICY "Admin write ticker items" ON public.ticker_items USING (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Admin write ticker items" ON public.ticker_items USING (public.is_admin(auth.uid()));
 
 CREATE POLICY "Public read faqs" ON public.faqs FOR SELECT USING (visible = true);
-CREATE POLICY "Admin write faqs" ON public.faqs USING (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Admin write faqs" ON public.faqs USING (public.is_admin(auth.uid()));
 
 CREATE POLICY "Public read contact info" ON public.contact_info FOR SELECT USING (true);
-CREATE POLICY "Admin write contact info" ON public.contact_info USING (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Admin write contact info" ON public.contact_info USING (public.is_admin(auth.uid()));
 
 -- AUDIT_LOGS Table Policies
-CREATE POLICY "Admins can view audit logs" ON public.audit_logs FOR SELECT USING (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-);
-CREATE POLICY "System/Admins can write audit logs" ON public.audit_logs FOR INSERT WITH CHECK (
-  EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'admin')
-);
+CREATE POLICY "Admins can view audit logs" ON public.audit_logs FOR SELECT USING (public.is_admin(auth.uid()));
+CREATE POLICY "System/Admins can write audit logs" ON public.audit_logs FOR INSERT WITH CHECK (public.is_admin(auth.uid()));
+

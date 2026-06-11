@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Proposal Submission | CSE Fest 2026</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@600;700&family=Geist+Mono:wght@400;500&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Space+Grotesk:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-grid-pattern {
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, rgba(195, 192, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(195, 192, 255, 0.05) 1px, transparent 1px);
+        }
+        .glass-panel {
+            background: rgba(27, 27, 36, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glow-primary:hover {
+            box-shadow: 0 0 15px rgba(79, 70, 229, 0.4);
+        }
+        @keyframes pulse-cyan {
+            0%, 100% { background-color: rgba(6, 182, 212, 0.2); }
+            50% { background-color: rgba(6, 182, 212, 0.5); }
+        }
+        .animate-pulse-cyan {
+            animation: pulse-cyan 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#4f46e5",
+                        "surface-container-low": "#1b1b24",
+                        "secondary-fixed": "#f0dbff",
+                        "on-tertiary-container": "#ffd2be",
+                        "on-primary-container": "#dad7ff",
+                        "surface-tint": "#c3c0ff",
+                        "error": "#ffb4ab",
+                        "surface-container-high": "#2a2933",
+                        "primary": "#c3c0ff",
+                        "on-secondary-fixed": "#2c0051",
+                        "on-secondary-container": "#d6a9ff",
+                        "on-primary": "#1d00a5",
+                        "on-secondary": "#490080",
+                        "outline": "#918fa1",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "on-error": "#690005",
+                        "secondary": "#ddb7ff",
+                        "surface-container-lowest": "#0e0d16",
+                        "surface-container-highest": "#35343e",
+                        "surface-bright": "#393842",
+                        "on-tertiary": "#571f00",
+                        "tertiary-fixed": "#ffdbcc",
+                        "on-surface": "#e4e1ee",
+                        "on-secondary-fixed-variant": "#6900b3",
+                        "error-container": "#93000a",
+                        "inverse-surface": "#e4e1ee",
+                        "surface-dim": "#13121b",
+                        "secondary-container": "#6f00be",
+                        "on-primary-fixed": "#0f0069",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "background": "#13121b",
+                        "on-error-container": "#ffdad6",
+                        "surface-container": "#1f1f28",
+                        "primary-fixed": "#e2dfff",
+                        "tertiary": "#ffb695",
+                        "on-surface-variant": "#c7c4d8",
+                        "tertiary-container": "#a44100",
+                        "on-tertiary-fixed": "#351000",
+                        "on-background": "#e4e1ee",
+                        "secondary-fixed-dim": "#ddb7ff",
+                        "tertiary-fixed-dim": "#ffb695",
+                        "inverse-on-surface": "#302f39",
+                        "surface-variant": "#35343e",
+                        "outline-variant": "#464555",
+                        "surface": "#13121b",
+                        "inverse-primary": "#4d44e3"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "max-width": "1280px",
+                        "margin-mobile": "16px",
+                        "gutter": "24px",
+                        "unit": "4px",
+                        "margin-desktop": "64px"
+                    },
+                    "fontFamily": {
+                        "data-display": ["Geist Mono"],
+                        "headline-xl": ["Space Grotesk"],
+                        "label-sm": ["Inter"],
+                        "headline-lg-mobile": ["Space Grotesk"],
+                        "headline-lg": ["Space Grotesk"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "data-display": ["14px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "headline-xl": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-sm": ["12px", { "lineHeight": "1", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md bg-grid-pattern min-h-screen">
+<!-- TopNavBar (Shared Component JSON Mapping) -->
+<header class="fixed top-0 w-full z-50 bg-surface/60 backdrop-blur-xl border-b border-white/20 shadow-[0_0_15px_rgba(195,192,255,0.1)]">
+<div class="flex justify-between items-center h-16 px-margin-desktop w-full">
+<div class="flex items-center gap-8">
+<span class="font-headline-lg text-headline-lg font-bold text-primary">CSE Fest 2026</span>
+<nav class="hidden md:flex space-x-6">
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-200 cursor-pointer active:scale-95" href="#">Timeline</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-200 cursor-pointer active:scale-95" href="#">Workshops</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-200 cursor-pointer active:scale-95" href="#">Support</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2">notifications</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2">terminal</button>
+<div class="w-10 h-10 rounded-full border border-primary/30 overflow-hidden">
+<img alt="User profile avatar" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEmeQU0JcNwPLliYSiO7tz_TBvB345hn43TZRetRVCoSOUfLJselNCawI_8U01ltYR5omYbxd0gV3osOip0bD3W17DmuDwXKq_YNj-1B3PkznTTwqXKD2HeU61K777ewMyCd_VyCHnWfGacO_SYOkuuQttslFUesqoLK4WRZNJ6Q-hvHxI4ZM8CrLBPyZmE-EstrufDni9LQ_Q5i8vzhLtn3M789YMHQL2nxcM3nuRyN5Wb_kYZp0wAXiYHoPHsmGVHgcklXVtl5ob"/>
+</div>
+</div>
+</div>
+</header>
+<main class="pt-24 pb-32 max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop">
+<!-- Header Section -->
+<div class="mb-12">
+<div class="flex items-center gap-3 mb-2">
+<span class="bg-primary/10 text-primary border border-primary/20 px-3 py-1 rounded text-label-sm font-label-sm tracking-widest uppercase">Console v2.6</span>
+<span class="text-outline text-label-sm font-label-sm">/</span>
+<span class="text-outline text-label-sm font-label-sm">Submissions</span>
+</div>
+<h1 class="font-headline-xl text-headline-xl text-on-surface">Proposal Submission Terminal</h1>
+<p class="text-on-surface-variant mt-2 max-w-2xl">Initialize your project metadata and technical documentation. High-integrity verification is required for all components.</p>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Left Column: Main Form -->
+<div class="lg:col-span-8 space-y-gutter">
+<!-- Submission Form Panel -->
+<section class="glass-panel rounded-xl p-8 space-y-6">
+<div class="flex items-center gap-2 text-primary border-b border-white/10 pb-4 mb-4">
+<span class="material-symbols-outlined">description</span>
+<h2 class="font-headline-lg text-headline-lg">Project Core Metadata</h2>
+</div>
+<div class="space-y-4">
+<div>
+<label class="block text-label-sm font-label-sm text-outline uppercase mb-2">Project Title</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-4 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/50 font-data-display" placeholder="e.g. Distributed Neural Architecture v1.0" type="text"/>
+</div>
+<div>
+<label class="block text-label-sm font-label-sm text-outline uppercase mb-2">Technical Track</label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-4 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all appearance-none font-data-display">
+<option>Select Specialization...</option>
+<option>AI & Machine Learning</option>
+<option>Cyber Security & Cryptography</option>
+<option>Cloud Native Computing</option>
+<option>Web 3.0 & Decentralized Systems</option>
+</select>
+</div>
+<div>
+<label class="block text-label-sm font-label-sm text-outline uppercase mb-2">Executive Summary</label>
+<textarea class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-4 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-outline/50" placeholder="Provide a concise technical overview of the project objectives and methodology..." rows="6"></textarea>
+</div>
+</div>
+</section>
+<!-- File Upload Zone -->
+<section class="glass-panel rounded-xl p-8">
+<div class="flex items-center gap-2 text-primary border-b border-white/10 pb-4 mb-6">
+<span class="material-symbols-outlined">upload_file</span>
+<h2 class="font-headline-lg text-headline-lg">Technical Proposal</h2>
+</div>
+<div class="border-2 border-dashed border-outline-variant hover:border-primary/50 transition-colors rounded-xl p-12 text-center group cursor-pointer relative overflow-hidden">
+<input class="absolute inset-0 opacity-0 cursor-pointer" type="file"/>
+<div class="space-y-4">
+<div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary text-3xl">cloud_upload</span>
+</div>
+<div>
+<p class="font-headline-lg text-on-surface">Drag & Drop Technical PDF</p>
+<p class="text-outline mt-1">Maximum file size: 10MB (Format: PDF or DOCX)</p>
+</div>
+<div class="flex justify-center gap-4 mt-6">
+<span class="px-3 py-1 bg-surface-container-highest rounded text-label-sm font-label-sm text-on-surface">PDF</span>
+<span class="px-3 py-1 bg-surface-container-highest rounded text-label-sm font-label-sm text-on-surface">DOCX</span>
+</div>
+</div>
+</div>
+<!-- Progress Example -->
+<div class="mt-8 space-y-2">
+<div class="flex justify-between text-label-sm font-label-sm uppercase">
+<span class="text-outline">Verification Progress</span>
+<span class="text-primary font-data-display">Ready for Upload</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="w-0 h-full bg-primary transition-all duration-500"></div>
+</div>
+</div>
+</section>
+<!-- Links Section -->
+<section class="glass-panel rounded-xl p-8">
+<div class="flex items-center gap-2 text-primary border-b border-white/10 pb-4 mb-6">
+<span class="material-symbols-outlined">link</span>
+<h2 class="font-headline-lg text-headline-lg">External Repositories</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block text-label-sm font-label-sm text-outline uppercase mb-2">GitHub Repository URL</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">code</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-4 pl-12 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none font-data-display" placeholder="https://github.com/user/project" type="url"/>
+</div>
+</div>
+<div>
+<label class="block text-label-sm font-label-sm text-outline uppercase mb-2">Video Demo Link</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">play_circle</span>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-lg p-4 pl-12 text-on-surface focus:border-primary focus:ring-1 focus:ring-primary outline-none font-data-display" placeholder="https://youtube.com/v/..." type="url"/>
+</div>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Sidebar -->
+<aside class="lg:col-span-4 space-y-gutter">
+<!-- Submission Status -->
+<div class="glass-panel rounded-xl p-6 border-l-4 border-l-secondary">
+<div class="flex justify-between items-start mb-6">
+<div>
+<p class="text-label-sm font-label-sm text-outline uppercase tracking-wider">Current State</p>
+<h3 class="font-headline-lg text-on-surface">DRAFT</h3>
+</div>
+<div class="bg-secondary/10 px-3 py-1 rounded text-secondary animate-pulse-cyan">
+<span class="text-label-sm font-label-sm">Autosaving...</span>
+</div>
+</div>
+<div class="flex items-center gap-3 text-on-surface-variant font-data-display text-sm">
+<span class="material-symbols-outlined text-sm">schedule</span>
+                        Last updated: Feb 12, 2026 - 14:32:01
+                    </div>
+</div>
+<!-- Deadline Countdown -->
+<div class="bg-surface-container-lowest rounded-xl p-6 border border-primary/20 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl"></div>
+<p class="text-label-sm font-label-sm text-outline uppercase mb-4">Time Remaining</p>
+<div class="grid grid-cols-4 gap-2 text-center">
+<div class="bg-surface-container rounded-lg p-2">
+<div class="font-headline-lg text-primary font-data-display">08</div>
+<div class="text-[10px] text-outline uppercase">Days</div>
+</div>
+<div class="bg-surface-container rounded-lg p-2">
+<div class="font-headline-lg text-primary font-data-display">14</div>
+<div class="text-[10px] text-outline uppercase">Hrs</div>
+</div>
+<div class="bg-surface-container rounded-lg p-2">
+<div class="font-headline-lg text-primary font-data-display">52</div>
+<div class="text-[10px] text-outline uppercase">Min</div>
+</div>
+<div class="bg-surface-container rounded-lg p-2">
+<div class="font-headline-lg text-primary font-data-display">19</div>
+<div class="text-[10px] text-outline uppercase">Sec</div>
+</div>
+</div>
+</div>
+<!-- Guidelines Checklist -->
+<div class="glass-panel rounded-xl p-6">
+<h3 class="font-headline-lg text-on-surface mb-6 border-b border-white/10 pb-4">Validation Checklist</h3>
+<ul class="space-y-4">
+<li class="flex items-center gap-3 group">
+<div class="w-5 h-5 rounded border border-primary bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm font-bold">check</span>
+</div>
+<span class="text-on-surface-variant group-hover:text-on-surface transition-colors">PDF Format verification</span>
+</li>
+<li class="flex items-center gap-3 group">
+<div class="w-5 h-5 rounded border border-primary bg-primary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-sm font-bold">check</span>
+</div>
+<span class="text-on-surface-variant group-hover:text-on-surface transition-colors">Max 10MB limit check</span>
+</li>
+<li class="flex items-center gap-3 group">
+<div class="w-5 h-5 rounded border border-outline-variant bg-transparent flex items-center justify-center"></div>
+<span class="text-on-surface-variant group-hover:text-on-surface transition-colors">Architecture Diagram included</span>
+</li>
+<li class="flex items-center gap-3 group">
+<div class="w-5 h-5 rounded border border-outline-variant bg-transparent flex items-center justify-center"></div>
+<span class="text-on-surface-variant group-hover:text-on-surface transition-colors">Technical Track selected</span>
+</li>
+<li class="flex items-center gap-3 group">
+<div class="w-5 h-5 rounded border border-outline-variant bg-transparent flex items-center justify-center"></div>
+<span class="text-on-surface-variant group-hover:text-on-surface transition-colors">Repository access granted</span>
+</li>
+</ul>
+<div class="mt-8 p-4 bg-primary/5 border border-primary/10 rounded-lg">
+<div class="flex items-start gap-2">
+<span class="material-symbols-outlined text-primary text-lg">info</span>
+<p class="text-xs text-on-surface-variant">Incomplete items will prevent final transmission. Ensure all dependencies are verified.</p>
+</div>
+</div>
+</div>
+<!-- Support Card -->
+<div class="p-6 rounded-xl border border-white/5 bg-gradient-to-br from-surface-container-low to-surface-container-lowest">
+<p class="font-headline-lg text-on-surface text-lg">Facing issues?</p>
+<p class="text-sm text-outline mt-2 mb-4">Our technical support team is active on Discord for immediate assistance with terminal errors.</p>
+<button class="w-full py-3 bg-surface-container-high hover:bg-surface-container-highest text-primary border border-primary/20 rounded-lg transition-all flex items-center justify-center gap-2 font-label-sm tracking-wide">
+<span class="material-symbols-outlined text-lg">forum</span>
+                        Join Support Channel
+                    </button>
+</div>
+</aside>
+</div>
+</main>
+<!-- Action Bar: Fixed Bottom -->
+<footer class="fixed bottom-0 left-0 w-full bg-surface/80 backdrop-blur-2xl border-t border-white/10 z-50">
+<div class="max-w-max-width mx-auto px-margin-desktop h-20 flex justify-between items-center">
+<div class="hidden md:flex items-center gap-4 text-outline font-data-display text-sm">
+<span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-primary inline-block"></span> Local Host: 127.0.0.1</span>
+<span class="text-white/10">|</span>
+<span>Session: ACTIVE_ENCRYPTED</span>
+</div>
+<div class="flex items-center gap-4 w-full md:w-auto">
+<button class="flex-1 md:flex-none px-8 py-3 rounded-lg border border-outline-variant text-on-surface hover:bg-white/5 transition-all active:scale-95 font-label-sm tracking-widest uppercase">
+                    Save Draft
+                </button>
+<button class="flex-1 md:flex-none px-12 py-3 rounded-lg bg-primary text-on-primary font-bold shadow-[0_0_15px_rgba(195,192,255,0.4)] hover:shadow-[0_0_25px_rgba(195,192,255,0.6)] transition-all active:scale-95 glow-primary font-label-sm tracking-widest uppercase">
+                    Submit Proposal
+                </button>
+</div>
+</div>
+</footer>
+<script>
+        // Simple Micro-interactions for the form
+        document.querySelectorAll('input, select, textarea').forEach(el => {
+            el.addEventListener('focus', () => {
+                // Potential for more complex animations if needed
+            });
+        });
+
+        // Countdown Logic Example
+        function updateTimer() {
+            // Static for design demo, but could be dynamic
+            const sec = document.querySelectorAll('.font-data-display')[4];
+            if(sec) {
+                let current = parseInt(sec.innerText);
+                current = current <= 0 ? 59 : current - 1;
+                sec.innerText = current.toString().padStart(2, '0');
+            }
+        }
+        setInterval(updateTimer, 1000);
+    </script>
+</body></html>

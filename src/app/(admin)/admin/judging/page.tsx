@@ -2,21 +2,13 @@
 
 import * as React from "react";
 import {
-  Trophy,
-  Award,
-  Search,
   Check,
   X,
   Eye,
   Lock,
   Unlock,
   AlertCircle,
-  Clock,
-  Plus,
   Sliders,
-  ChevronRight,
-  User,
-  Star,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -267,9 +259,9 @@ export default function AdminJudgingPage() {
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
-        <div className="h-10 bg-neutral-900 w-1/3 rounded-radius-sm" />
-        <div className="h-24 bg-neutral-900 w-full rounded-radius-md" />
-        <div className="h-64 bg-neutral-900 w-full rounded-radius-md" />
+        <div className="h-10 bg-neutral-900 w-1/3 rounded-sm" />
+        <div className="h-24 bg-neutral-900 w-full rounded-md" />
+        <div className="h-64 bg-neutral-900 w-full rounded-md" />
       </div>
     );
   }
@@ -289,14 +281,14 @@ export default function AdminJudgingPage() {
 
       {/* Messages */}
       {errorMsg && (
-        <div className="p-4 rounded-radius-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
           <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-4 rounded-radius-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
           <Check className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{successMsg}</span>
         </div>
@@ -316,7 +308,7 @@ export default function AdminJudgingPage() {
                   <select
                     value={selectedCompId}
                     onChange={(e) => setSelectedCompId(e.target.value)}
-                    className="flex h-10 w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                    className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
                   >
                     {competitions.map((c) => (
                       <option key={c.id} value={c.id}>
@@ -350,7 +342,7 @@ export default function AdminJudgingPage() {
                 {dataLoading ? (
                   <div className="p-12 space-y-4 animate-pulse">
                     {[...Array(3)].map((_, idx) => (
-                      <div key={idx} className="h-10 bg-neutral-900 w-full rounded-radius-sm" />
+                      <div key={idx} className="h-10 bg-neutral-900 w-full rounded-sm" />
                     ))}
                   </div>
                 ) : teams.length > 0 ? (

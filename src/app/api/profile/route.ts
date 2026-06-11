@@ -3,6 +3,14 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { checkRateLimit } from "@/lib/utils/rate-limit";
 
+// Normalizes a URL by prepending https:// if no protocol is present
+function normalizeUrl(val: string | undefined): string {
+  if (!val || val.trim() === "") return "";
+  const trimmed = val.trim();
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
 const profileSchema = z.object({
   full_name: z.string().min(2, "Full Name must be at least 2 characters"),
   phone: z.string().min(10, "Phone number must be valid"),
@@ -11,9 +19,29 @@ const profileSchema = z.object({
   department: z.string().min(2, "Department is required"),
   semester: z.string().min(1, "Semester is required"),
   student_id: z.string().min(2, "Student ID is required"),
-  github: z.string().url("Please enter a valid GitHub profile URL").optional().or(z.literal("")),
-  portfolio: z.string().url("Please enter a valid portfolio URL").optional().or(z.literal("")),
-  skills: z.array(z.string()).min(1, "Select at least one skill"),
+  github: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .transform((val) => normalizeUrl(val))
+    .pipe(
+      z.string().refine(
+        (val) => val === "" || z.string().url().safeParse(val).success,
+        "Please enter a valid online profile URL (e.g. github.com/username)"
+      )
+    ),
+  portfolio: z
+    .string()
+    .optional()
+    .or(z.literal(""))
+    .transform((val) => normalizeUrl(val))
+    .pipe(
+      z.string().refine(
+        (val) => val === "" || z.string().url().safeParse(val).success,
+        "Please enter a valid portfolio URL (e.g. mysite.com)"
+      )
+    ),
+  skills: z.string().optional().or(z.literal("")),
   bio: z.string().max(250, "Bio must be under 250 characters").optional().or(z.literal("")),
   tshirt_size: z.string().min(1, "T-shirt size is required"),
 });
@@ -73,7 +101,7 @@ export async function POST(req: Request) {
         student_id: parseResult.data.student_id,
         github: parseResult.data.github || null,
         portfolio: parseResult.data.portfolio || null,
-        skills: parseResult.data.skills,
+        skills: parseResult.data.skills || null,
         bio: parseResult.data.bio || null,
         tshirt_size: parseResult.data.tshirt_size,
         updated_at: new Date().toISOString(),
@@ -97,7 +125,7 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET(req: Request) {
+export async function GET() {
   try {
     const supabase = await createClient();
 

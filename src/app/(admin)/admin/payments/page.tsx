@@ -181,14 +181,14 @@ export default function AdminPaymentsPage() {
 
       {/* Messages */}
       {errorMsg && (
-        <div className="p-4 rounded-radius-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
           <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-4 rounded-radius-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
           <Check className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{successMsg}</span>
         </div>
@@ -235,7 +235,7 @@ export default function AdminPaymentsPage() {
       {loading ? (
         <div className="space-y-4 animate-pulse">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-44 bg-neutral-900 rounded-radius-md" />
+            <div key={i} className="h-44 bg-neutral-900 rounded-md" />
           ))}
         </div>
       ) : filteredPayments.length > 0 ? (
@@ -306,7 +306,7 @@ export default function AdminPaymentsPage() {
                     <div className="text-xxs text-neutral-500 font-semibold uppercase tracking-wide font-sans">
                       Transaction Screenshot
                     </div>
-                    <div className="relative group w-full md:w-48 aspect-video rounded-radius-sm border border-neutral-850 overflow-hidden bg-neutral-950 flex items-center justify-center">
+                    <div className="relative group w-full md:w-48 aspect-video rounded-sm border border-neutral-850 overflow-hidden bg-neutral-950 flex items-center justify-center">
                       <img
                         src={p.screenshot_url}
                         alt="Screenshot Preview"
@@ -378,7 +378,7 @@ export default function AdminPaymentsPage() {
                         }
                         value={reviewNotes}
                         onChange={(e) => setReviewNotes(e.target.value)}
-                        className="flex w-full rounded-radius-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-xs text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
+                        className="flex w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-xs text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none"
                       />
                       <div className="flex justify-end gap-2 text-xs">
                         <Button
@@ -406,7 +406,7 @@ export default function AdminPaymentsPage() {
           })}
         </div>
       ) : (
-        <div className="py-16 text-center border border-dashed border-neutral-800 rounded-radius-md bg-neutral-900/10">
+        <div className="py-16 text-center border border-dashed border-neutral-800 rounded-md bg-neutral-900/10">
           <CreditCard className="h-10 w-10 text-neutral-700 mb-4 mx-auto" />
           <h3 className="font-heading font-semibold text-neutral-300 mb-1">No Payments Found</h3>
           <p className="text-xs text-neutral-500 font-sans max-w-xs mx-auto">
@@ -435,7 +435,7 @@ export default function AdminPaymentsPage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="border border-neutral-800 rounded-radius-md overflow-hidden bg-neutral-950 aspect-16/10 max-h-[75vh] flex items-center justify-center">
+            <div className="border border-neutral-800 rounded-md overflow-hidden bg-neutral-950 aspect-16/10 max-h-[75vh] flex items-center justify-center">
               <img
                 src={zoomImage.url}
                 alt="Payment proof zoom screenshot"

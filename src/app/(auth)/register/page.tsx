@@ -2,14 +2,15 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Terminal, Lock, Mail, ArrowRight, UserCheck } from "lucide-react";
+import { Lock, Mail, ArrowRight, UserCheck, ShieldAlert, CheckCircle2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card, CardContent } from "@/components/ui/Card";
 import { createClient } from "@/lib/supabase/client";
 
 const registerSchema = z
@@ -79,98 +80,156 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-12 bg-neutral-950">
-      {/* Left Column: Branding / Stats */}
-      <div className="hidden lg:flex lg:col-span-5 flex-col justify-between p-12 bg-linear-to-br from-neutral-900 via-neutral-950 to-primary/10 border-r border-neutral-900 relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-pattern opacity-10 pointer-events-none" />
-
-        {/* Header */}
-        <Link href="/" className="flex items-center gap-2 z-10">
-          <Terminal className="h-6 w-6 text-accent" />
-          <span className="font-heading font-bold text-lg tracking-wider text-neutral-50">
-            CSE FEST '26
-          </span>
-        </Link>
-
-        {/* Branding Slogan */}
-        <div className="space-y-4 z-10">
-          <h2 className="text-display-sm font-extrabold font-heading text-neutral-100 leading-tight">
-            Begin Your Journey.
-          </h2>
-          <p className="text-neutral-400 font-sans leading-relaxed">
-            Create your account today. Fill out your academic details, verify your student identity, build your roster team, and register for national-level showcases and contests.
-          </p>
-        </div>
-
-        {/* Footer info */}
-        <div className="text-xs text-neutral-500 font-sans z-10">
-          © {new Date().getFullYear()} Dept of CSE & CSIT, SMUCT.
-        </div>
-      </div>
-
-      {/* Right Column: Register Form */}
-      <div className="lg:col-span-7 flex flex-col justify-center items-center p-6 sm:p-12">
-        <div className="w-full max-w-md space-y-8">
-          <div className="space-y-2 text-center lg:text-left">
-            <h1 className="text-h3 font-heading font-bold text-neutral-50">Create Account</h1>
-            <p className="text-sm text-neutral-400 font-sans">
-              Sign up with your academic email address to join.
-            </p>
+    <div className="min-h-screen bg-background flex flex-col overflow-x-hidden select-text">
+      {/* Top Navbar */}
+      <header className="fixed top-0 w-full z-50 bg-neutral-950/60 backdrop-blur-xl border-b border-neutral-850 h-16">
+        <div className="flex justify-between items-center px-6 md:px-16 max-w-[1280px] mx-auto h-full w-full">
+          <Link href="/" className="font-heading text-lg font-black text-primary tracking-tight">
+            CSE FEST 2026
+          </Link>
+          <div className="hidden md:flex items-center gap-8 text-neutral-400 font-sans text-sm">
+            <Link href="/#about" className="hover:text-primary transition-colors">Events</Link>
+            <Link href="/schedule" className="hover:text-primary transition-colors">Schedule</Link>
+            <Link href="/#faq" className="hover:text-primary transition-colors">FAQ</Link>
           </div>
+          <Link href="/login">
+            <Button className="bg-primary hover:bg-primary/95 text-white text-xs font-bold py-2 px-5 h-auto rounded-lg">
+              Sign In
+            </Button>
+          </Link>
+        </div>
+      </header>
 
-          <Card variant="default" className="p-0 border-0 bg-transparent shadow-none">
-            <CardContent className="p-0 space-y-6">
-              {/* OAuth Trigger */}
-              <Button
-                variant="secondary"
+      {/* Main Split Screen */}
+      <main className="flex-grow flex flex-col md:flex-row pt-16 min-h-[calc(100vh-4rem)]">
+        {/* Left Visual Panel (60%) */}
+        <section className="hidden md:flex relative w-3/5 bg-neutral-950 overflow-hidden items-center justify-center border-r border-neutral-850">
+          <div className="absolute inset-0 bg-grid-pattern opacity-30" />
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-secondary/10 pointer-events-none" />
+          
+          <div className="relative z-10 w-full px-12 flex flex-col items-center text-center">
+            {/* Big Brand Logo */}
+            <div className="mb-12 transform hover:scale-[1.01] transition-transform duration-500">
+              <Image
+                src="/logo of smuct and cse fest combined (for dark mode).png"
+                alt="CSE Fest 2026 Logo"
+                width={384}
+                height={110}
+                priority
+                className="w-96 h-auto object-contain drop-shadow-[0_0_30px_rgba(99,102,241,0.3)]"
+              />
+            </div>
+
+            {/* Technical Stats Grid */}
+            <div className="grid grid-cols-2 gap-6 w-full max-w-lg select-none">
+              <div className="bg-neutral-900/40 backdrop-blur-md border border-neutral-850 p-6 rounded-xl text-left border-l-4 border-l-primary">
+                <div className="font-mono text-primary text-2xl font-black mb-1">5000+</div>
+                <div className="font-sans text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Participants</div>
+              </div>
+              <div className="bg-neutral-900/40 backdrop-blur-md border border-neutral-850 p-6 rounded-xl text-left border-l-4 border-l-tertiary">
+                <div className="font-mono text-tertiary text-2xl font-black mb-1">20+</div>
+                <div className="font-sans text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Tracks</div>
+              </div>
+            </div>
+
+            {/* Floating Code Elements */}
+            <div className="absolute top-20 left-20 bg-neutral-900/50 border border-neutral-850 backdrop-blur-md p-3 rounded-lg rotate-12 opacity-50 select-none">
+              <code className="font-mono text-xs text-primary">git commit -m &quot;innovation&quot;</code>
+            </div>
+            <div className="absolute bottom-20 right-20 bg-neutral-900/50 border border-neutral-850 backdrop-blur-md p-3 rounded-lg -rotate-6 opacity-50 select-none">
+              <code className="font-mono text-xs text-tertiary">npm start fest-2026</code>
+            </div>
+          </div>
+        </section>
+
+        {/* Right Auth Card (40%) */}
+        <section className="w-full md:w-2/5 flex items-center justify-center p-6 md:p-12 relative bg-neutral-900/10">
+          <div className="absolute inset-0 bg-grid-pattern md:hidden opacity-20" />
+          <div className="w-full max-w-md z-10 space-y-8">
+            {/* Auth Tab Toggle */}
+            <div className="flex bg-neutral-900 border border-neutral-850 rounded-lg p-1">
+              <button
+                className="flex-1 py-2 text-center rounded-md text-xs font-bold font-sans transition-all text-neutral-500 hover:text-neutral-300"
+                onClick={() => router.push("/login")}
+              >
+                LOGIN
+              </button>
+              <button
+                className="flex-1 py-2 text-center rounded-md text-xs font-bold font-sans transition-all bg-primary text-white"
+                onClick={() => {}}
+              >
+                SIGN UP
+              </button>
+            </div>
+
+            {/* Register View */}
+            <div className="space-y-6">
+              <div className="text-center md:text-left space-y-2">
+                <h1 className="font-heading text-4xl font-extrabold text-neutral-50 leading-tight">Create Account</h1>
+                <p className="text-neutral-400 font-sans text-sm">Join the command center of innovation.</p>
+              </div>
+
+              {/* Google OAuth Button */}
+              <button
                 type="button"
                 onClick={handleGoogleLogin}
-                className="w-full justify-center gap-2.5 font-sans"
+                className="w-full flex items-center justify-center gap-3 bg-neutral-50 hover:bg-neutral-200 text-neutral-950 font-bold py-3 rounded-lg transition-colors text-sm font-sans cursor-pointer active:scale-[0.98]"
               >
-                <svg className="h-4 w-4 mr-1" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                 </svg>
-                <span>Sign up with Google</span>
-              </Button>
+                <span>Continue with Google</span>
+              </button>
 
-              {/* Separator Divider */}
-              <div className="relative flex items-center justify-center">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-neutral-800" />
-                </div>
-                <span className="relative bg-neutral-950 px-4 text-xs uppercase text-neutral-600 font-sans font-medium">
-                  Or email credentials
-                </span>
+              <div className="flex items-center gap-4 text-neutral-700 select-none">
+                <div className="h-px bg-neutral-800 flex-grow" />
+                <span className="font-sans text-[10px] font-bold uppercase tracking-wider text-neutral-500">OR REGISTER WITH EMAIL</span>
+                <div className="h-px bg-neutral-800 flex-grow" />
               </div>
 
               {/* Register Form */}
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                {errorMsg && (
-                  <div className="p-4 rounded-radius-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium leading-relaxed">
-                    {errorMsg}
-                  </div>
-                )}
-                {successMsg && (
-                  <div className="p-4 rounded-radius-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium leading-relaxed">
-                    {successMsg}
-                  </div>
-                )}
+                <AnimatePresence mode="wait">
+                  {errorMsg && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="p-4 rounded-lg bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2"
+                    >
+                      <ShieldAlert className="h-4.5 w-4.5 shrink-0 mt-0.5" />
+                      <span>{errorMsg}</span>
+                    </motion.div>
+                  )}
+
+                  {successMsg && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      className="p-4 rounded-lg bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2"
+                    >
+                      <CheckCircle2 className="h-4.5 w-4.5 shrink-0 mt-0.5" />
+                      <span>{successMsg}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <div className="space-y-4">
                   <div className="relative">
                     <Input
                       label="Email Address"
                       type="email"
-                      placeholder="name@university.edu.bd"
+                      placeholder="dev@csefest.com"
                       error={errors.email?.message}
                       disabled={loading}
-                      className="pl-10"
+                      className="pl-10 h-11 border-neutral-850 bg-neutral-950/40"
                       {...register("email")}
                     />
-                    <Mail className="absolute left-3.5 top-10 h-4 w-4 text-neutral-600" />
+                    <Mail className="absolute left-3.5 top-[38px] h-4.5 w-4.5 text-neutral-500 pointer-events-none" />
                   </div>
 
                   <div className="relative">
@@ -180,10 +239,10 @@ export default function RegisterPage() {
                       placeholder="••••••••"
                       error={errors.password?.message}
                       disabled={loading}
-                      className="pl-10"
+                      className="pl-10 h-11 border-neutral-850 bg-neutral-950/40"
                       {...register("password")}
                     />
-                    <Lock className="absolute left-3.5 top-10 h-4 w-4 text-neutral-600" />
+                    <Lock className="absolute left-3.5 top-[38px] h-4.5 w-4.5 text-neutral-500 pointer-events-none" />
                   </div>
 
                   <div className="relative">
@@ -193,32 +252,36 @@ export default function RegisterPage() {
                       placeholder="••••••••"
                       error={errors.confirmPassword?.message}
                       disabled={loading}
-                      className="pl-10"
+                      className="pl-10 h-11 border-neutral-850 bg-neutral-950/40"
                       {...register("confirmPassword")}
                     />
-                    <UserCheck className="absolute left-3.5 top-10 h-4 w-4 text-neutral-600" />
+                    <UserCheck className="absolute left-3.5 top-[38px] h-4.5 w-4.5 text-neutral-500 pointer-events-none" />
                   </div>
                 </div>
 
                 <div className="pt-2">
-                  <Button variant="primary" type="submit" isLoading={loading} className="w-full justify-center gap-2">
+                  <Button
+                    type="submit"
+                    isLoading={loading}
+                    className="w-full bg-primary hover:bg-primary/95 text-white py-3 h-auto rounded-lg text-sm font-bold font-sans flex items-center justify-center gap-2 hover:shadow-[0_0_15px_rgba(99,102,241,0.3)] cursor-pointer"
+                  >
                     <span>Sign Up</span>
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-4.5 w-4.5" />
                   </Button>
                 </div>
               </form>
 
-              {/* Footer CTA */}
-              <div className="text-center text-sm font-sans text-neutral-500">
+              <div className="text-center text-xs font-sans text-neutral-500 select-none">
                 Already have an account?{" "}
-                <Link href="/login" className="text-accent font-semibold hover:underline">
+                <Link href="/login" className="text-primary font-bold hover:underline ml-1">
                   Sign In
                 </Link>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            </div>
+          </div>
+        </section>
+      </main>
     </div>
   );
 }
+

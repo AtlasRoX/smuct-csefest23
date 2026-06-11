@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Transaction Terminal | CSE Fest 2026</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Geist+Mono:wght@100..900&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Space+Grotesk:wght@100..900&display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .bg-grid-pattern {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, rgba(195, 192, 255, 0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(195, 192, 255, 0.05) 1px, transparent 1px);
+        }
+        .glass-panel {
+            background: rgba(27, 27, 36, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glow-indigo:hover {
+            box-shadow: 0 0 20px rgba(79, 70, 229, 0.4);
+        }
+        @keyframes pulse-cyan {
+            0%, 100% { background-color: rgba(195, 192, 255, 0.2); }
+            50% { background-color: rgba(195, 192, 255, 0.4); }
+        }
+        .animate-pulse-cyan {
+            animation: pulse-cyan 2s infinite ease-in-out;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                "surface-bright": "#393842",
+                "on-error-container": "#ffdad6",
+                "background": "#13121b",
+                "secondary-fixed-dim": "#ddb7ff",
+                "tertiary": "#ffb695",
+                "tertiary-container": "#a44100",
+                "on-secondary-fixed-variant": "#6900b3",
+                "on-error": "#690005",
+                "secondary-container": "#6f00be",
+                "on-primary-fixed": "#0f0069",
+                "surface-container-low": "#1b1b24",
+                "on-tertiary-fixed": "#351000",
+                "surface-container": "#1f1f28",
+                "primary-container": "#4f46e5",
+                "tertiary-fixed-dim": "#ffb695",
+                "outline": "#918fa1",
+                "surface": "#13121b",
+                "inverse-primary": "#4d44e3",
+                "surface-container-lowest": "#0e0d16",
+                "on-tertiary-fixed-variant": "#7b2f00",
+                "on-surface": "#e4e1ee",
+                "primary-fixed": "#e2dfff",
+                "on-primary-container": "#dad7ff",
+                "on-background": "#e4e1ee",
+                "on-primary": "#1d00a5",
+                "inverse-on-surface": "#302f39",
+                "primary-fixed-dim": "#c3c0ff",
+                "surface-dim": "#13121b",
+                "error-container": "#93000a",
+                "surface-tint": "#c3c0ff",
+                "surface-container-high": "#2a2933",
+                "on-secondary-fixed": "#2c0051",
+                "on-tertiary": "#571f00",
+                "surface-variant": "#35343e",
+                "outline-variant": "#464555",
+                "surface-container-highest": "#35343e",
+                "on-surface-variant": "#c7c4d8",
+                "on-primary-fixed-variant": "#3323cc",
+                "on-tertiary-container": "#ffd2be",
+                "on-secondary": "#490080",
+                "tertiary-fixed": "#ffdbcc",
+                "primary": "#c3c0ff",
+                "on-secondary-container": "#d6a9ff",
+                "error": "#ffb4ab",
+                "inverse-surface": "#e4e1ee",
+                "secondary-fixed": "#f0dbff",
+                "secondary": "#ddb7ff"
+              },
+              "fontFamily": {
+                "label-sm": ["Inter"],
+                "headline-xl": ["Space Grotesk"],
+                "headline-lg": ["Space Grotesk"],
+                "body-md": ["Inter"],
+                "headline-lg-mobile": ["Space Grotesk"],
+                "data-display": ["Geist Mono"]
+              }
+            }
+          }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background font-body-md bg-grid-pattern min-h-screen">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 border-b border-white/20 bg-surface/60 backdrop-blur-xl shadow-[0_0_15px_rgba(195,192,255,0.1)]">
+<div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 w-full max-w-max-width mx-auto">
+<div class="flex items-center gap-8">
+<span class="font-headline-lg text-headline-lg font-bold text-primary tracking-tight">CSE Fest 2026</span>
+<nav class="hidden md:flex items-center gap-6">
+<a class="font-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Events</a>
+<a class="font-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Schedule</a>
+<a class="font-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Leaderboard</a>
+<a class="font-body-md text-on-surface-variant hover:text-on-surface transition-colors" href="#">Support</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-on-surface-variant hover:bg-white/10 rounded-full transition-all active:scale-95">
+<span class="material-symbols-outlined">account_balance_wallet</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:bg-white/10 rounded-full transition-all active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hidden md:block bg-primary-container text-on-primary-container px-6 py-2 rounded-xl font-bold active:scale-95 transition-transform">
+                    Register
+                </button>
+<div class="w-10 h-10 rounded-full border border-primary/30 overflow-hidden">
+<img alt="User Profile Avatar" class="w-full h-auto" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACupPkmamPo5VaFtRyxhOIs10xNFpKN9f0RH57ALO2fbfMhSbwHWkRvd3Kk6b_woLJUFblgUu6FWhXqgqcaOq1a5FJTsD12QO__juLaGEuxZUMt8HIfT4Ski2k1PYANqg6oCe4tiyn_ZR5a2VvtkZV1pZXp2q_m-R5Hl7GDK-7pnmg6Bdqo1qK1V56d78Q9lU6TvYxtx1pdu5WMmsrTQyxu5yyzoHUTVWVRC4RpeoNfpSQF5dcRvq_Pj-n4hHdJLUiTvE4ILGHCnG_"/>
+</div>
+</div>
+</div>
+</header>
+<div class="flex pt-[73px] min-h-screen">
+<!-- SideNavBar -->
+<aside class="hidden lg:flex flex-col h-[calc(100vh-73px)] w-64 border-r border-white/10 bg-surface-container-low/80 backdrop-blur-lg p-4 gap-2 sticky top-[73px]">
+<div class="mb-6 px-2">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">Command Center</h2>
+<p class="font-label-sm text-label-sm text-on-surface-variant">User Terminal v2.0</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/50 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container font-bold rounded-xl" href="#">
+<span class="material-symbols-outlined">payments</span>
+<span class="font-body-md">Payments</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/50 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined">confirmation_number</span>
+<span class="font-body-md">Tickets</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/50 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-body-md">Team</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-variant/50 rounded-xl transition-all" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Settings</span>
+</a>
+</nav>
+<div class="mt-auto space-y-1 pt-4 border-t border-white/5">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="font-label-sm">Help</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:text-primary transition-all" href="#">
+<span class="material-symbols-outlined">logout</span>
+<span class="font-label-sm">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 px-margin-mobile md:px-margin-desktop py-8 max-w-6xl mx-auto w-full">
+<header class="mb-10">
+<h1 class="font-headline-xl text-headline-xl text-on-surface flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-4xl">terminal</span>
+                    Transaction Terminal
+                </h1>
+<p class="text-on-surface-variant mt-2 max-w-2xl font-body-md">Secure payment gateway for CSE Fest 2026. Complete your registration by finalizing the transaction through our verified channels.</p>
+</header>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter">
+<!-- Left Column: Summary & Payment -->
+<div class="lg:col-span-8 space-y-8">
+<!-- Transaction Summary -->
+<section class="glass-panel rounded-xl overflow-hidden">
+<div class="bg-primary/10 px-6 py-4 border-b border-white/10 flex justify-between items-center">
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-primary">Invoice #2026-X84J9</h3>
+<span class="font-data-display text-data-display bg-surface px-3 py-1 rounded border border-primary/20">STATUS: PENDING</span>
+</div>
+<div class="p-6 space-y-4">
+<div class="flex justify-between items-center py-2 border-b border-white/5">
+<div>
+<p class="font-bold text-on-surface">Hackathon 4.0 Entry Fee</p>
+<p class="text-on-surface-variant font-label-sm">Premium Track - Team Access</p>
+</div>
+<span class="font-data-display text-data-display">BDT 1,200.00</span>
+</div>
+<div class="flex justify-between items-center py-2 border-b border-white/5">
+<div>
+<p class="font-bold text-on-surface">Team Phoenix - 4 Members</p>
+<p class="text-on-surface-variant font-label-sm">Identity Badge & Kit (4 x BDT 150)</p>
+</div>
+<span class="font-data-display text-data-display">BDT 600.00</span>
+</div>
+<div class="flex justify-between items-center pt-4">
+<span class="text-on-surface-variant">Subtotal</span>
+<span class="font-data-display text-data-display">BDT 1,800.00</span>
+</div>
+<div class="flex justify-between items-center">
+<span class="text-on-surface-variant">Platform Service Tax (5%)</span>
+<span class="font-data-display text-data-display">BDT 90.00</span>
+</div>
+<div class="mt-6 p-4 bg-surface rounded-lg border-2 border-primary/20 flex justify-between items-center">
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">TOTAL AMOUNT</span>
+<span class="font-data-display text-3xl font-bold text-primary">BDT 1,890.00</span>
+</div>
+</div>
+</section>
+<!-- Payment Method Selection -->
+<section>
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-4">Select Payment Method</h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div class="payment-card glass-panel p-6 rounded-xl cursor-pointer hover:border-primary transition-all group glow-indigo border-2 border-transparent" onclick="selectMethod('wallet')">
+<div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary">account_balance_wallet</span>
+</div>
+<h4 class="font-bold mb-1">Digital Wallet</h4>
+<p class="text-on-surface-variant font-label-sm">bKash, Nagad, Rocket</p>
+</div>
+<div class="payment-card glass-panel p-6 rounded-xl cursor-pointer hover:border-primary transition-all group glow-indigo border-2 border-primary" onclick="selectMethod('card')">
+<div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary">credit_card</span>
+</div>
+<h4 class="font-bold mb-1">Credit/Debit Card</h4>
+<p class="text-on-surface-variant font-label-sm">Visa, Mastercard, Amex</p>
+</div>
+<div class="payment-card glass-panel p-6 rounded-xl cursor-pointer hover:border-primary transition-all group glow-indigo border-2 border-transparent" onclick="selectMethod('bank')">
+<div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-primary">account_balance</span>
+</div>
+<h4 class="font-bold mb-1">Bank Transfer</h4>
+<p class="text-on-surface-variant font-label-sm">BFTN, EFT, Wire</p>
+</div>
+</div>
+</section>
+<!-- Transaction Details Form -->
+<section class="glass-panel p-8 rounded-xl">
+<div class="mb-6" id="method-title">
+<h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Card Information</h3>
+<p class="text-on-surface-variant">Enter your credit or debit card details to proceed.</p>
+</div>
+<form class="space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="font-label-sm text-on-surface-variant">CARDHOLDER NAME</label>
+<input class="w-full bg-background border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-lg px-4 py-3 outline-none text-on-surface transition-all" placeholder="John Doe" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="font-label-sm text-on-surface-variant">CARD NUMBER</label>
+<input class="w-full bg-background border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary rounded-lg px-4 py-3 outline-none text-on-surface font-data-display transition-all" placeholder="**** **** **** 1234" type="text"/>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-6">
+<div class="space-y-2 col-span-2">
+<label class="font-label-sm text-on-surface-variant">EXPIRY DATE</label>
+<div class="flex gap-2">
+<input class="w-1/2 bg-background border border-outline-variant focus:border-primary rounded-lg px-4 py-3 outline-none text-on-surface font-data-display" placeholder="MM" type="text"/>
+<input class="w-1/2 bg-background border border-outline-variant focus:border-primary rounded-lg px-4 py-3 outline-none text-on-surface font-data-display" placeholder="YY" type="text"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="font-label-sm text-on-surface-variant">CVV</label>
+<input class="w-full bg-background border border-outline-variant focus:border-primary rounded-lg px-4 py-3 outline-none text-on-surface font-data-display" placeholder="***" type="password"/>
+</div>
+</div>
+</form>
+</section>
+</div>
+<!-- Right Column: Security & Verification -->
+<div class="lg:col-span-4 space-y-6">
+<div class="glass-panel p-6 rounded-xl border-l-4 border-primary">
+<div class="flex items-start gap-4">
+<div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary" data-weight="fill">verified_user</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Secure SSL Encryption</h4>
+<p class="text-on-surface-variant font-label-sm mt-1 leading-relaxed">Your transaction data is encrypted with 256-bit SSL protocols. We do not store full card numbers on our servers.</p>
+</div>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-xl border-l-4 border-secondary">
+<div class="flex items-start gap-4">
+<div class="w-10 h-10 bg-secondary/20 rounded-full flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-secondary">flash_on</span>
+</div>
+<div>
+<h4 class="font-bold text-on-surface">Instant Verification</h4>
+<p class="text-on-surface-variant font-label-sm mt-1 leading-relaxed">Payments are processed in real-time. Your registration status will update immediately upon successful confirmation.</p>
+</div>
+</div>
+</div>
+<div class="glass-panel p-6 rounded-xl relative overflow-hidden group">
+<div class="absolute inset-0 bg-primary/5 opacity-50 group-hover:opacity-100 transition-opacity"></div>
+<h4 class="font-bold text-on-surface relative z-10 mb-2">Need Assistance?</h4>
+<p class="text-on-surface-variant font-label-sm relative z-10 mb-4">Contact our technical support desk for any payment issues.</p>
+<button class="w-full bg-surface-variant py-2 rounded-lg font-label-sm hover:bg-primary hover:text-on-primary transition-all relative z-10">Open Support Ticket</button>
+</div>
+<div class="glass-panel rounded-xl overflow-hidden h-48 relative">
+<img class="w-full h-full object-cover opacity-40" data-alt="A high-tech server room background with glowing blue and violet fiber optic cables, representing high-speed secure networking and data processing. The scene is shot with a shallow depth of field, emphasizing the futuristic tech environment. The color palette is dominated by dark navies and neon cyan accents, perfectly matching a cyber-tech professional aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBcC0WVsCS8K9EP32pfprRQAd0c2GO08Vs8TVQhXNziUia8xG2y6DM-mTRNbbvuCRBM9-5Eu-AfJ488bfUqqmiZMCBT4tyaLSOk_uW_WV_fauRwq31XJvpI9SsYqRmxszQALjHdlbstfuNOmJot-bzsckOlPZKokE92J0tRWrop7Z3vZuDg1qDBaF3k4JeRssTPE1Wt9bPl6ypAimpOy_KrU9DCy00Xm8f5Unh5Daxj0--KlBSaJCWKhZzNsE_g_h3UgvTw2DJxd3Xe"/>
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center p-6 bg-gradient-to-t from-background to-transparent">
+<span class="animate-pulse-cyan text-primary px-3 py-1 rounded-full text-xs font-bold mb-2">NETWORK SECURE</span>
+<p class="font-data-display text-xs text-on-surface-variant uppercase tracking-widest">Global Node: DHK-SVR-01</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Footer -->
+<footer class="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-6">
+<p class="font-label-sm text-on-surface-variant flex items-center gap-2">
+<span class="material-symbols-outlined text-xs">info</span>
+                    Transaction is subject to CSE Fest 2026 Terms of Service.
+                </p>
+<div class="flex flex-wrap gap-4 w-full md:w-auto">
+<button class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-8 py-3 rounded-xl border border-primary/40 text-primary hover:bg-primary/10 transition-all active:scale-95">
+<span class="material-symbols-outlined">download</span>
+                        Download Invoice Draft
+                    </button>
+<button class="flex-1 md:flex-initial flex items-center justify-center gap-2 px-12 py-3 rounded-xl bg-primary text-on-primary font-bold shadow-[0_0_15px_rgba(195,192,255,0.4)] hover:shadow-[0_0_25px_rgba(195,192,255,0.6)] transition-all active:scale-95 group">
+                        Proceed to Pay
+                        <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</div>
+</footer>
+</main>
+</div>
+<!-- Global Footer -->
+<footer class="bg-surface-container-lowest w-full py-8 border-t border-outline-variant">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-mobile md:px-margin-desktop w-full max-w-max-width mx-auto">
+<div class="mb-4 md:mb-0">
+<span class="text-primary font-bold">CSE Fest 2026</span>
+<p class="font-label-sm text-on-surface-variant mt-1">© 2026 Department of Computer Science & Engineering. Built for the future.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-6">
+<a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Code of Conduct</a>
+<a class="font-label-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Contact Us</a>
+</div>
+</div>
+</footer>
+<script>
+        function selectMethod(method) {
+            // Remove border from all cards
+            document.querySelectorAll('.payment-card').forEach(card => {
+                card.classList.remove('border-primary');
+                card.classList.add('border-transparent');
+            });
+            
+            // Add border to active card
+            const target = event.currentTarget;
+            target.classList.remove('border-transparent');
+            target.classList.add('border-primary');
+
+            // Dynamic header update
+            const title = document.getElementById('method-title');
+            if(method === 'wallet') {
+                title.innerHTML = `
+                    <h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Digital Wallet</h3>
+                    <p class="text-on-surface-variant">Please provide your wallet transaction ID for verification.</p>
+                `;
+            } else if(method === 'card') {
+                title.innerHTML = `
+                    <h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Card Information</h3>
+                    <p class="text-on-surface-variant">Enter your credit or debit card details to proceed.</p>
+                `;
+            } else {
+                title.innerHTML = `
+                    <h3 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">Bank Transfer Details</h3>
+                    <p class="text-on-surface-variant">Complete the transfer via your bank portal and upload the receipt.</p>
+                `;
+            }
+        }
+    </script>
+</body></html>
