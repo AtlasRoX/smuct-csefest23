@@ -14,6 +14,7 @@ import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface SubmissionItem {
   id: string;
@@ -44,6 +45,7 @@ export default function AdminSubmissionsPage() {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [statusFilter, setStatusFilter] = React.useState<string>("all");
   const [refreshTrigger, setRefreshTrigger] = React.useState(0);
+  const [mutatingState, setMutatingState] = React.useState<{ id: string; status: string } | null>(null);
 
   React.useEffect(() => {
     let active = true;
@@ -79,6 +81,7 @@ export default function AdminSubmissionsPage() {
   const handleStatusUpdate = async (submissionId: string, status: "under_review" | "selected" | "rejected") => {
     setErrorMsg(null);
     setSuccessMsg(null);
+    setMutatingState({ id: submissionId, status });
     try {
       const res = await fetch("/api/admin/submissions", {
         method: "POST",
@@ -94,6 +97,8 @@ export default function AdminSubmissionsPage() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "An error occurred.";
       setErrorMsg(errorMessage);
+    } finally {
+      setMutatingState(null);
     }
   };
 
@@ -115,42 +120,58 @@ export default function AdminSubmissionsPage() {
   });
 
   return (
-    <div className="space-y-8">
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-8 animate-fade-in"
+    >
       {/* Header */}
-      <div>
-        <h1 className="text-h3 font-heading font-bold text-neutral-50">Project Proposals Queue</h1>
-        <p className="text-sm text-neutral-400 font-sans mt-1">
-          Review project descriptions and docs from team rosters and evaluate their selection status.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-neutral-850 pb-5">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <Send className="h-4.5 w-4.5 text-neutral-550" />
+            <span className="text-xs font-mono text-neutral-500 uppercase tracking-widest">Admin Panel</span>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-heading font-bold text-neutral-50 tracking-tight">Project Proposals Queue</h1>
+          <p className="text-xs text-neutral-400 font-sans mt-1">
+            Review project descriptions and docs from team rosters and evaluate their selection status.
+          </p>
+        </div>
       </div>
 
       {/* Messages */}
-      {errorMsg && (
-        <div className="p-4 rounded-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
-          <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
-          <span>{errorMsg}</span>
-        </div>
-      )}
-
-      {successMsg && (
-        <div className="p-4 rounded-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
-          <Check className="h-4.5 w-4.5 shrink-0 mt-0.5" />
-          <span>{successMsg}</span>
-        </div>
-      )}
+      <AnimatePresence mode="wait">
+        {errorMsg && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="p-4 rounded bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2"
+          >
+            <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
+            <span>{errorMsg}</span>
+          </motion.div>
+        )}
+        {successMsg && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="p-4 rounded bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2"
+          >
+            <Check className="h-4.5 w-4.5 shrink-0 mt-0.5" />
+            <span>{successMsg}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Search and Filters */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-neutral-850 pb-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         {/* Tabs */}
-        <div className="flex flex-wrap gap-2 sm:gap-4">
+        <div className="flex items-center gap-1 bg-neutral-900/60 border border-neutral-850 rounded-lg p-1 flex-wrap backdrop-blur-md">
           {["all", "submitted", "under_review", "selected", "rejected"].map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              className={`py-2 px-3 text-xs font-semibold tracking-wide font-sans capitalize transition-colors border-b-2 outline-none ${
+              className={`py-1.5 px-3 text-xs font-semibold tracking-wide font-sans capitalize rounded-md transition-all duration-155 cursor-pointer outline-none ${
                 statusFilter === status
-                  ? "border-accent text-accent"
-                  : "border-transparent text-neutral-400 hover:text-neutral-200"
+                  ? "bg-neutral-800 text-neutral-50 shadow-sm"
+                  : "text-neutral-550 hover:text-neutral-300"
               }`}
             >
               {status.replace("_", " ")}
@@ -164,127 +185,148 @@ export default function AdminSubmissionsPage() {
             placeholder="Search team, proposal title..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9"
+            className="w-full pl-9 h-9.5 text-xs bg-neutral-950 border-neutral-800/80 focus:border-neutral-700"
           />
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500 pointer-events-none" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-500 pointer-events-none" />
         </div>
       </div>
 
       {/* Grid Submissions List */}
       {loading ? (
-        <div className="space-y-4 animate-pulse">
+        <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-40 bg-neutral-900 rounded-md" />
+            <div key={i} className="h-44 bg-neutral-800/20 rounded-lg border border-neutral-800/60 animate-pulse" />
           ))}
         </div>
       ) : filteredSubmissions.length > 0 ? (
-        <div className="space-y-6">
-          {filteredSubmissions.map((s) => (
-            <Card key={s.id} variant="default" className="border-neutral-800/80 p-6 space-y-4">
-              <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xxs font-semibold font-mono text-accent uppercase tracking-wide">
-                      {s.competitions?.name} ({s.competitions?.type})
-                    </span>
-                    <Badge
-                      variant={
-                        s.status === "selected"
-                          ? "success"
-                          : s.status === "rejected"
-                          ? "error"
-                          : s.status === "under_review"
-                          ? "primary"
-                          : "neutral"
-                      }
-                      className="capitalize"
-                    >
-                      {s.status.replace("_", " ")}
-                    </Badge>
+        <div className="space-y-4">
+          {filteredSubmissions.map((s, idx) => (
+            <motion.div
+              key={s.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.03 }}
+            >
+              <Card variant="glass" className="border-neutral-800/40 bg-neutral-900/10 hover:border-neutral-700/60 transition-all duration-150 p-5 rounded-lg space-y-4">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-bold font-mono text-neutral-500 uppercase tracking-widest">
+                        {s.competitions?.name}
+                      </span>
+                      <span className="text-[10px] font-mono text-neutral-600 uppercase tracking-widest">
+                        • {s.competitions?.type}
+                      </span>
+                      <Badge
+                        variant={
+                          s.status === "selected"
+                            ? "success"
+                            : s.status === "rejected"
+                            ? "error"
+                            : s.status === "under_review" || s.status === "submitted"
+                            ? "warning"
+                            : "neutral"
+                        }
+                        className="capitalize text-[10px] py-0.5 px-2 font-semibold tracking-wider font-mono rounded"
+                      >
+                        {s.status.replace("_", " ")}
+                      </Badge>
+                    </div>
+                    <h3 className="text-sm font-heading font-bold text-neutral-100 leading-tight mt-1">
+                      {s.title}
+                    </h3>
+                    <p className="text-xs text-neutral-400 font-sans">
+                      Submitted by Team: <span className="text-neutral-200 font-semibold">{s.teams?.name || "N/A"}</span>
+                    </p>
                   </div>
-                  <h3 className="text-base font-heading font-semibold text-neutral-100">
-                    {s.title}
-                  </h3>
-                  <p className="text-xs text-neutral-400 font-sans">
-                    Submitted by Team: <span className="text-neutral-200 font-semibold">{s.teams?.name || "N/A"}</span>
-                  </p>
-                </div>
 
-                {/* Actions */}
-                <div className="flex sm:flex-col lg:flex-row gap-2 shrink-0">
-                  {s.status === "submitted" && (
-                    <Button
-                      variant="secondary"
-                      onClick={() => handleStatusUpdate(s.id, "under_review")}
-                      className="text-xs py-1.5 px-3 flex items-center gap-1.5"
-                    >
-                      <Clock className="h-3.5 w-3.5" />
-                      <span>Mark Reviewing</span>
-                    </Button>
-                  )}
-                  {s.status !== "selected" && (
-                    <Button
-                      variant="primary"
-                      onClick={() => handleStatusUpdate(s.id, "selected")}
-                      className="text-xs py-1.5 px-3 flex items-center gap-1.5 bg-success hover:bg-success/90 border-success"
-                    >
-                      <Check className="h-3.5 w-3.5" />
-                      <span>Select Team</span>
-                    </Button>
-                  )}
-                  {s.status !== "rejected" && (
-                    <Button
-                      variant="secondary"
-                      onClick={() => handleStatusUpdate(s.id, "rejected")}
-                      className="text-xs py-1.5 px-3 flex items-center gap-1.5 hover:border-error hover:text-error"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                      <span>Reject Proposal</span>
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {/* Proposal Document Link & Notes */}
-              <div className="pt-4 border-t border-neutral-850 space-y-3 font-sans">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="text-xs text-neutral-500 font-semibold uppercase tracking-wide">
-                    Google Docs Proposal
+                  {/* Actions */}
+                  <div className="flex sm:flex-col lg:flex-row gap-2 shrink-0 self-start">
+                    {s.status === "submitted" && (
+                      <Button
+                        variant="secondary"
+                        onClick={() => handleStatusUpdate(s.id, "under_review")}
+                        isLoading={mutatingState?.id === s.id && mutatingState?.status === "under_review"}
+                        disabled={!!mutatingState}
+                        className="text-xs py-1.5 px-3 rounded border border-neutral-850 hover:border-neutral-700 bg-neutral-950 text-neutral-300"
+                      >
+                        <Clock className="h-3.5 w-3.5" />
+                        <span>Mark Reviewing</span>
+                      </Button>
+                    )}
+                    {s.status !== "selected" && (
+                      <Button
+                        variant="success"
+                        onClick={() => handleStatusUpdate(s.id, "selected")}
+                        isLoading={mutatingState?.id === s.id && mutatingState?.status === "selected"}
+                        disabled={!!mutatingState}
+                        className="text-xs py-1.5 px-3 rounded border border-success/20 hover:scale-[1.01] transition-transform"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                        <span>Select Team</span>
+                      </Button>
+                    )}
+                    {s.status !== "rejected" && (
+                      <Button
+                        variant="destructive"
+                        onClick={() => handleStatusUpdate(s.id, "rejected")}
+                        isLoading={mutatingState?.id === s.id && mutatingState?.status === "rejected"}
+                        disabled={!!mutatingState}
+                        className="text-xs py-1.5 px-3 rounded border border-error/20 hover:scale-[1.01] transition-transform"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                        <span>Reject Proposal</span>
+                      </Button>
+                    )}
                   </div>
-                  <a
-                    href={s.google_docs_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs text-accent hover:underline flex items-center gap-1"
-                  >
-                    <span>Open Proposal Document</span>
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </a>
                 </div>
 
-                {s.notes && (
-                  <div className="p-3 bg-neutral-950 rounded-sm border border-neutral-850/60 text-xs">
-                    <div className="font-semibold text-neutral-400 mb-1">Roster Technical Notes:</div>
-                    <p className="text-neutral-300 leading-relaxed whitespace-pre-wrap">{s.notes}</p>
+                {/* Proposal Document Link & Notes */}
+                <div className="pt-4 border-t border-neutral-850 space-y-4 font-sans">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-neutral-950/30 p-3 rounded border border-neutral-850/60">
+                    <div className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="w-1 h-1 rounded-full bg-neutral-600" />
+                      Google Docs Proposal
+                    </div>
+                    <a
+                      href={s.google_docs_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs text-neutral-300 hover:text-neutral-50 hover:underline flex items-center gap-1.5 font-semibold transition-colors group"
+                    >
+                      <span>Open Proposal Document</span>
+                      <ExternalLink className="h-3.5 w-3.5 text-neutral-500 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                    </a>
                   </div>
-                )}
 
-                <div className="text-xxs text-neutral-500 pt-1">
-                  Submitted at: {new Date(s.submitted_at).toLocaleString()}
+                  {s.notes && (
+                    <div className="p-3 bg-neutral-950/20 rounded border border-neutral-850/60 text-xs shadow-inner">
+                      <div className="font-semibold text-neutral-550 mb-1 flex items-center gap-1.5">
+                        <span className="w-1 h-1 rounded-full bg-neutral-600" />
+                        Roster Technical Notes:
+                      </div>
+                      <p className="text-neutral-300 leading-relaxed whitespace-pre-wrap font-sans">{s.notes}</p>
+                    </div>
+                  )}
+
+                  <div className="text-[10px] text-neutral-600 pt-1 flex items-center justify-between font-mono">
+                    <span>ID: {s.id}</span>
+                    <span>Submitted: {new Date(s.submitted_at).toLocaleString()}</span>
+                  </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            </motion.div>
           ))}
         </div>
       ) : (
-        <div className="py-16 text-center border border-dashed border-neutral-800 rounded-md bg-neutral-900/10">
-          <Send className="h-10 w-10 text-neutral-700 mb-4 mx-auto" />
-          <h3 className="font-heading font-semibold text-neutral-300 mb-1">No Proposals Found</h3>
-          <p className="text-xs text-neutral-500 font-sans max-w-xs mx-auto">
+        <div className="py-20 text-center border border-dashed border-neutral-800/80 rounded-xl bg-neutral-900/10">
+          <Send className="h-8 w-8 text-neutral-700 mb-4 mx-auto" />
+          <h3 className="font-heading font-semibold text-neutral-300 mb-1 text-sm">No Proposals Found</h3>
+          <p className="text-xs text-neutral-500 font-sans max-w-xs mx-auto leading-relaxed">
             There are no submissions matching this status or query.
           </p>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

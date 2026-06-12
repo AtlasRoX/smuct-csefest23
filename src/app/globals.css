@@ -29,6 +29,22 @@
   --shadow-2-opacity: 0.12;
   --shadow-3-opacity: 0.15;
   --shadow-4-glow: rgba(99, 102, 241, 0.08);
+
+  /* Sales CRM Theme Tokens (Light Mode) */
+  --sidebar-bg: rgb(250, 250, 250);
+  --sidebar-fg: rgb(63, 63, 70);
+  --sidebar-border: rgb(226, 232, 240);
+  --sidebar-accent: rgb(244, 244, 245);
+  --sidebar-accent-fg: rgb(24, 24, 27);
+  --crm-bg: rgb(255, 255, 255);
+  --crm-fg: rgb(2, 8, 23);
+  --crm-card: rgb(255, 255, 255);
+  --crm-border: rgb(226, 232, 240);
+  --crm-input: rgb(226, 232, 240);
+  --crm-muted: rgb(241, 245, 249);
+  --crm-muted-fg: rgb(100, 116, 139);
+  --crm-primary: rgb(37, 99, 235);
+  --crm-primary-fg: rgb(248, 250, 252);
 }
 
 .dark {
@@ -58,6 +74,22 @@
   --shadow-2-opacity: 0.5;
   --shadow-3-opacity: 0.6;
   --shadow-4-glow: rgba(99, 102, 241, 0.2);
+
+  /* Sales CRM Theme Tokens (Dark Mode Override) */
+  --sidebar-bg: rgb(9, 9, 11);
+  --sidebar-fg: rgb(161, 161, 170);
+  --sidebar-border: rgb(39, 39, 42);
+  --sidebar-accent: rgb(24, 24, 27);
+  --sidebar-accent-fg: rgb(250, 250, 250);
+  --crm-bg: rgb(9, 9, 11);
+  --crm-fg: rgb(250, 250, 250);
+  --crm-card: rgb(20, 20, 23);
+  --crm-border: rgb(39, 39, 42);
+  --crm-input: rgb(39, 39, 42);
+  --crm-muted: rgb(24, 24, 27);
+  --crm-muted-fg: rgb(161, 161, 170);
+  --crm-primary: rgb(59, 130, 246); /* lighter blue for dark mode */
+  --crm-primary-fg: rgb(248, 250, 252);
 }
 
 @theme {
@@ -67,7 +99,8 @@
   --font-mono: var(--font-geist-mono), monospace;
 
   /* Theme color palette */
-  --color-primary: hsl(243, 75%, 59%);
+  --color-primary: var(--crm-primary);
+  --color-primary-foreground: var(--crm-primary-fg);
   --color-secondary: hsl(270, 95%, 60%);
   --color-tertiary: var(--accent-color);
   --color-accent: var(--accent-color);
@@ -77,8 +110,20 @@
   --color-gold: hsl(43, 96%, 56%);
   --color-silver: hsl(240, 5%, 65%);
   --color-bronze: hsl(25, 60%, 45%);
-  --color-background: var(--neutral-950);
-  --color-on-background: var(--neutral-50);
+  --color-background: var(--crm-bg);
+  --color-foreground: var(--crm-fg);
+  --color-on-background: var(--crm-fg);
+  --color-sidebar: var(--sidebar-bg);
+  --color-sidebar-foreground: var(--sidebar-fg);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-fg);
+  --color-border: var(--crm-border);
+  --color-input: var(--crm-input);
+  --color-muted: var(--crm-muted);
+  --color-muted-foreground: var(--crm-muted-fg);
+  --color-card: var(--crm-card);
+  --color-card-foreground: var(--crm-fg);
 
   /* Neutrals mapped to CSS variables */
   --color-neutral-950: var(--neutral-950);
@@ -138,6 +183,9 @@
   --animate-border-glow: border-glow 3s ease-in-out infinite;
   --animate-slide-down: slide-down 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
   --animate-timeline-pulse: timeline-pulse 2.5s ease-in-out infinite;
+  --animate-blob: blob 10s ease-in-out infinite;
+  --animate-float-3d: float-3d 6s ease-in-out infinite;
+  --animate-float-3d-delayed: float-3d 6s ease-in-out 3s infinite;
 
   @keyframes fade-in {
     from { opacity: 0; transform: translateY(8px); }
@@ -206,6 +254,18 @@
     0%, 100% { opacity: 0.15; }
     50% { opacity: 0.55; }
   }
+
+  @keyframes float-3d {
+    0%, 100% { transform: translateY(0) rotateX(60deg) rotateZ(45deg); }
+    50% { transform: translateY(-16px) rotateX(60deg) rotateZ(45deg); }
+  }
+
+  @keyframes blob {
+    0% { transform: translate(0px, 0px) scale(1); }
+    33% { transform: translate(30px, -50px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+    100% { transform: translate(0px, 0px) scale(1); }
+  }
 }
 
 @utility font-heading {
@@ -216,6 +276,7 @@
   /* Smooth scrolling across the entire app */
   html {
     scroll-behavior: smooth;
+    overflow-x: hidden;
   }
 
   body {
@@ -224,6 +285,7 @@
     font-family: var(--font-sans);
     /* Minimum supported width — prevents layout collapse below 320px */
     min-width: 320px;
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -453,4 +515,53 @@
 @utility section-top-accent {
   background: linear-gradient(to right, transparent, rgba(99, 102, 241, 0.35), rgba(139, 92, 246, 0.25), transparent);
   height: 1px;
+}
+
+/* ─── 3D Perspective and Custom Utilities ────────────────────────── */
+@utility perspective-1000 {
+  perspective: 1000px;
+}
+
+@utility perspective-500 {
+  perspective: 500px;
+}
+
+@utility transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+@utility translate-z-32 {
+  transform: translateZ(32px);
+}
+
+@utility -translate-z-32 {
+  transform: translateZ(-32px);
+}
+
+@utility animate-blob {
+  animation: var(--animate-blob);
+}
+
+@utility animate-float-3d {
+  animation: var(--animate-float-3d);
+}
+
+@utility animate-float-3d-delayed {
+  animation: var(--animate-float-3d-delayed);
+}
+
+/* ─── Custom scrollbar for dark mode ──────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--neutral-950);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--neutral-800);
+  border-radius: var(--radius-sm);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
 }

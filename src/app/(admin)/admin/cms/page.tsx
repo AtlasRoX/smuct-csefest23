@@ -18,6 +18,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 interface Announcement {
   id: string;
@@ -83,6 +84,8 @@ export default function AdminCMSPage() {
   const [activeAnnModal, setActiveAnnModal] = React.useState<Partial<Announcement> | null>(null);
   const [activeTickerModal, setActiveTickerModal] = React.useState<Partial<TickerItem> | null>(null);
   const [activeFaqModal, setActiveFaqModal] = React.useState<Partial<FAQ> | null>(null);
+
+  useBodyScrollLock(activeAnnModal !== null || activeTickerModal !== null || activeFaqModal !== null);
 
   const fetchCMSData = React.useCallback(async () => {
     try {
@@ -382,11 +385,11 @@ export default function AdminCMSPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div>
-          <h1 className="text-h3 font-heading font-bold text-neutral-50">Content Management System</h1>
+          <h1 className="text-h3 font-heading font-bold text-neutral-50 tracking-tight">Content Management System</h1>
           <p className="text-sm text-neutral-400 font-sans mt-1">
             Configure announcement alerts, adjust ticker messages, structure public FAQs, and set organizer coordinates.
           </p>
@@ -394,7 +397,7 @@ export default function AdminCMSPage() {
       </div>
 
       {/* Tabs Menu navigation */}
-      <div className="flex border-b border-neutral-800 gap-2 overflow-x-auto">
+      <div className="p-1 rounded bg-neutral-900/20 border border-neutral-800/40 backdrop-blur-md flex gap-1 overflow-x-auto max-w-md">
         {(["announcements", "ticker", "faqs", "contact"] as TabType[]).map((tab) => (
           <button
             key={tab}
@@ -402,10 +405,10 @@ export default function AdminCMSPage() {
               setActiveTab(tab);
               setErrorMsg(null);
             }}
-            className={`px-4 py-2.5 font-sans font-medium text-xs capitalize border-b-2 transition-all duration-150 outline-none whitespace-nowrap ${
+            className={`flex-1 px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider rounded transition-all duration-150 outline-none whitespace-nowrap cursor-pointer select-none text-center ${
               activeTab === tab
-                ? "border-secondary text-neutral-50 bg-neutral-900/10"
-                : "border-transparent text-neutral-500 hover:text-neutral-300"
+                ? "bg-neutral-900 text-neutral-100 border border-neutral-800"
+                : "text-neutral-500 border border-transparent hover:text-neutral-350 hover:bg-neutral-900/10"
             }`}
           >
             {tab === "faqs" ? "FAQs" : tab}
@@ -415,14 +418,14 @@ export default function AdminCMSPage() {
 
       {/* Status Flashes */}
       {errorMsg && (
-        <div className="p-4 rounded-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2 animate-fade-in">
+        <div className="p-4 rounded-lg bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2.5 animate-fade-in">
           <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-4 rounded-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2 animate-fade-in">
+        <div className="p-4 rounded-lg bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2.5 animate-fade-in">
           <Check className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{successMsg}</span>
         </div>
@@ -431,8 +434,8 @@ export default function AdminCMSPage() {
       {/* Primary Tab Content Pane */}
       {loading ? (
         <div className="space-y-4 animate-pulse">
-          <div className="h-10 bg-neutral-900 w-1/4 rounded" />
-          <div className="h-40 bg-neutral-900 w-full rounded" />
+          <div className="h-10 bg-neutral-900 w-1/4 rounded-lg" />
+          <div className="h-40 bg-neutral-900 w-full rounded-xl" />
         </div>
       ) : (
         <div className="animate-fade-in">
@@ -441,7 +444,7 @@ export default function AdminCMSPage() {
           {/* ======================================= */}
           {activeTab === "announcements" && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center gap-4">
                 <h2 className="text-md font-heading font-semibold text-neutral-200">Announcements Directory</h2>
                 <Button
                   variant="primary"
@@ -455,90 +458,92 @@ export default function AdminCMSPage() {
                       pinned: false,
                     })
                   }
-                  className="text-xs py-1.5 px-3 gap-1.5 font-semibold bg-accent border-accent hover:bg-accent/90"
+                  className="text-xs py-2 px-4 gap-1.5 font-mono uppercase tracking-wider bg-neutral-100 hover:bg-neutral-200 text-neutral-900 border border-transparent rounded active:scale-98"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                   <span>Add Announcement</span>
                 </Button>
               </div>
 
-              <Card variant="default">
+              <Card variant="glass" className="bg-glass border-glass p-0 overflow-hidden">
                 <CardContent className="p-0">
                   {announcements.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse text-xs font-sans">
                         <thead>
-                          <tr className="border-b border-neutral-850 bg-neutral-900/30 text-neutral-400 font-semibold tracking-wide uppercase">
-                            <th className="py-3.5 px-4">Title</th>
-                            <th className="py-3.5 px-4 w-28">Type</th>
-                            <th className="py-3.5 px-4 w-28">Priority</th>
-                            <th className="py-3.5 px-4 w-28">Status</th>
-                            <th className="py-3.5 px-4 w-20 text-center">Pinned</th>
-                            <th className="py-3.5 px-4 text-right">Actions</th>
+                          <tr className="border-b border-neutral-800 bg-neutral-950/40 text-neutral-400 font-semibold tracking-wider uppercase text-xxs font-mono">
+                            <th className="py-4 px-6">Title</th>
+                            <th className="py-4 px-6 w-28">Type</th>
+                            <th className="py-4 px-6 w-28">Priority</th>
+                            <th className="py-4 px-6 w-28">Status</th>
+                            <th className="py-4 px-6 w-20 text-center">Pinned</th>
+                            <th className="py-4 px-6 text-right">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-neutral-850/50">
+                        <tbody className="divide-y divide-neutral-850/30">
                           {announcements.map((ann) => (
-                            <tr key={ann.id} className="hover:bg-neutral-900/10 transition-colors">
-                              <td className="py-4 px-4 font-medium text-neutral-100">
-                                <div className="space-y-0.5 max-w-sm truncate">
-                                  <div className="truncate font-semibold">{ann.title}</div>
-                                  <div className="text-neutral-500 text-xxs truncate">{ann.content}</div>
+                            <tr key={ann.id} className="hover:bg-neutral-900/20 transition-colors">
+                              <td className="py-4 px-6 font-medium text-neutral-100">
+                                <div className="space-y-1 max-w-sm truncate">
+                                  <div className="truncate font-semibold text-sm">{ann.title}</div>
+                                  <div className="text-neutral-500 text-xxs truncate leading-relaxed">{ann.content}</div>
                                 </div>
                               </td>
-                              <td className="py-4 px-4 capitalize">
-                                <Badge variant="neutral" className="text-xxs px-2">{ann.type}</Badge>
+                              <td className="py-4 px-6 capitalize">
+                                <Badge variant="neutral" className="text-xxs px-2.5 py-0.5">{ann.type}</Badge>
                               </td>
-                              <td className="py-4 px-4 capitalize">
+                              <td className="py-4 px-6 capitalize">
                                 <Badge
                                   variant={
                                     ann.priority === "emergency"
-                                      ? "warning"
+                                      ? "error"
                                       : ann.priority === "high"
                                       ? "warning"
+                                      : ann.priority === "normal"
+                                      ? "primary"
                                       : "neutral"
                                   }
-                                  className="text-xxs px-2"
+                                  className="text-xxs px-2.5 py-0.5 font-mono"
                                 >
                                   {ann.priority}
                                 </Badge>
                               </td>
-                              <td className="py-4 px-4 capitalize">
+                              <td className="py-4 px-6 capitalize">
                                 <Badge
                                   variant={
                                     ann.status === "published"
                                       ? "success"
                                       : ann.status === "draft"
-                                      ? "neutral"
+                                      ? "warning"
                                       : "neutral"
                                   }
-                                  className="text-xxs px-2"
+                                  className="text-xxs px-2.5 py-0.5 font-mono"
                                 >
                                   {ann.status}
                                 </Badge>
                               </td>
-                              <td className="py-4 px-4 text-center">
-                                {ann.pinned ? (
-                                  <Pin className="h-4.5 w-4.5 text-accent mx-auto fill-accent" />
+                              <td className="py-4 px-6 text-center">
+                               {ann.pinned ? (
+                                  <Pin className="h-3.5 w-3.5 text-neutral-400 mx-auto fill-neutral-500/10" />
                                 ) : (
-                                  <span className="text-neutral-600">—</span>
+                                  <span className="text-neutral-600 font-mono">—</span>
                                 )}
                               </td>
-                              <td className="py-4 px-4 text-right">
-                                <div className="flex justify-end gap-1.5">
+                              <td className="py-4 px-6 text-right">
+                                <div className="flex justify-end gap-2">
                                   <Button
                                     variant="secondary"
                                     onClick={() => setActiveAnnModal(ann)}
-                                    className="text-xxs py-1 px-2 h-7"
+                                    className="text-xxs py-1.5 px-2.5 h-8 bg-neutral-900 border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800"
                                   >
-                                    <Edit className="h-3 w-3" />
+                                    <Edit className="h-3.5 w-3.5 text-neutral-300" />
                                   </Button>
                                   <Button
                                     variant="ghost"
                                     onClick={() => handleDeleteAnnouncement(ann.id)}
-                                    className="text-xxs py-1 px-2 h-7 text-neutral-400 hover:text-error hover:bg-error/10"
+                                    className="text-xxs py-1.5 px-2.5 h-8 text-neutral-400 hover:text-error hover:bg-error/10 border border-transparent hover:border-error/20 rounded-lg transition-colors"
                                   >
-                                    <Trash2 className="h-3 w-3" />
+                                    <Trash2 className="h-3.5 w-3.5" />
                                   </Button>
                                 </div>
                               </td>
@@ -548,9 +553,9 @@ export default function AdminCMSPage() {
                       </table>
                     </div>
                   ) : (
-                    <div className="p-12 text-center text-neutral-500 flex flex-col items-center gap-2">
-                      <Megaphone className="h-8 w-8 text-neutral-700" />
-                      <span>No announcements have been created yet.</span>
+                    <div className="p-16 text-center text-neutral-500 flex flex-col items-center gap-3">
+                      <Megaphone className="h-10 w-10 text-neutral-700" />
+                      <span className="font-medium">No announcements have been created yet.</span>
                     </div>
                   )}
                 </CardContent>
@@ -563,7 +568,7 @@ export default function AdminCMSPage() {
           {/* ======================================= */}
           {activeTab === "ticker" && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center gap-4">
                 <h2 className="text-md font-heading font-semibold text-neutral-200">Scrolling News Ticker Queue</h2>
                 <Button
                   variant="primary"
@@ -574,69 +579,71 @@ export default function AdminCMSPage() {
                       active: true,
                     })
                   }
-                  className="text-xs py-1.5 px-3 gap-1.5 font-semibold bg-accent border-accent hover:bg-accent/90"
+                  className="text-xs py-2 px-4 gap-1.5 font-mono uppercase tracking-wider bg-neutral-100 hover:bg-neutral-200 text-neutral-900 border border-transparent rounded active:scale-98"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                   <span>Add News Ticker</span>
                 </Button>
               </div>
 
-              <Card variant="default">
+              <Card variant="glass" className="bg-glass border-glass p-0 overflow-hidden">
                 <CardContent className="p-0">
                   {tickerItems.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse text-xs font-sans">
                         <thead>
-                          <tr className="border-b border-neutral-850 bg-neutral-900/30 text-neutral-400 font-semibold tracking-wide uppercase">
-                            <th className="py-3.5 px-4">Message</th>
-                            <th className="py-3.5 px-4 w-28 text-center">Pinned</th>
-                            <th className="py-3.5 px-4 w-28 text-center">Active Status</th>
-                            <th className="py-3.5 px-4 text-right">Actions</th>
+                          <tr className="border-b border-neutral-800 bg-neutral-950/40 text-neutral-400 font-semibold tracking-wider uppercase text-xxs font-mono">
+                            <th className="py-4 px-6">Message</th>
+                            <th className="py-4 px-6 w-28 text-center">Pinned</th>
+                            <th className="py-4 px-6 w-28 text-center">Active Status</th>
+                            <th className="py-4 px-6 text-right">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-neutral-850/50">
+                        <tbody className="divide-y divide-neutral-850/30">
                           {tickerItems.map((item) => (
-                            <tr key={item.id} className="hover:bg-neutral-900/10 transition-colors">
-                              <td className="py-4 px-4 font-semibold text-neutral-200">
+                            <tr key={item.id} className="hover:bg-neutral-900/20 transition-colors">
+                              <td className="py-4 px-6 font-semibold text-neutral-200">
                                 {item.message}
                               </td>
-                              <td className="py-4 px-4 text-center">
+                              <td className="py-4 px-6 text-center">
                                 <button
                                   onClick={() => handleToggleTickerStatus(item, "pinned")}
-                                  className="focus:outline-none p-1 rounded hover:bg-neutral-850"
+                                  className="focus:outline-none p-1.5 rounded border border-neutral-800 bg-neutral-950 hover:bg-neutral-900 hover:border-neutral-700 transition-colors cursor-pointer"
+                                  aria-label="Toggle pin ticker"
                                 >
                                   {item.pinned ? (
-                                    <Pin className="h-4.5 w-4.5 text-accent mx-auto fill-accent" />
+                                    <Pin className="h-3.5 w-3.5 text-neutral-400 mx-auto fill-neutral-500/10" />
                                   ) : (
-                                    <Pin className="h-4.5 w-4.5 text-neutral-600 mx-auto" />
+                                    <Pin className="h-3.5 w-3.5 text-neutral-700 mx-auto" />
                                   )}
                                 </button>
                               </td>
-                              <td className="py-4 px-4 text-center">
+                              <td className="py-4 px-6 text-center">
                                 <button
                                   onClick={() => handleToggleTickerStatus(item, "active")}
-                                  className="focus:outline-none"
+                                  className="focus:outline-none cursor-pointer"
+                                  aria-label="Toggle active status"
                                 >
-                                  <Badge variant={item.active ? "success" : "neutral"} className="cursor-pointer">
+                                  <Badge variant={item.active ? "success" : "neutral"} className="cursor-pointer px-2.5 py-0.5 font-mono">
                                     {item.active ? "Active" : "Disabled"}
                                   </Badge>
                                 </button>
                               </td>
-                              <td className="py-4 px-4 text-right">
-                                <div className="flex justify-end gap-1.5">
+                              <td className="py-4 px-6 text-right">
+                                <div className="flex justify-end gap-2">
                                   <Button
                                     variant="secondary"
                                     onClick={() => setActiveTickerModal(item)}
-                                    className="text-xxs py-1 px-2 h-7"
+                                    className="text-xxs py-1.5 px-2.5 h-8 bg-neutral-900 border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800"
                                   >
-                                    <Edit className="h-3 w-3" />
+                                    <Edit className="h-3.5 w-3.5 text-neutral-300" />
                                   </Button>
                                   <Button
                                     variant="ghost"
                                     onClick={() => handleDeleteTickerItem(item.id)}
-                                    className="text-xxs py-1 px-2 h-7 text-neutral-400 hover:text-error hover:bg-error/10"
+                                    className="text-xxs py-1.5 px-2.5 h-8 text-neutral-400 hover:text-error hover:bg-error/10 border border-transparent hover:border-error/20 rounded-lg transition-colors"
                                   >
-                                    <Trash2 className="h-3 w-3" />
+                                    <Trash2 className="h-3.5 w-3.5" />
                                   </Button>
                                 </div>
                               </td>
@@ -646,9 +653,9 @@ export default function AdminCMSPage() {
                       </table>
                     </div>
                   ) : (
-                    <div className="p-12 text-center text-neutral-500 flex flex-col items-center gap-2">
-                      <Megaphone className="h-8 w-8 text-neutral-700 animate-pulse" />
-                      <span>No news ticker messages have been configured yet.</span>
+                    <div className="p-16 text-center text-neutral-500 flex flex-col items-center gap-3">
+                      <Megaphone className="h-10 w-10 text-neutral-700 animate-pulse" />
+                      <span className="font-medium">No news ticker messages have been configured yet.</span>
                     </div>
                   )}
                 </CardContent>
@@ -661,7 +668,7 @@ export default function AdminCMSPage() {
           {/* ======================================= */}
           {activeTab === "faqs" && (
             <div className="space-y-6">
-              <div className="flex justify-between items-center">
+              <div className="flex justify-between items-center gap-4">
                 <h2 className="text-md font-heading font-semibold text-neutral-200">Public FAQ Accordions</h2>
                 <Button
                   variant="primary"
@@ -673,37 +680,37 @@ export default function AdminCMSPage() {
                       visible: true,
                     })
                   }
-                  className="text-xs py-1.5 px-3 gap-1.5 font-semibold bg-accent border-accent hover:bg-accent/90"
+                  className="text-xs py-2 px-4 gap-1.5 font-mono uppercase tracking-wider bg-neutral-100 hover:bg-neutral-200 text-neutral-900 border border-transparent rounded active:scale-98"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                   <span>Add FAQ Item</span>
                 </Button>
               </div>
 
-              <Card variant="default">
+              <Card variant="glass" className="bg-glass border-glass p-0 overflow-hidden">
                 <CardContent className="p-0">
                   {faqs.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse text-xs font-sans">
                         <thead>
-                          <tr className="border-b border-neutral-850 bg-neutral-900/30 text-neutral-400 font-semibold tracking-wide uppercase">
-                            <th className="py-3.5 px-4 w-20 text-center font-mono">Order</th>
-                            <th className="py-3.5 px-4">Question & Answer</th>
-                            <th className="py-3.5 px-4 w-28 text-center">Visibility</th>
-                            <th className="py-3.5 px-4 text-right">Actions</th>
+                          <tr className="border-b border-neutral-800 bg-neutral-950/40 text-neutral-400 font-semibold tracking-wider uppercase text-xxs font-mono">
+                            <th className="py-4 px-6 w-24 text-center font-mono">Order</th>
+                            <th className="py-4 px-6">Question & Answer</th>
+                            <th className="py-4 px-6 w-28 text-center">Visibility</th>
+                            <th className="py-4 px-6 text-right">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-neutral-850/50">
+                        <tbody className="divide-y divide-neutral-850/30">
                           {faqs.map((faq, idx) => (
-                            <tr key={faq.id} className="hover:bg-neutral-900/10 transition-colors">
-                              <td className="py-4 px-4 text-center font-mono font-bold text-neutral-400">
-                                <div className="flex flex-col items-center gap-1">
-                                  <div className="text-accent text-sm">{faq.display_order}</div>
-                                  <div className="flex gap-0.5">
+                            <tr key={faq.id} className="hover:bg-neutral-900/20 transition-colors">
+                              <td className="py-4 px-6 text-center font-mono font-bold text-neutral-400">
+                                <div className="flex flex-col items-center gap-2">
+                                  <div className="text-neutral-355 text-sm font-bold">{faq.display_order}</div>
+                                  <div className="flex gap-1">
                                     <button
                                       disabled={idx === 0}
                                       onClick={() => handleReorderFaq(idx, "up")}
-                                      className="p-0.5 rounded hover:bg-neutral-850 disabled:opacity-30"
+                                      className="p-1 rounded border border-neutral-800 bg-neutral-950 text-neutral-500 hover:text-neutral-300 hover:border-neutral-700 disabled:opacity-20 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed"
                                       aria-label="Move FAQ up"
                                     >
                                       <ArrowUp className="h-3 w-3" />
@@ -711,7 +718,7 @@ export default function AdminCMSPage() {
                                     <button
                                       disabled={idx === faqs.length - 1}
                                       onClick={() => handleReorderFaq(idx, "down")}
-                                      className="p-0.5 rounded hover:bg-neutral-850 disabled:opacity-30"
+                                      className="p-1 rounded border border-neutral-800 bg-neutral-950 text-neutral-500 hover:text-neutral-300 hover:border-neutral-700 disabled:opacity-20 transition-all duration-150 cursor-pointer disabled:cursor-not-allowed"
                                       aria-label="Move FAQ down"
                                     >
                                       <ArrowDown className="h-3 w-3" />
@@ -719,37 +726,38 @@ export default function AdminCMSPage() {
                                   </div>
                                 </div>
                               </td>
-                              <td className="py-4 px-4">
-                                <div className="space-y-1 max-w-lg">
-                                  <div className="text-neutral-200 font-semibold leading-relaxed">{faq.question}</div>
-                                  <div className="text-neutral-500 text-xxs leading-relaxed font-normal">{faq.answer}</div>
+                              <td className="py-4 px-6">
+                                <div className="space-y-1.5 max-w-lg">
+                                  <div className="text-neutral-100 font-semibold leading-relaxed text-sm">{faq.question}</div>
+                                  <div className="text-neutral-400 text-xxs leading-relaxed font-normal">{faq.answer}</div>
                                 </div>
                               </td>
-                              <td className="py-4 px-4 text-center">
+                              <td className="py-4 px-6 text-center">
                                 <button
                                   onClick={() => handleToggleFaqVisibility(faq)}
-                                  className="focus:outline-none"
+                                  className="focus:outline-none cursor-pointer"
+                                  aria-label="Toggle visible faq"
                                 >
-                                  <Badge variant={faq.visible ? "success" : "neutral"} className="cursor-pointer">
+                                  <Badge variant={faq.visible ? "success" : "neutral"} className="cursor-pointer px-2.5 py-0.5 font-mono">
                                     {faq.visible ? "Visible" : "Hidden"}
                                   </Badge>
                                 </button>
                               </td>
-                              <td className="py-4 px-4 text-right">
-                                <div className="flex justify-end gap-1.5">
+                              <td className="py-4 px-6 text-right">
+                                <div className="flex justify-end gap-2">
                                   <Button
                                     variant="secondary"
                                     onClick={() => setActiveFaqModal(faq)}
-                                    className="text-xxs py-1 px-2 h-7"
+                                    className="text-xxs py-1.5 px-2.5 h-8 bg-neutral-900 border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800"
                                   >
-                                    <Edit className="h-3 w-3" />
+                                    <Edit className="h-3.5 w-3.5 text-neutral-300" />
                                   </Button>
                                   <Button
                                     variant="ghost"
                                     onClick={() => handleDeleteFaq(faq.id)}
-                                    className="text-xxs py-1 px-2 h-7 text-neutral-400 hover:text-error hover:bg-error/10"
+                                    className="text-xxs py-1.5 px-2.5 h-8 text-neutral-400 hover:text-error hover:bg-error/10 border border-transparent hover:border-error/20 rounded-lg transition-colors"
                                   >
-                                    <Trash2 className="h-3 w-3" />
+                                    <Trash2 className="h-3.5 w-3.5" />
                                   </Button>
                                 </div>
                               </td>
@@ -759,9 +767,9 @@ export default function AdminCMSPage() {
                       </table>
                     </div>
                   ) : (
-                    <div className="p-12 text-center text-neutral-500 flex flex-col items-center gap-2">
-                      <HelpCircle className="h-8 w-8 text-neutral-700" />
-                      <span>No FAQs have been added yet.</span>
+                    <div className="p-16 text-center text-neutral-500 flex flex-col items-center gap-3">
+                      <HelpCircle className="h-10 w-10 text-neutral-700" />
+                      <span className="font-medium">No FAQs have been added yet.</span>
                     </div>
                   )}
                 </CardContent>
@@ -781,15 +789,15 @@ export default function AdminCMSPage() {
                 </p>
               </div>
 
-              <Card variant="default">
+              <Card variant="glass" className="bg-glass border-glass">
                 <CardContent className="p-6">
                   <form onSubmit={handleSaveContact} className="space-y-5 text-xs font-sans text-neutral-300">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       {/* Email */}
                       <div className="space-y-1.5">
-                        <label className="font-semibold text-neutral-400">Support Email</label>
                         <Input
                           type="email"
+                          label="Support Email"
                           placeholder="csefest@smuct.edu.bd"
                           value={contact.email || ""}
                           onChange={(e) => setContact({ ...contact, email: e.target.value })}
@@ -798,9 +806,9 @@ export default function AdminCMSPage() {
                       </div>
                       {/* Phone */}
                       <div className="space-y-1.5">
-                        <label className="font-semibold text-neutral-400">Support Phone</label>
                         <Input
                           type="text"
+                          label="Support Phone"
                           placeholder="+880 1712-345678"
                           value={contact.phone || ""}
                           onChange={(e) => setContact({ ...contact, phone: e.target.value })}
@@ -809,12 +817,12 @@ export default function AdminCMSPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       {/* Facebook */}
                       <div className="space-y-1.5">
-                        <label className="font-semibold text-neutral-400">Facebook URL</label>
                         <Input
                           type="text"
+                          label="Facebook URL"
                           placeholder="https://facebook.com/smuct.cse"
                           value={contact.facebook || ""}
                           onChange={(e) => setContact({ ...contact, facebook: e.target.value })}
@@ -823,9 +831,9 @@ export default function AdminCMSPage() {
                       </div>
                       {/* LinkedIn */}
                       <div className="space-y-1.5">
-                        <label className="font-semibold text-neutral-400">LinkedIn URL</label>
                         <Input
                           type="text"
+                          label="LinkedIn URL"
                           placeholder="https://linkedin.com/school/smuct"
                           value={contact.linkedin || ""}
                           onChange={(e) => setContact({ ...contact, linkedin: e.target.value })}
@@ -836,9 +844,9 @@ export default function AdminCMSPage() {
 
                     {/* Address */}
                     <div className="space-y-1.5">
-                      <label className="font-semibold text-neutral-400">Campus Address</label>
                       <Input
                         type="text"
+                        label="Campus Address"
                         placeholder="SMUCT Campus, Uttara, Dhaka"
                         value={contact.address || ""}
                         onChange={(e) => setContact({ ...contact, address: e.target.value })}
@@ -848,9 +856,9 @@ export default function AdminCMSPage() {
 
                     {/* Maps URL */}
                     <div className="space-y-1.5">
-                      <label className="font-semibold text-neutral-400">Google Maps Location Link</label>
                       <Input
                         type="text"
+                        label="Google Maps Location Link"
                         placeholder="https://maps.google.com/?cid=..."
                         value={contact.maps_url || ""}
                         onChange={(e) => setContact({ ...contact, maps_url: e.target.value })}
@@ -864,7 +872,7 @@ export default function AdminCMSPage() {
                         variant="primary"
                         isLoading={saving}
                         disabled={saving}
-                        className="bg-accent border-accent hover:bg-accent/90 text-xs font-semibold py-2 px-5"
+                        className="bg-neutral-100 hover:bg-neutral-200 text-neutral-900 border border-transparent text-xs font-mono uppercase tracking-wider py-2 px-5 active:scale-[0.98] rounded cursor-pointer"
                       >
                         Save Coordinates
                       </Button>
@@ -881,27 +889,27 @@ export default function AdminCMSPage() {
       {/* ANNOUNCEMENT EDIT MODAL                                 */}
       {/* ======================================================== */}
       {activeAnnModal && (
-        <div className="fixed inset-0 z-50 flex bg-neutral-950/80 backdrop-blur-sm items-center justify-center p-4">
-          <Card className="w-full max-w-lg bg-neutral-900 border border-neutral-800 p-6 space-y-6">
+        <div className="fixed inset-0 z-50 flex bg-neutral-950/85 backdrop-blur-md items-center justify-center p-4">
+          <Card className="w-full max-w-lg bg-neutral-900 border border-neutral-800 p-6 space-y-6 shadow-level-3 animate-fade-in">
             <CardHeader className="p-0 flex flex-row justify-between items-center border-b border-neutral-800 pb-3">
               <div>
                 <CardTitle className="text-sm font-heading font-bold text-neutral-50">
-                  {activeAnnModal.id ? "Edit Announcement" : "Create Announcement"}
+                  {activeAnnModal.id ? "Edit Announcement Record" : "Build Announcement alert"}
                 </CardTitle>
               </div>
               <button
                 onClick={() => setActiveAnnModal(null)}
-                className="p-1 rounded-full bg-neutral-950 border border-neutral-850 hover:bg-neutral-850 transition-colors text-neutral-400"
+                className="p-1.5 rounded-full bg-neutral-950 border border-neutral-850 hover:bg-neutral-800 hover:text-neutral-200 transition-colors text-neutral-400 cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </CardHeader>
 
-            <form onSubmit={handleSaveAnnouncement} className="space-y-4 text-xs font-sans text-neutral-300">
+            <form onSubmit={handleSaveAnnouncement} className="space-y-5 text-xs font-sans text-neutral-300">
               {/* Title */}
               <div className="space-y-1.5">
-                <label className="font-semibold text-neutral-400">Title</label>
                 <Input
+                  label="Title"
                   type="text"
                   required
                   placeholder="e.g. Phase 2 submissions deadline extended"
@@ -912,12 +920,12 @@ export default function AdminCMSPage() {
               </div>
 
               {/* Content */}
-              <div className="space-y-1.5">
-                <label className="font-semibold text-neutral-400">Content Body</label>
+              <div className="flex flex-col space-y-1.5">
+                <label className="text-[10px] font-mono tracking-widest text-neutral-400 uppercase">Content Body</label>
                 <textarea
                   required
                   placeholder="Provide announcement details..."
-                  className="flex min-h-24 w-full rounded-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                  className="flex min-h-24 w-full rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 placeholder:text-neutral-600 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 outline-none transition-all duration-200 font-sans"
                   value={activeAnnModal.content || ""}
                   onChange={(e) => setActiveAnnModal({ ...activeAnnModal, content: e.target.value })}
                   disabled={saving}
@@ -926,10 +934,10 @@ export default function AdminCMSPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 {/* Priority */}
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-neutral-400">Priority Level</label>
+                <div className="flex flex-col space-y-1.5 w-full">
+                  <label className="text-[10px] font-mono tracking-widest text-neutral-400 uppercase select-none">Priority Level</label>
                   <select
-                    className="flex h-10 w-full rounded-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                    className="flex h-10 w-full rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 placeholder:text-neutral-600 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 outline-none transition-all duration-200 font-sans cursor-pointer"
                     value={activeAnnModal.priority || "normal"}
                     onChange={(e) =>
                       setActiveAnnModal({
@@ -947,10 +955,10 @@ export default function AdminCMSPage() {
                 </div>
 
                 {/* Type */}
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-neutral-400">Category Type</label>
+                <div className="flex flex-col space-y-1.5 w-full">
+                  <label className="text-[10px] font-mono tracking-widest text-neutral-400 uppercase select-none">Category Type</label>
                   <select
-                    className="flex h-10 w-full rounded-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                    className="flex h-10 w-full rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 placeholder:text-neutral-600 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 outline-none transition-all duration-200 font-sans cursor-pointer"
                     value={activeAnnModal.type || "general"}
                     onChange={(e) =>
                       setActiveAnnModal({
@@ -969,12 +977,12 @@ export default function AdminCMSPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 items-end">
                 {/* Status */}
-                <div className="space-y-1.5">
-                  <label className="font-semibold text-neutral-400">Publish Status</label>
+                <div className="flex flex-col space-y-1.5 w-full">
+                  <label className="text-[10px] font-mono tracking-widest text-neutral-400 uppercase select-none">Publish Status</label>
                   <select
-                    className="flex h-10 w-full rounded-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                    className="flex h-10 w-full rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 placeholder:text-neutral-600 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 outline-none transition-all duration-200 font-sans cursor-pointer"
                     value={activeAnnModal.status || "draft"}
                     onChange={(e) =>
                       setActiveAnnModal({
@@ -991,23 +999,21 @@ export default function AdminCMSPage() {
                 </div>
 
                 {/* Pinned Checkbox */}
-                <div className="space-y-1.5 flex items-center pt-6 gap-2">
+                <label className="relative flex items-center gap-3 p-3 h-10 rounded border border-neutral-800 bg-neutral-950/45 hover:bg-neutral-900/50 cursor-pointer select-none transition-all duration-200 text-xs font-sans text-neutral-350">
                   <input
                     type="checkbox"
                     id="ann-pinned"
                     checked={activeAnnModal.pinned || false}
                     onChange={(e) => setActiveAnnModal({ ...activeAnnModal, pinned: e.target.checked })}
-                    className="rounded border-neutral-700 bg-neutral-950 text-accent focus:ring-accent h-4 w-4"
+                    className="rounded border-neutral-750 bg-neutral-950 text-neutral-300 focus:ring-neutral-800 h-4 w-4 cursor-pointer"
                     disabled={saving}
                   />
-                  <label htmlFor="ann-pinned" className="font-semibold text-neutral-300 cursor-pointer select-none">
-                    Pin to top of lists
-                  </label>
-                </div>
+                  <span className="font-mono uppercase tracking-wider text-[10px]">Pin Alert to Top</span>
+                </label>
               </div>
 
-              <div className="flex justify-end gap-2 border-t border-neutral-800 pt-4">
-                <Button variant="ghost" onClick={() => setActiveAnnModal(null)} disabled={saving}>
+              <div className="flex justify-end gap-3 border-t border-neutral-800 pt-4">
+                <Button variant="secondary" onClick={() => setActiveAnnModal(null)} disabled={saving} className="active:scale-[0.98] font-mono uppercase tracking-wider text-[10px] px-3.5 h-8.5 cursor-pointer">
                   Cancel
                 </Button>
                 <Button
@@ -1015,9 +1021,9 @@ export default function AdminCMSPage() {
                   variant="primary"
                   isLoading={saving}
                   disabled={saving}
-                  className="bg-accent border-accent hover:bg-accent/90"
+                  className="bg-neutral-100 hover:bg-neutral-200 text-neutral-900 border border-transparent active:scale-[0.98] font-mono uppercase tracking-wider text-[10px] px-4.5 h-8.5 cursor-pointer rounded"
                 >
-                  Confirm Save
+                  Save Changes
                 </Button>
               </div>
             </form>
@@ -1029,30 +1035,29 @@ export default function AdminCMSPage() {
       {/* TICKER EDIT MODAL                                       */}
       {/* ======================================================== */}
       {activeTickerModal && (
-        <div className="fixed inset-0 z-50 flex bg-neutral-950/80 backdrop-blur-sm items-center justify-center p-4">
-          <Card className="w-full max-w-lg bg-neutral-900 border border-neutral-800 p-6 space-y-6">
+        <div className="fixed inset-0 z-50 flex bg-neutral-950/85 backdrop-blur-md items-center justify-center p-4">
+          <Card className="w-full max-w-lg bg-neutral-900 border border-neutral-800 p-6 space-y-6 shadow-level-3 animate-fade-in">
             <CardHeader className="p-0 flex flex-row justify-between items-center border-b border-neutral-800 pb-3">
               <div>
                 <CardTitle className="text-sm font-heading font-bold text-neutral-50">
-                  {activeTickerModal.id ? "Edit Ticker Message" : "Create Ticker Message"}
+                  {activeTickerModal.id ? "Edit Ticker Message" : "Build Ticker alert"}
                 </CardTitle>
               </div>
               <button
                 onClick={() => setActiveTickerModal(null)}
-                className="p-1 rounded-full bg-neutral-950 border border-neutral-850 hover:bg-neutral-850 transition-colors text-neutral-400"
+                className="p-1.5 rounded-full bg-neutral-950 border border-neutral-850 hover:bg-neutral-800 hover:text-neutral-200 transition-colors text-neutral-400 cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </CardHeader>
-
-            <form onSubmit={handleSaveTickerItem} className="space-y-4 text-xs font-sans text-neutral-300">
+            <form onSubmit={handleSaveTickerItem} className="space-y-5 text-xs font-sans text-neutral-300">
               {/* Message */}
-              <div className="space-y-1.5">
-                <label className="font-semibold text-neutral-400">Ticker Message</label>
+              <div className="flex flex-col space-y-1.5">
+                <label className="text-[10px] font-mono tracking-widest text-neutral-400 uppercase">Ticker Message</label>
                 <textarea
                   required
                   placeholder="Provide news ticker alert text..."
-                  className="flex min-h-20 w-full rounded-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                  className="flex min-h-20 w-full rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 placeholder:text-neutral-600 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 outline-none transition-all duration-200 font-sans"
                   value={activeTickerModal.message || ""}
                   onChange={(e) => setActiveTickerModal({ ...activeTickerModal, message: e.target.value })}
                   disabled={saving}
@@ -1061,38 +1066,34 @@ export default function AdminCMSPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 {/* Active Checkbox */}
-                <div className="space-y-1.5 flex items-center pt-2 gap-2">
+                <label className="relative flex items-center gap-3 p-3 h-11 rounded border border-neutral-800 bg-neutral-950/45 hover:bg-neutral-900/50 cursor-pointer select-none transition-all duration-200 text-xs font-sans text-neutral-350">
                   <input
                     type="checkbox"
                     id="ticker-active"
                     checked={activeTickerModal.active !== false}
                     onChange={(e) => setActiveTickerModal({ ...activeTickerModal, active: e.target.checked })}
-                    className="rounded border-neutral-700 bg-neutral-950 text-accent focus:ring-accent h-4 w-4"
+                    className="rounded border-neutral-750 bg-neutral-950 text-neutral-300 focus:ring-neutral-800 h-4 w-4 cursor-pointer"
                     disabled={saving}
                   />
-                  <label htmlFor="ticker-active" className="font-semibold text-neutral-300 cursor-pointer select-none">
-                    Display message (Active)
-                  </label>
-                </div>
+                  <span className="font-mono uppercase tracking-wider text-[10px]">Display Alert (Active)</span>
+                </label>
 
                 {/* Pinned Checkbox */}
-                <div className="space-y-1.5 flex items-center pt-2 gap-2">
+                <label className="relative flex items-center gap-3 p-3 h-11 rounded border border-neutral-800 bg-neutral-950/45 hover:bg-neutral-900/50 cursor-pointer select-none transition-all duration-200 text-xs font-sans text-neutral-350">
                   <input
                     type="checkbox"
                     id="ticker-pinned"
                     checked={activeTickerModal.pinned || false}
                     onChange={(e) => setActiveTickerModal({ ...activeTickerModal, pinned: e.target.checked })}
-                    className="rounded border-neutral-700 bg-neutral-950 text-accent focus:ring-accent h-4 w-4"
+                    className="rounded border-neutral-750 bg-neutral-950 text-neutral-300 focus:ring-neutral-800 h-4 w-4 cursor-pointer"
                     disabled={saving}
                   />
-                  <label htmlFor="ticker-pinned" className="font-semibold text-neutral-300 cursor-pointer select-none">
-                    Pin message to start
-                  </label>
-                </div>
+                  <span className="font-mono uppercase tracking-wider text-[10px]">Pin Alert to Start</span>
+                </label>
               </div>
 
-              <div className="flex justify-end gap-2 border-t border-neutral-800 pt-4">
-                <Button variant="ghost" onClick={() => setActiveTickerModal(null)} disabled={saving}>
+              <div className="flex justify-end gap-3 border-t border-neutral-800 pt-4">
+                <Button variant="secondary" onClick={() => setActiveTickerModal(null)} disabled={saving} className="active:scale-[0.98] font-mono uppercase tracking-wider text-[10px] px-3.5 h-8.5 cursor-pointer">
                   Cancel
                 </Button>
                 <Button
@@ -1100,9 +1101,9 @@ export default function AdminCMSPage() {
                   variant="primary"
                   isLoading={saving}
                   disabled={saving}
-                  className="bg-accent border-accent hover:bg-accent/90"
+                  className="bg-neutral-100 hover:bg-neutral-200 text-neutral-900 border border-transparent active:scale-[0.98] font-mono uppercase tracking-wider text-[10px] px-4.5 h-8.5 cursor-pointer rounded"
                 >
-                  Confirm Save
+                  Save Changes
                 </Button>
               </div>
             </form>
@@ -1114,8 +1115,8 @@ export default function AdminCMSPage() {
       {/* FAQ EDIT MODAL                                          */}
       {/* ======================================================== */}
       {activeFaqModal && (
-        <div className="fixed inset-0 z-50 flex bg-neutral-950/80 backdrop-blur-sm items-center justify-center p-4">
-          <Card className="w-full max-w-lg bg-neutral-900 border border-neutral-800 p-6 space-y-6">
+        <div className="fixed inset-0 z-50 flex bg-neutral-950/85 backdrop-blur-md items-center justify-center p-4">
+          <Card className="w-full max-w-lg bg-neutral-900 border border-neutral-800 p-6 space-y-6 shadow-level-3 animate-fade-in">
             <CardHeader className="p-0 flex flex-row justify-between items-center border-b border-neutral-800 pb-3">
               <div>
                 <CardTitle className="text-sm font-heading font-bold text-neutral-50">
@@ -1124,17 +1125,17 @@ export default function AdminCMSPage() {
               </div>
               <button
                 onClick={() => setActiveFaqModal(null)}
-                className="p-1 rounded-full bg-neutral-950 border border-neutral-850 hover:bg-neutral-850 transition-colors text-neutral-400"
+                className="p-1.5 rounded-full bg-neutral-950 border border-neutral-850 hover:bg-neutral-800 hover:text-neutral-200 transition-colors text-neutral-400 cursor-pointer"
               >
                 <X className="h-4 w-4" />
               </button>
             </CardHeader>
 
-            <form onSubmit={handleSaveFaq} className="space-y-4 text-xs font-sans text-neutral-300">
+            <form onSubmit={handleSaveFaq} className="space-y-5 text-xs font-sans text-neutral-300">
               {/* Question */}
               <div className="space-y-1.5">
-                <label className="font-semibold text-neutral-400">FAQ Question</label>
                 <Input
+                  label="FAQ Question"
                   type="text"
                   required
                   placeholder="e.g. Can we register if students are from different departments?"
@@ -1145,23 +1146,23 @@ export default function AdminCMSPage() {
               </div>
 
               {/* Answer */}
-              <div className="space-y-1.5">
-                <label className="font-semibold text-neutral-400">FAQ Answer</label>
+              <div className="flex flex-col space-y-1.5">
+                <label className="text-[10px] font-mono tracking-widest text-neutral-400 uppercase">FAQ Answer</label>
                 <textarea
                   required
                   placeholder="Provide accordion expansion answer text..."
-                  className="flex min-h-24 w-full rounded-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 placeholder:text-neutral-500 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                  className="flex min-h-24 w-full rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 placeholder:text-neutral-600 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 outline-none transition-all duration-200 font-sans"
                   value={activeFaqModal.answer || ""}
                   onChange={(e) => setActiveFaqModal({ ...activeFaqModal, answer: e.target.value })}
                   disabled={saving}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 items-end">
                 {/* Display Order */}
                 <div className="space-y-1.5">
-                  <label className="font-semibold text-neutral-400">Display Order</label>
                   <Input
+                    label="Display Order"
                     type="number"
                     required
                     min="1"
@@ -1174,23 +1175,21 @@ export default function AdminCMSPage() {
                 </div>
 
                 {/* Visible Checkbox */}
-                <div className="space-y-1.5 flex items-center pt-6 gap-2">
+                <label className="relative flex items-center gap-3 p-3 h-10 rounded border border-neutral-800 bg-neutral-950/45 hover:bg-neutral-900/50 cursor-pointer select-none transition-all duration-200 text-xs font-sans text-neutral-350">
                   <input
                     type="checkbox"
                     id="faq-visible"
                     checked={activeFaqModal.visible !== false}
                     onChange={(e) => setActiveFaqModal({ ...activeFaqModal, visible: e.target.checked })}
-                    className="rounded border-neutral-700 bg-neutral-950 text-accent focus:ring-accent h-4 w-4"
+                    className="rounded border-neutral-750 bg-neutral-950 text-neutral-300 focus:ring-neutral-800 h-4 w-4 cursor-pointer"
                     disabled={saving}
                   />
-                  <label htmlFor="faq-visible" className="font-semibold text-neutral-300 cursor-pointer select-none">
-                    Visible on website
-                  </label>
-                </div>
+                  <span className="font-mono uppercase tracking-wider text-[10px]">Visible on website</span>
+                </label>
               </div>
 
-              <div className="flex justify-end gap-2 border-t border-neutral-800 pt-4">
-                <Button variant="ghost" onClick={() => setActiveFaqModal(null)} disabled={saving}>
+              <div className="flex justify-end gap-3 border-t border-neutral-800 pt-4">
+                <Button variant="secondary" onClick={() => setActiveFaqModal(null)} disabled={saving} className="active:scale-[0.98] font-mono uppercase tracking-wider text-[10px] px-3.5 h-8.5 cursor-pointer">
                   Cancel
                 </Button>
                 <Button
@@ -1198,9 +1197,9 @@ export default function AdminCMSPage() {
                   variant="primary"
                   isLoading={saving}
                   disabled={saving}
-                  className="bg-accent border-accent hover:bg-accent/90"
+                  className="bg-neutral-100 hover:bg-neutral-200 text-neutral-900 border border-transparent active:scale-[0.98] font-mono uppercase tracking-wider text-[10px] px-4.5 h-8.5 cursor-pointer rounded"
                 >
-                  Confirm Save
+                  Save Changes
                 </Button>
               </div>
             </form>
@@ -1209,4 +1208,5 @@ export default function AdminCMSPage() {
       )}
     </div>
   );
+
 }

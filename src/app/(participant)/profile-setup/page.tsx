@@ -78,17 +78,29 @@ export default function ProfileSetupWizard() {
   const [dragActiveFront, setDragActiveFront] = React.useState(false);
   const [dragActiveBack, setDragActiveBack] = React.useState(false);
 
-  // Retrieve user email from Supabase session
+  // Retrieve user email from Supabase session and guard re-entry
   React.useEffect(() => {
     const fetchUser = async () => {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (user?.email) {
         setUserEmail(user.email);
+
+        // If profile is already complete, redirect to dashboard
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("profile_complete")
+          .eq("id", user.id)
+          .single();
+
+        if (profile?.profile_complete) {
+          router.replace("/dashboard");
+        }
       }
     };
     fetchUser();
-  }, []);
+  }, [router]);
+
 
   const {
     register,
@@ -244,30 +256,29 @@ export default function ProfileSetupWizard() {
   ];
 
   return (
-    <div className="w-full space-y-8 py-2">
+    <div className="w-full space-y-6 py-2 max-w-5xl animate-fade-in">
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-neutral-850 pb-5">
+      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-neutral-800/40 pb-4">
         <div>
-          <h1 className="text-h3 font-heading font-bold text-neutral-50 flex items-center gap-2.5">
-            <Terminal className="h-6 w-6 text-primary animate-pulse" />
-            <span>Delegate Profile Setup</span>
+          <h1 className="text-lg md:text-xl font-heading font-bold text-neutral-100 flex items-center gap-2.5 tracking-tight uppercase">
+            <Terminal className="h-5 w-5 text-neutral-405" />
+            <span>Delegate Onboarding Wizard</span>
           </h1>
-          <p className="text-sm text-neutral-400 font-sans mt-1">
+          <p className="text-xs text-neutral-500 font-sans mt-1">
             Complete your official festival registration wizard to unlock competition entries and team setups.
           </p>
         </div>
         <div className="shrink-0">
-          <span className="font-mono text-xs text-neutral-400 bg-neutral-900 border border-neutral-850 px-3 py-1.5 rounded">
-            Wizard Step {step} of 5
+          <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 bg-neutral-900/50 border border-neutral-800/60 px-3 py-1.5 rounded">
+            STEP {step} OF 5
           </span>
         </div>
       </div>
 
       {/* Horizontal Stepper */}
-      <div className="bg-neutral-900/40 border border-neutral-850 rounded-xl p-5 md:p-6 shadow-sm">
-        <div className="flex items-center justify-between max-w-4xl mx-auto">
+      <div className="bg-neutral-900/10 border border-neutral-800/40 rounded p-4 shadow-none">
+        <div className="flex items-center justify-between max-w-3xl mx-auto">
           {stepsConfig.map((item, idx) => {
-            const StepIcon = item.icon;
             const isCompleted = step > item.id;
             const isActive = step === item.id;
             return (
@@ -281,27 +292,27 @@ export default function ProfileSetupWizard() {
                     }
                   }}
                   disabled={item.id >= step}
-                  className="flex items-center gap-2.5 outline-none focus:outline-none text-left disabled:cursor-not-allowed group"
+                  className="flex items-center gap-2 outline-none focus:outline-none text-left disabled:cursor-not-allowed group"
                 >
                   <div
-                    className={`w-8 h-8 rounded-full flex items-center justify-center border text-xs transition-all duration-200 shrink-0 ${
+                    className={`w-6 h-6 rounded flex items-center justify-center border text-[10px] font-mono transition-all duration-150 shrink-0 ${
                       isActive
-                        ? "border-primary bg-primary text-white font-bold shadow-[0_0_10px_rgba(99,102,241,0.4)]"
+                        ? "border-neutral-400 bg-neutral-900 text-neutral-100 font-bold"
                         : isCompleted
-                        ? "border-emerald-500 bg-emerald-500/10 text-emerald-400 group-hover:border-primary group-hover:text-primary group-hover:bg-primary/5 cursor-pointer"
-                        : "border-neutral-800 bg-neutral-950 text-neutral-600"
+                        ? "border-neutral-800 bg-neutral-900/45 text-neutral-300 group-hover:border-neutral-700 cursor-pointer"
+                        : "border-neutral-900 bg-neutral-950 text-neutral-605"
                     }`}
                   >
-                    {isCompleted ? <Check className="h-4 w-4" /> : item.id}
+                    {isCompleted ? <Check className="h-3 w-3" /> : item.id}
                   </div>
                   <div className="hidden md:block">
                     <p
-                      className={`text-xxs font-heading font-semibold uppercase tracking-wider transition-colors ${
+                      className={`text-[9px] font-mono tracking-widest uppercase transition-colors ${
                         isActive
-                          ? "text-primary"
+                          ? "text-neutral-200 font-semibold"
                           : isCompleted
-                          ? "text-emerald-400 group-hover:text-primary cursor-pointer"
-                          : "text-neutral-500"
+                          ? "text-neutral-400 group-hover:text-neutral-200 cursor-pointer"
+                          : "text-neutral-600"
                       }`}
                     >
                       {item.label}
@@ -311,8 +322,8 @@ export default function ProfileSetupWizard() {
                 {/* Connector Line */}
                 {idx < stepsConfig.length - 1 && (
                   <div
-                    className={`grow h-0.5 mx-4 transition-colors duration-200 ${
-                      step > item.id ? "bg-emerald-500/40" : "bg-neutral-850"
+                    className={`grow h-px mx-3 transition-colors duration-155 ${
+                      step > item.id ? "bg-neutral-800/80" : "bg-neutral-900/85"
                     }`}
                   />
                 )}
@@ -323,9 +334,9 @@ export default function ProfileSetupWizard() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Form Area */}
-        <div className="lg:col-span-8 bg-neutral-900/40 border border-neutral-850 rounded-xl p-6 md:p-8 flex flex-col min-h-[480px] justify-between">
+        <div className="lg:col-span-8 bg-neutral-900/10 border border-neutral-800/40 rounded-lg p-6 flex flex-col min-h-[440px] justify-between">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 grow flex flex-col justify-between">
             <div className="space-y-6">
               <AnimatePresence mode="wait">
@@ -334,9 +345,9 @@ export default function ProfileSetupWizard() {
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className="p-4 rounded-lg bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2"
+                    className="p-4 rounded bg-error/20 border border-error/30 text-xs text-error font-mono flex items-start gap-2"
                   >
-                    <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
+                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                     <span>{errorMsg}</span>
                   </motion.div>
                 )}
@@ -349,46 +360,52 @@ export default function ProfileSetupWizard() {
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
-                    className="space-y-5"
+                    className="space-y-4"
                   >
-                    <div className="border-b border-neutral-850/60 pb-3">
-                      <h1 className="text-xl font-heading font-extrabold text-neutral-200">Identity Details</h1>
-                      <p className="text-xs text-neutral-400 font-sans mt-1">Let&apos;s start with your basic identification for your official festival pass.</p>
+                    <div className="border-b border-neutral-800/30 pb-3 mb-4">
+                      <h2 className="text-xs uppercase font-mono tracking-widest text-neutral-400 font-semibold">Identity Details</h2>
+                      <p className="text-xs text-neutral-500 font-sans mt-1">Let&apos;s start with your basic identification for your official festival pass.</p>
                     </div>
 
-                    <Input
-                      label="Full Name (As per NID/Passport)"
-                      placeholder="e.g. Abdullah Al Mamun"
-                      error={errors.full_name?.message}
-                      className="h-11 border-neutral-850 bg-neutral-950/40"
-                      {...register("full_name")}
-                    />
-
-                    <div className="relative">
+                    <div className="flex flex-col space-y-1.5 w-full">
+                      <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">Full Name (As per NID/Passport)</label>
                       <Input
-                        label="University Email Address"
-                        value={userEmail}
-                        readOnly
-                        disabled
-                        className="pl-10 h-11 border-neutral-850/30 bg-neutral-900/50 text-neutral-400 select-all cursor-not-allowed"
+                        placeholder="e.g. Abdullah Al Mamun"
+                        error={errors.full_name?.message}
+                        className="h-9 border-neutral-800/80 bg-neutral-950 text-xs focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 transition-all duration-150"
+                        {...register("full_name")}
                       />
-                      <Lock className="absolute left-3.5 top-[38px] h-4.5 w-4.5 text-neutral-600 pointer-events-none" />
+                    </div>
+
+                    <div className="flex flex-col space-y-1.5 w-full relative">
+                      <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">University Email Address</label>
+                      <div className="relative">
+                        <Input
+                          value={userEmail}
+                          readOnly
+                          disabled
+                          className="pl-9 h-9 border-neutral-800/30 bg-neutral-900/50 text-neutral-500 select-all cursor-not-allowed text-xs"
+                        />
+                        <Lock className="absolute left-3 top-2.5 h-3.5 w-3.5 text-neutral-600 pointer-events-none" />
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input
-                        label="Phone Number"
-                        placeholder="+880 1XXX-XXXXXX"
-                        error={errors.phone?.message}
-                        className="h-11 border-neutral-850 bg-neutral-950/40"
-                        {...register("phone")}
-                      />
+                      <div className="flex flex-col space-y-1.5 w-full">
+                        <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">Phone Number</label>
+                        <Input
+                          placeholder="+880 1XXX-XXXXXX"
+                          error={errors.phone?.message}
+                          className="h-9 border-neutral-800/80 bg-neutral-950 text-xs focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 transition-all duration-150"
+                          {...register("phone")}
+                        />
+                      </div>
 
                       <div className="flex flex-col space-y-1.5 w-full">
-                        <label className="text-sm font-medium text-neutral-300 font-sans select-none">
+                        <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">
                           Gender
                         </label>
-                        <div className="grid grid-cols-2 gap-2 h-11">
+                        <div className="grid grid-cols-2 gap-2 h-9">
                           {(["male", "female"] as const).map((g) => {
                             const watched = watch("gender");
                             const isSelected = watched === g;
@@ -397,13 +414,13 @@ export default function ProfileSetupWizard() {
                                 key={g}
                                 type="button"
                                 onClick={() => setValue("gender", g, { shouldValidate: true })}
-                                className={`h-full rounded-sm border text-sm font-medium font-sans transition-all duration-150 capitalize tracking-wide ${
+                                className={`h-full rounded border text-xs font-mono transition-all duration-150 capitalize tracking-wider ${
                                   isSelected
-                                    ? "border-primary bg-primary/10 text-primary shadow-[0_0_0_1px_var(--color-primary)]"
-                                    : "border-neutral-850 bg-neutral-950/40 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200"
+                                    ? "border-neutral-400 bg-neutral-900 text-neutral-100 font-semibold"
+                                    : "border-neutral-900 bg-neutral-950/40 text-neutral-500 hover:border-neutral-800 hover:text-neutral-300"
                                 }`}
                               >
-                                {g === "male" ? "♂ Male" : "♀ Female"}
+                                {g === "male" ? "Male" : "Female"}
                               </button>
                             );
                           })}
@@ -423,45 +440,53 @@ export default function ProfileSetupWizard() {
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
-                    className="space-y-5"
+                    className="space-y-4"
                   >
-                    <div className="border-b border-neutral-850/60 pb-3">
-                      <h1 className="text-xl font-heading font-extrabold text-neutral-200">Academic Records</h1>
-                      <p className="text-xs text-neutral-400 font-sans mt-1">Provide your current university status to check registration eligibility.</p>
+                    <div className="border-b border-neutral-800/30 pb-3 mb-4">
+                      <h2 className="text-xs uppercase font-mono tracking-widest text-neutral-400 font-semibold">Academic Records</h2>
+                      <p className="text-xs text-neutral-500 font-sans mt-1">Provide your current university status to check registration eligibility.</p>
                     </div>
 
-                    <Input
-                      label="University Name"
-                      placeholder="e.g. Shanto-Mariam University of Creative Technology"
-                      error={errors.university?.message}
-                      className="h-11 border-neutral-850 bg-neutral-950/40"
-                      {...register("university")}
-                    />
+                    <div className="flex flex-col space-y-1.5 w-full">
+                      <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">University Name</label>
+                      <Input
+                        placeholder="e.g. Shanto-Mariam University of Creative Technology"
+                        error={errors.university?.message}
+                        className="h-9 border-neutral-800/80 bg-neutral-950 text-xs focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 transition-all duration-150"
+                        {...register("university")}
+                      />
+                    </div>
 
-                    <Input
-                      label="Department"
-                      placeholder="e.g. Computer Science & Engineering"
-                      error={errors.department?.message}
-                      className="h-11 border-neutral-850 bg-neutral-950/40"
-                      {...register("department")}
-                    />
+                    <div className="flex flex-col space-y-1.5 w-full">
+                      <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">Department</label>
+                      <Input
+                        placeholder="e.g. Computer Science & Engineering"
+                        error={errors.department?.message}
+                        className="h-9 border-neutral-800/80 bg-neutral-950 text-xs focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 transition-all duration-150"
+                        {...register("department")}
+                      />
+                    </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Input
-                        label="Semester"
-                        placeholder="e.g. 8th"
-                        error={errors.semester?.message}
-                        className="h-11 border-neutral-850 bg-neutral-950/40"
-                        {...register("semester")}
-                      />
+                      <div className="flex flex-col space-y-1.5 w-full">
+                        <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">Semester</label>
+                        <Input
+                          placeholder="e.g. 8th"
+                          error={errors.semester?.message}
+                          className="h-9 border-neutral-800/80 bg-neutral-950 text-xs focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 transition-all duration-150"
+                          {...register("semester")}
+                        />
+                      </div>
 
-                      <Input
-                        label="Student ID"
-                        placeholder="e.g. 201071000"
-                        error={errors.student_id?.message}
-                        className="h-11 border-neutral-850 bg-neutral-950/40"
-                        {...register("student_id")}
-                      />
+                      <div className="flex flex-col space-y-1.5 w-full">
+                        <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">Student ID</label>
+                        <Input
+                          placeholder="e.g. 201071000"
+                          error={errors.student_id?.message}
+                          className="h-9 border-neutral-800/80 bg-neutral-950 text-xs focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 transition-all duration-150"
+                          {...register("student_id")}
+                        />
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -472,23 +497,23 @@ export default function ProfileSetupWizard() {
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
-                    className="space-y-5"
+                    className="space-y-4"
                   >
-                    <div className="border-b border-neutral-850/60 pb-3">
-                      <h1 className="text-xl font-heading font-extrabold text-neutral-200">Student ID Verification</h1>
-                      <p className="text-xs text-neutral-400 font-sans mt-1">Upload clear images of your Student ID card. Limits: Max 5MB, JPG/PNG only.</p>
+                    <div className="border-b border-neutral-800/30 pb-3 mb-4">
+                      <h2 className="text-xs uppercase font-mono tracking-widest text-neutral-400 font-semibold">Student ID Verification</h2>
+                      <p className="text-xs text-neutral-500 font-sans mt-1">Upload clear images of your Student ID card. Limits: Max 5MB, JPG/PNG only.</p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      {/* Front Card Dropzone */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Front ID Dropzone */}
                       <div className="space-y-2">
-                        <label className="text-xs font-mono font-bold tracking-wider text-neutral-400 uppercase select-none">ID Card Front Side</label>
+                        <label className="text-[10px] font-mono font-bold tracking-widest text-neutral-400 uppercase select-none">ID Front Side</label>
                         <div
                           onDragOver={(e) => handleDrag(e, "front", true)}
                           onDragLeave={(e) => handleDrag(e, "front", false)}
                           onDrop={(e) => handleDrop(e, "front")}
-                          className={`relative h-36 border-2 border-dashed rounded-lg flex flex-col items-center justify-center bg-neutral-950/50 transition-all duration-150 ${
-                            dragActiveFront ? "border-primary bg-primary/5 shadow-[0_0_15px_rgba(99,102,241,0.2)]" : "border-neutral-800 hover:border-neutral-700"
+                          className={`relative h-32 border border-dashed rounded flex flex-col items-center justify-center bg-neutral-950 transition-all duration-150 ${
+                            dragActiveFront ? "border-neutral-500 bg-neutral-900/30" : "border-neutral-800/85 hover:border-neutral-700/60"
                           }`}
                         >
                           {idFront ? (
@@ -497,16 +522,16 @@ export default function ProfileSetupWizard() {
                               <button
                                 type="button"
                                 onClick={() => setIdFront(null)}
-                                className="absolute top-1.5 right-1.5 p-1 bg-neutral-900 border border-neutral-800 rounded-full text-neutral-400 hover:text-neutral-100 transition-colors"
+                                className="absolute top-1.5 right-1.5 p-1 bg-neutral-900 border border-neutral-850 rounded-full text-neutral-400 hover:text-neutral-100 transition-colors"
                               >
-                                <X className="h-3.5 w-3.5" />
+                                <X className="h-3 w-3" />
                               </button>
                             </div>
                           ) : (
                             <div className="text-center p-3 space-y-1.5 pointer-events-none">
-                              <Upload className="h-6 w-6 text-neutral-500 mx-auto" />
-                              <div className="text-[11px] text-neutral-500 font-sans">
-                                Drop Front Side, or <span className="text-primary font-semibold">Browse</span>
+                              <Upload className="h-4 w-4 text-neutral-500 mx-auto" />
+                              <div className="text-[10px] text-neutral-400 font-mono uppercase tracking-widest">
+                                Drop front side, or <span className="text-neutral-200 underline font-semibold cursor-pointer">Browse</span>
                               </div>
                             </div>
                           )}
@@ -520,15 +545,15 @@ export default function ProfileSetupWizard() {
                         {idFrontError && <span className="text-xs text-error font-sans font-medium">{idFrontError}</span>}
                       </div>
 
-                      {/* Back Card Dropzone */}
+                      {/* Back ID Dropzone */}
                       <div className="space-y-2">
-                        <label className="text-xs font-mono font-bold tracking-wider text-neutral-400 uppercase select-none">ID Card Back Side</label>
+                        <label className="text-[10px] font-mono font-bold tracking-widest text-neutral-400 uppercase select-none">ID Back Side</label>
                         <div
                           onDragOver={(e) => handleDrag(e, "back", true)}
                           onDragLeave={(e) => handleDrag(e, "back", false)}
                           onDrop={(e) => handleDrop(e, "back")}
-                          className={`relative h-36 border-2 border-dashed rounded-lg flex flex-col items-center justify-center bg-neutral-950/50 transition-all duration-150 ${
-                            dragActiveBack ? "border-primary bg-primary/5 shadow-[0_0_15px_rgba(99,102,241,0.2)]" : "border-neutral-800 hover:border-neutral-700"
+                          className={`relative h-32 border border-dashed rounded flex flex-col items-center justify-center bg-neutral-950 transition-all duration-150 ${
+                            dragActiveBack ? "border-neutral-500 bg-neutral-900/30" : "border-neutral-800/85 hover:border-neutral-700/60"
                           }`}
                         >
                           {idBack ? (
@@ -537,16 +562,16 @@ export default function ProfileSetupWizard() {
                               <button
                                 type="button"
                                 onClick={() => setIdBack(null)}
-                                className="absolute top-1.5 right-1.5 p-1 bg-neutral-900 border border-neutral-800 rounded-full text-neutral-400 hover:text-neutral-100 transition-colors"
+                                className="absolute top-1.5 right-1.5 p-1 bg-neutral-900 border border-neutral-850 rounded-full text-neutral-400 hover:text-neutral-100 transition-colors"
                               >
-                                <X className="h-3.5 w-3.5" />
+                                <X className="h-3 w-3" />
                               </button>
                             </div>
                           ) : (
                             <div className="text-center p-3 space-y-1.5 pointer-events-none">
-                              <Upload className="h-6 w-6 text-neutral-500 mx-auto" />
-                              <div className="text-[11px] text-neutral-500 font-sans">
-                                Drop Back Side, or <span className="text-primary font-semibold">Browse</span>
+                              <Upload className="h-4 w-4 text-neutral-550 mx-auto" />
+                              <div className="text-[10px] text-neutral-400 font-mono uppercase tracking-widest">
+                                Drop back side, or <span className="text-neutral-200 underline font-semibold cursor-pointer">Browse</span>
                               </div>
                             </div>
                           )}
@@ -566,38 +591,38 @@ export default function ProfileSetupWizard() {
                         <label className="text-[10px] font-mono font-bold tracking-widest text-neutral-500 uppercase">Uploaded Attachments</label>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {idFront && (
-                            <div className="bg-neutral-900/50 border border-neutral-850 rounded-lg p-2.5 flex items-center gap-3">
-                              <div className="w-12 h-10 bg-neutral-950 rounded overflow-hidden shrink-0 flex items-center justify-center border border-neutral-850">
+                            <div className="bg-neutral-900/20 border border-neutral-800/60 rounded p-2 flex items-center gap-3">
+                              <div className="w-10 h-8 bg-neutral-950 rounded overflow-hidden shrink-0 flex items-center justify-center border border-neutral-800/60">
                                 <img src={idFront} alt="Thumbnail Front" className="h-full w-full object-cover" />
                               </div>
                               <div className="grow min-w-0">
-                                <p className="text-xs font-semibold text-neutral-200 truncate">id_card_front.png</p>
-                                <p className="text-[9px] font-mono text-emerald-400 font-bold">READY • VERIFIABLE</p>
+                                <p className="text-[11px] font-semibold text-neutral-300 truncate">id_card_front.png</p>
+                                <p className="text-[9px] font-mono text-success font-bold">READY • VERIFIABLE</p>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => setIdFront(null)}
                                 className="text-neutral-500 hover:text-error transition-colors p-1"
                               >
-                                <X className="h-4 w-4" />
+                                <X className="h-3.5 w-3.5" />
                               </button>
                             </div>
                           )}
                           {idBack && (
-                            <div className="bg-neutral-900/50 border border-neutral-850 rounded-lg p-2.5 flex items-center gap-3">
-                              <div className="w-12 h-10 bg-neutral-950 rounded overflow-hidden shrink-0 flex items-center justify-center border border-neutral-850">
+                            <div className="bg-neutral-900/20 border border-neutral-800/60 rounded p-2 flex items-center gap-3">
+                              <div className="w-10 h-8 bg-neutral-950 rounded overflow-hidden shrink-0 flex items-center justify-center border border-neutral-800/60">
                                 <img src={idBack} alt="Thumbnail Back" className="h-full w-full object-cover" />
                               </div>
                               <div className="grow min-w-0">
-                                <p className="text-xs font-semibold text-neutral-200 truncate">id_card_back.png</p>
-                                <p className="text-[9px] font-mono text-emerald-400 font-bold">READY • VERIFIABLE</p>
+                                <p className="text-[11px] font-semibold text-neutral-300 truncate">id_card_back.png</p>
+                                <p className="text-[9px] font-mono text-success font-bold">READY • VERIFIABLE</p>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => setIdBack(null)}
                                 className="text-neutral-500 hover:text-error transition-colors p-1"
                               >
-                                <X className="h-4 w-4" />
+                                <X className="h-3.5 w-3.5" />
                               </button>
                             </div>
                           )}
@@ -613,23 +638,23 @@ export default function ProfileSetupWizard() {
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
-                    className="space-y-5"
+                    className="space-y-4"
                   >
-                    <div className="border-b border-neutral-850/60 pb-3">
-                      <h1 className="text-xl font-heading font-extrabold text-neutral-200">Professional Roster</h1>
-                      <p className="text-xs text-neutral-400 font-sans mt-1">Highlight your coding profiles, skills, and size details.</p>
+                    <div className="border-b border-neutral-800/30 pb-3 mb-4">
+                      <h2 className="text-xs uppercase font-mono tracking-widest text-neutral-400 font-semibold">Professional Roster</h2>
+                      <p className="text-xs text-neutral-500 font-sans mt-1">Highlight your coding profiles, skills, and size details.</p>
                     </div>
 
                     {/* Online Profile URL */}
                     <div className="flex flex-col space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-neutral-300 font-sans select-none">Online Profile</label>
-                        <span className="text-[10px] font-sans text-neutral-500 bg-neutral-900 border border-neutral-850 px-2 py-0.5 rounded">Optional</span>
+                        <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none font-mono">Online Profile</label>
+                        <span className="text-[9px] font-mono text-neutral-500 bg-neutral-905 border border-neutral-800/40 px-2 py-0.5 rounded">OPTIONAL</span>
                       </div>
                       <Input
                         type="url"
                         placeholder="e.g. https://github.com/username or https://linkedin.com/in/username"
-                        className="h-10 border-neutral-850 bg-neutral-950/40 placeholder:text-neutral-600 font-mono text-sm"
+                        className="h-9 border-neutral-800/80 bg-neutral-950 placeholder:text-neutral-600 font-mono text-xs focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20"
                         {...register("github")}
                       />
                       {errors.github && (
@@ -639,14 +664,14 @@ export default function ProfileSetupWizard() {
 
                     {/* Skills — freeform text */}
                     <div className="flex flex-col space-y-1.5">
-                      <label className="text-sm font-medium text-neutral-300 font-sans select-none">Skills & Tech Stack</label>
+                      <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">Skills & Tech Stack</label>
                       <textarea
-                        placeholder="Tell us in plain English — e.g. I work with React, Node.js, and Python. I've also built IoT projects with Arduino and have experience in CTF challenges."
+                        placeholder="Describe your tech stack naturally — e.g. I work with React, Node.js, and Python."
                         rows={3}
-                        className="flex w-full rounded-sm border border-neutral-850 bg-neutral-950/40 px-3 py-2.5 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans placeholder:text-neutral-600 transition-colors resize-none leading-relaxed"
+                        className="flex w-full rounded border border-neutral-800/80 bg-neutral-950 px-3 py-2 text-xs text-neutral-200 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 outline-none font-sans placeholder:text-neutral-600 transition-colors resize-none leading-relaxed"
                         {...register("skills")}
                       />
-                      <p className="text-[11px] text-neutral-600 font-sans">Describe your tech stack and experience in your own words. No need to list — just write naturally.</p>
+                      <p className="text-[10px] text-neutral-500 font-sans leading-normal">Tell us about your developer skillset in your own words.</p>
                       {errors.skills && (
                         <span className="text-xs text-error font-sans font-medium">{errors.skills.message}</span>
                       )}
@@ -655,13 +680,13 @@ export default function ProfileSetupWizard() {
                     {/* Bio — optional */}
                     <div className="flex flex-col space-y-1.5">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium text-neutral-300 font-sans select-none">Short Biography</label>
-                        <span className="text-[10px] font-sans text-neutral-500 bg-neutral-900 border border-neutral-850 px-2 py-0.5 rounded">Optional</span>
+                        <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">Short Biography</label>
+                        <span className="text-[9px] font-mono text-neutral-550 bg-neutral-905 border border-neutral-800/40 px-2 py-0.5 rounded">OPTIONAL</span>
                       </div>
                       <textarea
-                        placeholder="A quick intro about yourself — your interests, goals, or what brings you to CSE Fest 2026."
+                        placeholder="A quick intro about yourself..."
                         rows={3}
-                        className="flex w-full rounded-sm border border-neutral-850 bg-neutral-950/40 px-3 py-2.5 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans placeholder:text-neutral-600 transition-colors resize-none leading-relaxed"
+                        className="flex w-full rounded border border-neutral-800/80 bg-neutral-950 px-3 py-2 text-xs text-neutral-200 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 outline-none font-sans placeholder:text-neutral-600 transition-colors resize-none leading-relaxed"
                         {...register("bio")}
                       />
                       {errors.bio && (
@@ -671,7 +696,7 @@ export default function ProfileSetupWizard() {
 
                     {/* T-Shirt Size — button toggle */}
                     <div className="flex flex-col space-y-1.5">
-                      <label className="text-sm font-medium text-neutral-300 font-sans select-none">Festival T-Shirt Size</label>
+                      <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none font-mono">Festival T-Shirt Size</label>
                       <div className="grid grid-cols-5 gap-2">
                         {(["S", "M", "L", "XL", "XXL"] as const).map((size) => {
                           const isSelected = watch("tshirt_size") === size;
@@ -680,10 +705,10 @@ export default function ProfileSetupWizard() {
                               key={size}
                               type="button"
                               onClick={() => setValue("tshirt_size", size, { shouldValidate: true })}
-                              className={`h-11 rounded-sm border text-sm font-bold font-mono transition-all duration-150 ${
+                              className={`h-9 rounded border text-xs font-mono transition-all duration-155 tracking-wider ${
                                 isSelected
-                                  ? "border-primary bg-primary/10 text-primary shadow-[0_0_0_1px_var(--color-primary)]"
-                                  : "border-neutral-850 bg-neutral-950/40 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200"
+                                  ? "border-neutral-400 bg-neutral-900 text-neutral-100 font-bold"
+                                  : "border-neutral-900 bg-neutral-950/40 text-neutral-500 hover:border-neutral-850 hover:text-neutral-350"
                               }`}
                             >
                               {size}
@@ -705,41 +730,41 @@ export default function ProfileSetupWizard() {
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
-                    className="space-y-5"
+                    className="space-y-4"
                   >
-                    <div className="border-b border-neutral-850/60 pb-3">
-                      <h1 className="text-xl font-heading font-extrabold text-neutral-200">Confirm Profile Details</h1>
-                      <p className="text-xs text-neutral-400 font-sans mt-1">Verify details before submission. Information is locked for verification review.</p>
+                    <div className="border-b border-neutral-800/30 pb-3 mb-4">
+                      <h2 className="text-xs uppercase font-mono tracking-widest text-neutral-400 font-semibold">Confirm Profile Details</h2>
+                      <p className="text-xs text-neutral-500 font-sans mt-1">Verify details before submission. Information is locked for verification review.</p>
                     </div>
 
-                    <div className="bg-neutral-900/30 border border-neutral-850 rounded-lg p-5 text-sm space-y-3 font-sans">
-                      <div className="grid grid-cols-2 border-b border-neutral-850/40 pb-2">
-                        <span className="text-neutral-500">Full Name</span>
-                        <span className="text-neutral-200 font-bold text-right truncate">{watch("full_name")}</span>
+                    <div className="bg-neutral-900/10 border border-neutral-800/40 rounded p-4 space-y-2.5 font-sans animate-fade-in">
+                      <div className="grid grid-cols-2 border-b border-neutral-800/20 pb-2">
+                        <span className="text-[10px] font-mono tracking-widest text-neutral-500 uppercase">FULL NAME</span>
+                        <span className="text-xs text-neutral-200 font-semibold text-right truncate">{watch("full_name")}</span>
                       </div>
-                      <div className="grid grid-cols-2 border-b border-neutral-850/40 pb-2">
-                        <span className="text-neutral-500">Contact Phone</span>
-                        <span className="text-neutral-200 font-mono font-semibold text-right">{watch("phone")}</span>
+                      <div className="grid grid-cols-2 border-b border-neutral-800/20 pb-2">
+                        <span className="text-[10px] font-mono tracking-widest text-neutral-500 uppercase">CONTACT PHONE</span>
+                        <span className="text-xs text-neutral-350 font-mono text-right">{watch("phone")}</span>
                       </div>
-                      <div className="grid grid-cols-2 border-b border-neutral-850/40 pb-2">
-                        <span className="text-neutral-500">University</span>
-                        <span className="text-neutral-200 font-bold text-right truncate">{watch("university")}</span>
+                      <div className="grid grid-cols-2 border-b border-neutral-800/20 pb-2">
+                        <span className="text-[10px] font-mono tracking-widest text-neutral-500 uppercase">UNIVERSITY</span>
+                        <span className="text-xs text-neutral-200 font-semibold text-right truncate">{watch("university")}</span>
                       </div>
-                      <div className="grid grid-cols-2 border-b border-neutral-850/40 pb-2">
-                        <span className="text-neutral-500">Department</span>
-                        <span className="text-neutral-200 font-semibold text-right truncate">{watch("department")}</span>
+                      <div className="grid grid-cols-2 border-b border-neutral-800/20 pb-2">
+                        <span className="text-[10px] font-mono tracking-widest text-neutral-500 uppercase">DEPARTMENT</span>
+                        <span className="text-xs text-neutral-300 text-right truncate">{watch("department")}</span>
                       </div>
-                      <div className="grid grid-cols-2 border-b border-neutral-850/40 pb-2">
-                        <span className="text-neutral-500">Semester & ID</span>
-                        <span className="text-neutral-200 font-mono text-right">{watch("semester")} Semester / ID: {watch("student_id")}</span>
+                      <div className="grid grid-cols-2 border-b border-neutral-800/20 pb-2">
+                        <span className="text-[10px] font-mono tracking-widest text-neutral-500 uppercase">SEMESTER & ID</span>
+                        <span className="text-xs text-neutral-350 font-mono text-right">{watch("semester")} Semester / ID: {watch("student_id")}</span>
                       </div>
-                      <div className="grid grid-cols-2 border-b border-neutral-850/40 pb-2">
-                        <span className="text-neutral-500">T-Shirt Size</span>
-                        <span className="text-neutral-200 font-bold text-right">{watch("tshirt_size")}</span>
+                      <div className="grid grid-cols-2 border-b border-neutral-800/20 pb-2">
+                        <span className="text-[10px] font-mono tracking-widest text-neutral-500 uppercase">T-SHIRT SIZE</span>
+                        <span className="text-xs text-neutral-200 font-mono font-bold text-right">{watch("tshirt_size")}</span>
                       </div>
-                      <div className="space-y-1 pt-1">
-                        <span className="text-neutral-500 block">Skills & Tech Stack</span>
-                        <p className="text-neutral-300 text-xs font-sans leading-relaxed mt-1">{watch("skills") || <span className="text-neutral-600 italic">Not provided</span>}</p>
+                      <div className="space-y-1 pt-1.5">
+                        <span className="text-[10px] font-mono tracking-widest text-neutral-500 uppercase block">SKILLS & TECH STACK</span>
+                        <p className="text-neutral-350 text-xs font-sans leading-relaxed mt-1">{watch("skills") || <span className="text-neutral-600 italic font-mono">Not provided</span>}</p>
                       </div>
                     </div>
                   </motion.div>
@@ -747,15 +772,15 @@ export default function ProfileSetupWizard() {
               </AnimatePresence>
             </div>
 
-            <div className="flex justify-between items-center pt-6 border-t border-neutral-850 mt-8">
+            <div className="flex justify-between items-center pt-5 border-t border-neutral-800/40 mt-8">
               <Button
                 variant="secondary"
                 type="button"
                 onClick={prevStep}
                 disabled={step === 1 || loading}
-                className="gap-2 px-4 h-10 text-xs font-bold font-sans cursor-pointer active:scale-98"
+                className="gap-2 px-4 h-9 text-xs font-mono uppercase tracking-wider cursor-pointer border border-neutral-800 hover:border-neutral-700 bg-neutral-950 text-neutral-300 active:scale-98"
               >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="h-3.5 w-3.5" />
                 <span>Back</span>
               </Button>
 
@@ -763,19 +788,19 @@ export default function ProfileSetupWizard() {
                 <Button
                   type="button"
                   onClick={nextStep}
-                  className="bg-primary hover:bg-primary/95 text-white gap-2 px-5 h-10 text-xs font-bold font-sans cursor-pointer active:scale-98"
+                  className="bg-neutral-100 hover:bg-neutral-200 text-neutral-900 border border-transparent gap-2 px-5 h-9 text-xs font-mono uppercase tracking-wider cursor-pointer active:scale-98"
                 >
                   <span>Continue</span>
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               ) : (
                 <Button
                   type="submit"
                   isLoading={loading}
-                  className="bg-primary hover:bg-primary/95 text-white gap-2 px-6 h-10 text-xs font-bold font-sans cursor-pointer active:scale-98 hover:shadow-[0_0_15px_rgba(99,102,241,0.3)]"
+                  className="bg-neutral-100 hover:bg-neutral-200 text-neutral-900 border border-transparent gap-2 px-6 h-9 text-xs font-mono uppercase tracking-wider cursor-pointer active:scale-98"
                 >
                   <span>Submit Profile</span>
-                  <Check className="h-4 w-4" />
+                  <Check className="h-3.5 w-3.5" />
                 </Button>
               )}
             </div>
@@ -784,9 +809,9 @@ export default function ProfileSetupWizard() {
 
         {/* Right Sidebar Column */}
         <aside className="lg:col-span-4 flex flex-col justify-between h-full space-y-6">
-          <div className="bg-primary/5 border border-neutral-850/60 rounded-xl p-6 md:p-8 space-y-6 grow">
-            <div className="w-12 h-12 bg-primary/10 border border-primary/20 rounded-xl flex items-center justify-center mb-4">
-              <Info className="h-5 w-5 text-primary" />
+          <div className="bg-neutral-900/10 border border-neutral-800/40 rounded-lg p-5 space-y-5 grow">
+            <div className="w-10 h-10 bg-neutral-900 border border-neutral-800/60 rounded flex items-center justify-center mb-2">
+              <Info className="h-4.5 w-4.5 text-neutral-400" />
             </div>
 
             <AnimatePresence mode="wait">
@@ -796,17 +821,17 @@ export default function ProfileSetupWizard() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="space-y-4 font-sans"
+                  className="space-y-3 font-sans"
                 >
-                  <h3 className="text-md font-bold text-neutral-200">Why Identity?</h3>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
+                  <h3 className="text-xs font-mono uppercase tracking-widest text-neutral-200">Why Identity?</h3>
+                  <p className="text-[11px] text-neutral-500 leading-relaxed">
                     Your name and gender details are mapped directly onto the printed Delegate Badges and certificates. Please double-check spelling.
                   </p>
-                  <div className="bg-neutral-900/60 border border-neutral-850 rounded-lg p-3 space-y-2 mt-4">
+                  <div className="bg-neutral-900/40 border border-neutral-800/40 rounded p-3 mt-4">
                     <div className="flex gap-2">
-                      <Shield className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <Shield className="h-4 w-4 text-neutral-400 shrink-0 mt-0.5" />
                       <div className="space-y-0.5">
-                        <h4 className="text-[10px] font-bold text-primary uppercase tracking-wider">Encrypted Storage</h4>
+                        <h4 className="text-[9px] font-mono font-bold text-neutral-300 uppercase tracking-widest">Encrypted Storage</h4>
                         <p className="text-[10px] text-neutral-500 leading-tight">All personal records are encrypted and kept strictly confidential.</p>
                       </div>
                     </div>
@@ -820,13 +845,13 @@ export default function ProfileSetupWizard() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="space-y-4 font-sans"
+                  className="space-y-3 font-sans"
                 >
-                  <h3 className="text-md font-bold text-neutral-200">Academic Check</h3>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
+                  <h3 className="text-xs font-mono uppercase tracking-widest text-neutral-200">Academic Check</h3>
+                  <p className="text-[11px] text-neutral-500 leading-relaxed">
                     CSE Fest 2026 hosts contests targeting specific student demographics (e.g. internal university vs national level external hackathons).
                   </p>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
+                  <p className="text-[11px] text-neutral-500 leading-relaxed">
                     Providing your accurate department and registration ID allows instant verification rules to be met.
                   </p>
                 </motion.div>
@@ -838,13 +863,13 @@ export default function ProfileSetupWizard() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="space-y-4 font-sans"
+                  className="space-y-3 font-sans"
                 >
-                  <h3 className="text-md font-bold text-neutral-200">Verification Tips</h3>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
-                    Please upload high-resolution photos of your physical student ID card. 
+                  <h3 className="text-xs font-mono uppercase tracking-widest text-neutral-200">Verification Tips</h3>
+                  <p className="text-[11px] text-neutral-500 leading-relaxed">
+                    Please upload high-resolution photos of your physical student ID card.
                   </p>
-                  <ul className="text-xs text-neutral-400 list-disc pl-4 space-y-1.5 leading-relaxed">
+                  <ul className="text-[11px] text-neutral-500 list-disc pl-4 space-y-1 leading-relaxed">
                     <li>Avoid heavy glare or shadows on text.</li>
                     <li>Ensure registration/roll number is legible.</li>
                     <li>Expired cards will be flagged by admins.</li>
@@ -858,13 +883,13 @@ export default function ProfileSetupWizard() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="space-y-4 font-sans"
+                  className="space-y-3 font-sans"
                 >
-                  <h3 className="text-md font-bold text-neutral-200">Build Your Roster</h3>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
+                  <h3 className="text-xs font-mono uppercase tracking-widest text-neutral-200">Build Your Roster</h3>
+                  <p className="text-[11px] text-neutral-500 leading-relaxed">
                     Connecting GitHub and portfolio profiles enables prospective team organizers to view your coding accomplishments.
                   </p>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
+                  <p className="text-[11px] text-neutral-500 leading-relaxed">
                     T-shirt size is final and cannot be modified once delegate packages are queued for manufacturing.
                   </p>
                 </motion.div>
@@ -876,13 +901,13 @@ export default function ProfileSetupWizard() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="space-y-4 font-sans"
+                  className="space-y-3 font-sans"
                 >
-                  <h3 className="text-md font-bold text-neutral-200">Final Verification</h3>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
+                  <h3 className="text-xs font-mono uppercase tracking-widest text-neutral-200">Final Verification</h3>
+                  <p className="text-[11px] text-neutral-500 leading-relaxed">
                     Once submitted, details are queued for verification. Approvals generally take under 24 hours.
                   </p>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
+                  <p className="text-[11px] text-neutral-500 leading-relaxed">
                     You can register for draft status events in the meantime, but team publications require verified profiles.
                   </p>
                 </motion.div>
@@ -890,13 +915,13 @@ export default function ProfileSetupWizard() {
             </AnimatePresence>
           </div>
 
-          <div className="space-y-3 pt-4 border-t border-neutral-850/60 font-sans">
-            <div className="p-3 bg-neutral-900/50 border border-neutral-850 rounded-lg">
+          <div className="space-y-3 pt-4 border-t border-neutral-800/40 font-sans">
+            <div className="p-3 bg-neutral-900/10 border border-neutral-800/40 rounded">
               <div className="flex items-start gap-2.5">
                 <HelpCircle className="h-4 w-4 text-neutral-500 shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Need Assistance?</h4>
-                  <p className="text-[10px] text-neutral-500 leading-tight mt-0.5">Contact the registration helpline at register@csefest2026.com</p>
+                  <h4 className="text-[9px] font-mono font-bold text-neutral-400 uppercase tracking-widest">Need Assistance?</h4>
+                  <p className="text-[9px] text-neutral-500 font-sans leading-tight mt-0.5">Contact the registration helpline at register@csefest2026.com</p>
                 </div>
               </div>
             </div>

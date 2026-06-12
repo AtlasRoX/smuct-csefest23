@@ -123,10 +123,10 @@ export async function POST(req: Request) {
             .update({ is_finalist: false, updated_at: new Date().toISOString() })
             .eq("team_id", rank.team_id);
 
-          // Update teams status back to 'registered' if they were 'finalist'
+          // Update teams status back to 'judging_ready' if they were 'finalist'
           await supabase
             .from("teams")
-            .update({ status: "registered", updated_at: new Date().toISOString() })
+            .update({ status: "judging_ready", updated_at: new Date().toISOString() })
             .eq("id", rank.team_id)
             .eq("status", "finalist");
         }

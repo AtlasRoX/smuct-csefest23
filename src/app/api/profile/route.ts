@@ -88,7 +88,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 3. Update profile row
+    // 3. Update profile row — mark profile_complete = true so participant gains full portal access
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -104,6 +104,7 @@ export async function POST(req: Request) {
         skills: parseResult.data.skills || null,
         bio: parseResult.data.bio || null,
         tshirt_size: parseResult.data.tshirt_size,
+        profile_complete: true,
         updated_at: new Date().toISOString(),
       })
       .eq("id", user.id);

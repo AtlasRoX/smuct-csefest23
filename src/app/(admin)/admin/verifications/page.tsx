@@ -2,391 +2,670 @@
 
 import * as React from "react";
 import {
-  Search,
+  Users,
+  ChevronDown,
+  ChevronUp,
   Check,
   X,
-  Eye,
   AlertCircle,
+  Crown,
+  ShieldCheck,
+  ShieldX,
   Clock,
   FileText,
+  ExternalLink,
+  User,
+  Search,
 } from "lucide-react";
-import { Card } from "@/components/ui/Card";
+import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
-import { createClient } from "@/lib/supabase/client";
+import { motion, AnimatePresence } from "framer-motion";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
-interface VerificationItem {
-  id: string;
-  user_id: string;
-  id_front_url: string;
-  id_back_url: string;
+// ──────────────── Type Definitions ────────────────
+
+interface IdCard {
+  front_url: string;
+  back_url: string;
   status: string;
-  created_at: string;
-  profiles: {
-    full_name: string;
-    university: string;
-    student_id: string;
-    department: string;
-    email: {
-      email: string;
-    } | null;
-  } | null;
 }
 
-export default function VerificationsPage() {
-  const [verifications, setVerifications] = React.useState<VerificationItem[]>([]);
+interface MemberProfile {
+  full_name: string;
+  email: string;
+  phone: string;
+  gender: string;
+  university: string;
+  department: string;
+  semester: string;
+  student_id: string;
+  github: string;
+  skills: string;
+  bio: string;
+  tshirt_size: string;
+  profile_complete: boolean;
+}
+
+interface TeamMember {
+  id: string;
+  user_id: string;
+  role: "leader" | "member";
+  invitation_status: "pending" | "accepted" | "rejected";
+  verification_status: "pending" | "approved" | "rejected";
+  joined_at: string | null;
+  profile: MemberProfile | null;
+  id_card: IdCard | null;
+}
+
+interface TeamSubmission {
+  id: string;
+  title: string;
+  google_docs_url: string;
+  notes: string | null;
+  status: string;
+  submitted_at: string;
+}
+
+interface ReviewTeam {
+  id: string;
+  name: string;
+  status: string;
+  leader_id: string;
+  leader_confirmed: boolean;
+  competition: {
+    id: string;
+    name: string;
+    submission_end: string | null;
+  } | null;
+  members: TeamMember[];
+  submission: TeamSubmission | null;
+}
+
+// ──────────────── Helper Components ────────────────
+
+function VerifBadge({ status }: { status: string }) {
+  if (status === "approved")
+    return (
+      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-success/30 bg-success/10 text-success text-[9px] font-mono uppercase tracking-wider">
+        <ShieldCheck className="h-3 w-3" /> Approved
+      </span>
+    );
+  if (status === "rejected")
+    return (
+      <span className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-error/30 bg-error/10 text-error text-[9px] font-mono uppercase tracking-wider">
+        <ShieldX className="h-3 w-3" /> Rejected
+      </span>
+    );
+  return (
+    <span className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-warning/30 bg-warning/10 text-warning text-[9px] font-mono uppercase tracking-wider">
+      <Clock className="h-3 w-3" /> Pending
+    </span>
+  );
+}
+
+function TeamStatusBadge({ status }: { status: string }) {
+  const map: Record<string, string> = {
+    forming: "border-neutral-800 bg-neutral-900/40 text-neutral-400",
+    registered: "border-primary/30 bg-primary/10 text-primary",
+    submitted: "border-warning/30 bg-warning/10 text-warning",
+    judging_ready: "border-success/30 bg-success/10 text-success",
+    selected: "border-success/30 bg-success/10 text-success",
+    rejected: "border-error/30 bg-error/10 text-error",
+    finalist: "border-secondary/30 bg-secondary/10 text-secondary",
+  };
+  return (
+    <span className={`px-2 py-0.5 border rounded text-[9px] uppercase font-mono tracking-widest ${map[status] ?? "border-neutral-800 bg-neutral-900 text-neutral-400"}`}>
+      {status}
+    </span>
+  );
+}
+
+// ──────────────── Main Page ────────────────
+
+export default function TeamReviewPage() {
+  const [teams, setTeams] = React.useState<ReviewTeam[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = React.useState<string | null>(null);
+  const [actionMsg, setActionMsg] = React.useState<string | null>(null);
   const [searchTerm, setSearchTerm] = React.useState("");
-  const [statusFilter, setStatusFilter] = React.useState<"pending" | "verified" | "incomplete" | "all">("pending");
-  const [refreshTrigger, setRefreshTrigger] = React.useState(0);
+  const [expandedTeamIds, setExpandedTeamIds] = React.useState<Set<string>>(new Set());
+  const [actionLoading, setActionLoading] = React.useState<{ [memberId: string]: boolean }>({});
 
-  // Lightbox modal state
-  const [lightboxImages, setLightboxImages] = React.useState<{ front: string; back: string; name: string } | null>(null);
+  // Member modal state
+  const [selectedMember, setSelectedMember] = React.useState<{ member: TeamMember; teamId: string } | null>(null);
+  // Submission viewer state
+  const [viewSubmission, setViewSubmission] = React.useState<TeamSubmission | null>(null);
 
-  const supabase = createClient();
+  useBodyScrollLock(selectedMember !== null || viewSubmission !== null);
+
+  const loadTeams = React.useCallback(async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const res = await fetch("/api/admin/team-review");
+      const data = await res.json();
+      if (!data.success) throw new Error(data.message || "Failed to load team data.");
+      setTeams(data.data as ReviewTeam[]);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to load team data.";
+      setErrorMsg(msg);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   React.useEffect(() => {
-    let active = true;
-    async function loadVerifications() {
-      if (active) {
-        setLoading(true);
-        setErrorMsg(null);
-      }
-      try {
-        let query = supabase
-          .from("student_verifications")
-          .select("*")
-          .order("created_at", { ascending: false });
+    loadTeams();
+  }, [loadTeams]);
 
-        if (statusFilter !== "all") {
-          query = query.eq("status", statusFilter);
-        }
+  const toggleTeam = (teamId: string) => {
+    setExpandedTeamIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(teamId)) next.delete(teamId);
+      else next.add(teamId);
+      return next;
+    });
+  };
 
-        const { data: verifsData, error } = await query;
-        if (error) throw error;
-
-        if (verifsData && verifsData.length > 0) {
-          const userIds = verifsData.map((v) => v.user_id);
-          const { data: profilesData, error: profilesErr } = await supabase
-            .from("profiles")
-            .select("id, full_name, university, student_id, department")
-            .in("id", userIds);
-
-          if (profilesErr) throw profilesErr;
-
-          const { data: usersData, error: usersErr } = await supabase
-            .from("users")
-            .select("id, email")
-            .in("id", userIds);
-
-          if (usersErr) throw usersErr;
-
-          const merged = verifsData.map((v) => {
-            const profile = profilesData?.find((p) => p.id === v.user_id) || null;
-            const userRecord = usersData?.find((u) => u.id === v.user_id) || null;
-            return {
-              ...v,
-              profiles: profile
-                ? {
-                    full_name: profile.full_name || "",
-                    university: profile.university || "",
-                    student_id: profile.student_id || "",
-                    department: profile.department || "",
-                    email: userRecord ? { email: userRecord.email } : null,
-                  }
-                : null,
-            };
-          });
-
-          if (active) {
-            setVerifications(merged as unknown as VerificationItem[]);
-          }
-        } else {
-          if (active) {
-            setVerifications([]);
-          }
-        }
-      } catch (err) {
-        if (active) {
-          const errorMessage = err instanceof Error ? err.message : "Failed to load verifications data.";
-          setErrorMsg(errorMessage);
-        }
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
-    }
-
-    loadVerifications();
-
-    return () => {
-      active = false;
-    };
-  }, [supabase, statusFilter, refreshTrigger]);
-
-  const handleAction = async (userId: string, action: "approve" | "reject") => {
+  const handleMemberAction = async (memberId: string, teamId: string, action: "approve" | "reject") => {
+    setActionLoading((prev) => ({ ...prev, [memberId]: true }));
+    setActionMsg(null);
     setErrorMsg(null);
-    setSuccessMsg(null);
     try {
-      const res = await fetch("/api/admin/verify", {
+      const res = await fetch("/api/admin/team-review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, action }),
+        body: JSON.stringify({ member_id: memberId, action }),
       });
       const data = await res.json();
-      if (!data.success) {
-        throw new Error(data.message || "Failed to process verification action.");
+      if (!data.success) throw new Error(data.message);
+      setActionMsg(data.message);
+
+      // Close modal if open for this member
+      if (selectedMember?.member.id === memberId) {
+        setSelectedMember(null);
       }
-      setSuccessMsg(data.message);
-      setRefreshTrigger((prev) => prev + 1);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "An error occurred.";
-      setErrorMsg(errorMessage);
+
+      // Refresh data
+      await loadTeams();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Action failed.";
+      setErrorMsg(msg);
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [memberId]: false }));
     }
   };
 
-  // Filter lists based on search term
-  const filteredVerifications = verifications.filter((v) => {
-    const name = v.profiles?.full_name?.toLowerCase() || "";
-    const uni = v.profiles?.university?.toLowerCase() || "";
-    const idNum = v.profiles?.student_id?.toLowerCase() || "";
-    const search = searchTerm.toLowerCase();
-    return name.includes(search) || uni.includes(search) || idNum.includes(search);
-  });
+  const filteredTeams = React.useMemo(() => {
+    if (!searchTerm.trim()) return teams;
+    const q = searchTerm.toLowerCase();
+    return teams.filter(
+      (t) =>
+        t.name.toLowerCase().includes(q) ||
+        t.competition?.name.toLowerCase().includes(q) ||
+        t.members.some((m) => m.profile?.full_name.toLowerCase().includes(q))
+    );
+  }, [teams, searchTerm]);
+
+  // ── Render ──
+
+  if (loading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-9 bg-neutral-900 w-1/3 rounded-sm" />
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-24 bg-neutral-900/40 border border-neutral-800/40 rounded-lg" />
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div>
-        <h1 className="text-h3 font-heading font-bold text-neutral-50">Student ID Verification</h1>
-        <p className="text-sm text-neutral-400 font-sans mt-1">
-          Review academic documents submitted by participants and approve eligibility.
-        </p>
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 pb-4 border-b border-neutral-800/40">
+        <div>
+          <h1 className="text-xl md:text-2xl font-heading font-bold text-neutral-100 tracking-tight uppercase">
+            Team Review Panel
+          </h1>
+          <p className="text-xs text-neutral-500 font-sans mt-1">
+            Review team members, verify student IDs, and approve teams for the judging round.
+          </p>
+        </div>
+        <div className="relative max-w-xs w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-neutral-600 pointer-events-none" />
+          <Input
+            placeholder="Search teams or members..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9 h-9 text-xs bg-neutral-950 border-neutral-800 focus:border-neutral-700 hover:border-neutral-700/60 text-neutral-300 placeholder:text-neutral-600 font-mono"
+          />
+        </div>
       </div>
 
       {/* Messages */}
       {errorMsg && (
-        <div className="p-4 rounded-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
-          <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
+        <div className="p-3.5 rounded border border-error/30 bg-error/10 text-xs text-error font-mono flex items-start gap-2 animate-slide-down">
+          <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <span>{errorMsg}</span>
         </div>
       )}
-
-      {successMsg && (
-        <div className="p-4 rounded-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
-          <Check className="h-4.5 w-4.5 shrink-0 mt-0.5" />
-          <span>{successMsg}</span>
+      {actionMsg && (
+        <div className="p-3.5 rounded border border-success/30 bg-success/10 text-xs text-success font-mono flex items-start gap-2 animate-slide-down">
+          <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5" />
+          <span>{actionMsg}</span>
         </div>
       )}
 
-      {/* Search & Tabs Controls */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-neutral-850 pb-4">
-        {/* Tabs */}
-        <div className="flex gap-4">
-          {(["pending", "verified", "incomplete", "all"] as const).map((status) => (
-            <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              className={`py-2 px-3 text-xs font-semibold tracking-wide font-sans capitalize transition-colors border-b-2 outline-none ${
-                statusFilter === status
-                  ? "border-accent text-accent"
-                  : "border-transparent text-neutral-400 hover:text-neutral-200"
-              }`}
-            >
-              {status} ({status === statusFilter ? filteredVerifications.length : "..."})
-            </button>
-          ))}
-        </div>
-
-        {/* Search Input */}
-        <div className="w-full md:w-72 relative">
-          <Input
-            placeholder="Search name, ID, university..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-9"
-          />
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-500 pointer-events-none" />
-        </div>
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: "Total Teams", value: teams.length, color: "text-neutral-100" },
+          { label: "Submitted", value: teams.filter((t) => t.submission).length, color: "text-warning" },
+          { label: "Judging Ready", value: teams.filter((t) => t.status === "judging_ready").length, color: "text-success" },
+          { label: "Rejected", value: teams.filter((t) => t.status === "rejected").length, color: "text-error" },
+        ].map((s) => (
+          <div key={s.label} className="p-3 rounded border border-neutral-800/40 bg-neutral-900/10 space-y-1">
+            <p className="text-[10px] text-neutral-500 font-mono uppercase tracking-wider">{s.label}</p>
+            <p className={`text-2xl font-heading font-bold ${s.color}`}>{s.value}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Verification Items List */}
-      {loading ? (
-        <div className="space-y-4 animate-pulse">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-44 bg-neutral-900 rounded-md" />
-          ))}
+      {/* Team List */}
+      {filteredTeams.length === 0 ? (
+        <div className="py-20 text-center border border-dashed border-neutral-800/80 rounded bg-neutral-900/10">
+          <Users className="h-8 w-8 text-neutral-700 mb-3 mx-auto" />
+          <h3 className="font-heading font-semibold text-neutral-400 text-sm mb-1">No teams found</h3>
+          <p className="text-xs text-neutral-600 font-sans">{searchTerm ? "Try a different search." : "No teams have registered yet."}</p>
         </div>
-      ) : filteredVerifications.length > 0 ? (
-        <div className="space-y-6">
-          {filteredVerifications.map((v) => (
-            <Card key={v.id} variant="default" className="border-neutral-800/80 p-6 space-y-6">
-              <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2.5">
-                    <h3 className="text-base font-heading font-semibold text-neutral-100">
-                      {v.profiles?.full_name || "Unknown"}
-                    </h3>
-                    <Badge
-                      variant={
-                        v.status === "verified"
-                          ? "success"
-                          : v.status === "pending"
-                          ? "warning"
-                          : "neutral"
-                      }
-                      className="capitalize"
-                    >
-                      {v.status}
-                    </Badge>
+      ) : (
+        <div className="space-y-3">
+          {filteredTeams.map((team) => {
+            const isExpanded = expandedTeamIds.has(team.id);
+            const acceptedMembers = team.members.filter((m) => m.invitation_status === "accepted");
+            const approvedCount = acceptedMembers.filter((m) => m.verification_status === "approved").length;
+            const rejectedCount = acceptedMembers.filter((m) => m.verification_status === "rejected").length;
+            const pendingCount = acceptedMembers.filter((m) => m.verification_status === "pending").length;
+
+            return (
+              <Card key={team.id} className="border-neutral-800/40 bg-neutral-900/10 shadow-none rounded-lg overflow-hidden">
+                {/* Team Header Row */}
+                <button
+                  type="button"
+                  className="w-full p-5 flex items-center justify-between gap-4 text-left hover:bg-neutral-900/20 transition-all duration-150 cursor-pointer"
+                  onClick={() => toggleTeam(team.id)}
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="h-9 w-9 rounded-lg bg-neutral-900 border border-neutral-800/60 flex items-center justify-center shrink-0">
+                      <Users className="h-4 w-4 text-neutral-500" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-heading font-bold text-neutral-100">{team.name}</span>
+                        {team.leader_confirmed && (
+                          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded border border-success/30 bg-success/10 text-success text-[9px] font-mono uppercase tracking-wider">
+                            <Crown className="h-2.5 w-2.5" /> Leader Set
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-neutral-500 font-sans truncate">
+                        {team.competition?.name ?? "No Competition"} &nbsp;·&nbsp; {acceptedMembers.length} members
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-xs text-neutral-400 font-sans">
-                    Email: <span className="text-neutral-300">{v.profiles?.email?.email || "N/A"}</span>
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-1.5 pt-2 text-xs font-sans text-neutral-400">
-                    <div>
-                      University: <span className="text-neutral-200 font-semibold">{v.profiles?.university || "N/A"}</span>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    {/* Member verification mini-stats */}
+                    <div className="hidden sm:flex items-center gap-2 text-[10px] font-mono">
+                      {approvedCount > 0 && (
+                        <span className="text-success">{approvedCount} ✓</span>
+                      )}
+                      {pendingCount > 0 && (
+                        <span className="text-warning">{pendingCount} ⏳</span>
+                      )}
+                      {rejectedCount > 0 && (
+                        <span className="text-error">{rejectedCount} ✗</span>
+                      )}
                     </div>
-                    <div>
-                      Department: <span className="text-neutral-200 font-semibold">{v.profiles?.department || "N/A"}</span>
-                    </div>
-                    <div>
-                      Student ID: <span className="text-neutral-200 font-semibold font-mono">{v.profiles?.student_id || "N/A"}</span>
+
+                    <TeamStatusBadge status={team.status} />
+
+                    {team.submission && (
+                      <button
+                        type="button"
+                        className="p-1.5 rounded border border-neutral-800 bg-neutral-950 text-neutral-500 hover:text-neutral-200 hover:border-neutral-700 transition-all"
+                        title="View Submission"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewSubmission(team.submission);
+                        }}
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+
+                    {isExpanded ? (
+                      <ChevronUp className="h-4 w-4 text-neutral-500" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-neutral-500" />
+                    )}
+                  </div>
+                </button>
+
+                {/* Expanded Members List */}
+                <AnimatePresence>
+                  {isExpanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-5 pb-5 pt-3 border-t border-neutral-800/40 space-y-2">
+                        <p className="text-[10px] font-mono text-neutral-600 uppercase tracking-widest mb-3">
+                          Roster Members
+                        </p>
+                        {acceptedMembers.length === 0 ? (
+                          <p className="text-xs text-neutral-600 font-sans italic">No accepted members yet.</p>
+                        ) : (
+                          acceptedMembers.map((member) => (
+                            <div
+                              key={member.id}
+                              className="flex items-center justify-between gap-3 p-3 rounded border border-neutral-800/60 bg-neutral-950/40 hover:border-neutral-700/60 transition-all text-xs"
+                            >
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="h-7 w-7 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center shrink-0">
+                                  {member.role === "leader" ? (
+                                    <Crown className="h-3.5 w-3.5 text-gold" />
+                                  ) : (
+                                    <User className="h-3.5 w-3.5 text-neutral-500" />
+                                  )}
+                                </div>
+                                <div className="min-w-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedMember({ member, teamId: team.id })}
+                                    className="font-semibold text-neutral-200 hover:text-white hover:underline transition-all text-left cursor-pointer border-0 bg-transparent p-0 outline-none"
+                                  >
+                                    {member.profile?.full_name || "Unknown"}
+                                  </button>
+                                  <p className="text-[10px] text-neutral-500 font-mono truncate">
+                                    {member.profile?.university || "—"} &nbsp;·&nbsp; {member.profile?.student_id || "No ID"}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                <VerifBadge status={member.verification_status} />
+                                {member.verification_status === "pending" && (
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMemberAction(member.id, team.id, "approve")}
+                                      disabled={actionLoading[member.id]}
+                                      className="p-1.5 rounded border border-success/30 text-success hover:bg-success/10 hover:border-success transition-all disabled:opacity-50 cursor-pointer bg-transparent"
+                                      title="Approve Member"
+                                    >
+                                      <Check className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMemberAction(member.id, team.id, "reject")}
+                                      disabled={actionLoading[member.id]}
+                                      className="p-1.5 rounded border border-error/30 text-error hover:bg-error/10 hover:border-error transition-all disabled:opacity-50 cursor-pointer bg-transparent"
+                                      title="Reject Member"
+                                    >
+                                      <X className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ──────────────── Member Profile Modal ──────────────── */}
+      <AnimatePresence>
+        {selectedMember && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedMember(null)}
+              className="fixed inset-0 bg-neutral-950/85 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+              className="relative z-10 w-full max-w-2xl bg-neutral-900/97 border border-neutral-800 rounded-2xl shadow-level-3 overflow-hidden max-h-[90vh] flex flex-col"
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-5 border-b border-neutral-800/60">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-neutral-900 border border-neutral-800 flex items-center justify-center">
+                    {selectedMember.member.role === "leader" ? (
+                      <Crown className="h-5 w-5 text-gold" />
+                    ) : (
+                      <User className="h-5 w-5 text-neutral-400" />
+                    )}
+                  </div>
+                  <div>
+                    <h2 className="text-base font-heading font-bold text-neutral-100">
+                      {selectedMember.member.profile?.full_name || "Unknown Member"}
+                    </h2>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] text-neutral-500 font-mono">
+                        {selectedMember.member.role === "leader" ? "Team Leader" : "Member"}
+                      </span>
+                      <VerifBadge status={selectedMember.member.verification_status} />
                     </div>
                   </div>
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedMember(null)}
+                  className="p-1.5 rounded text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 transition-all border-0 bg-transparent cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
 
-                {/* Actions */}
-                {v.status === "pending" && (
-                  <div className="flex sm:flex-col lg:flex-row gap-2 shrink-0">
-                    <Button
-                      variant="primary"
-                      onClick={() => handleAction(v.user_id, "approve")}
-                      className="text-xs py-1.5 px-3 flex items-center gap-1.5 bg-success hover:bg-success/90 border-success"
-                    >
-                      <Check className="h-3.5 w-3.5" />
-                      <span>Approve</span>
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => handleAction(v.user_id, "reject")}
-                      className="text-xs py-1.5 px-3 flex items-center gap-1.5 hover:border-error hover:text-error"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                      <span>Decline</span>
-                    </Button>
+              {/* Modal Body */}
+              <div className="overflow-y-auto flex-1 p-5 space-y-6">
+                {/* Profile Info Grid */}
+                <div>
+                  <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest mb-3">Profile Information</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs font-sans">
+                    {[
+                      { label: "Full Name", value: selectedMember.member.profile?.full_name },
+                      { label: "Email", value: selectedMember.member.profile?.email },
+                      { label: "Phone", value: selectedMember.member.profile?.phone },
+                      { label: "Gender", value: selectedMember.member.profile?.gender },
+                      { label: "University", value: selectedMember.member.profile?.university },
+                      { label: "Department", value: selectedMember.member.profile?.department },
+                      { label: "Semester", value: selectedMember.member.profile?.semester },
+                      { label: "Student ID", value: selectedMember.member.profile?.student_id },
+                      { label: "T-Shirt Size", value: selectedMember.member.profile?.tshirt_size },
+                    ].map((field) => (
+                      <div key={field.label} className="space-y-1 p-2.5 rounded bg-neutral-950/60 border border-neutral-800/60">
+                        <p className="text-[9px] font-mono text-neutral-600 uppercase tracking-widest">{field.label}</p>
+                        <p className="text-neutral-200 font-semibold break-all">{field.value || "—"}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Skills / Bio */}
+                {(selectedMember.member.profile?.skills || selectedMember.member.profile?.bio) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-sans">
+                    {selectedMember.member.profile?.skills && (
+                      <div className="space-y-1 p-2.5 rounded bg-neutral-950/60 border border-neutral-800/60">
+                        <p className="text-[9px] font-mono text-neutral-600 uppercase tracking-widest">Skills</p>
+                        <p className="text-neutral-300 leading-relaxed">{selectedMember.member.profile.skills}</p>
+                      </div>
+                    )}
+                    {selectedMember.member.profile?.bio && (
+                      <div className="space-y-1 p-2.5 rounded bg-neutral-950/60 border border-neutral-800/60">
+                        <p className="text-[9px] font-mono text-neutral-600 uppercase tracking-widest">Bio</p>
+                        <p className="text-neutral-300 leading-relaxed">{selectedMember.member.profile.bio}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Student ID Cards */}
+                {selectedMember.member.id_card ? (
+                  <div>
+                    <p className="text-[10px] font-mono text-neutral-500 uppercase tracking-widest mb-3">Student ID Card</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { label: "Front", url: selectedMember.member.id_card.front_url },
+                        { label: "Back", url: selectedMember.member.id_card.back_url },
+                      ].map((side) => (
+                        <div key={side.label} className="space-y-1.5">
+                          <p className="text-[9px] font-mono text-neutral-600 uppercase tracking-widest">{side.label}</p>
+                          {side.url ? (
+                            <div className="w-full aspect-[3/2] relative rounded border border-neutral-800 bg-neutral-950/40 overflow-hidden flex items-center justify-center">
+                              <img
+                                src={side.url}
+                                alt={`ID ${side.label}`}
+                                className="w-full h-full object-contain rounded"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = "none";
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <div className="w-full aspect-[3/2] rounded border border-neutral-800 bg-neutral-950 flex items-center justify-center text-neutral-700 text-xs font-mono">
+                              Not uploaded
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded border border-neutral-800 bg-neutral-950/40 text-center text-xs text-neutral-600 font-mono">
+                    No student ID card uploaded
                   </div>
                 )}
               </div>
 
-              {/* ID Document Previews */}
-              <div className="pt-4 border-t border-neutral-850 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider font-sans">
-                    Uploaded Credentials
-                  </h4>
-                  <button
-                    onClick={() =>
-                      setLightboxImages({
-                        front: v.id_front_url,
-                        back: v.id_back_url,
-                        name: v.profiles?.full_name || "Participant ID",
-                      })
-                    }
-                    className="text-xxs text-accent hover:underline flex items-center gap-1 font-sans"
+              {/* Modal Footer — Approve/Reject Actions */}
+              {selectedMember.member.verification_status === "pending" && (
+                <div className="p-5 border-t border-neutral-800/60 flex gap-3">
+                  <Button
+                    variant="success"
+                    onClick={() => handleMemberAction(selectedMember.member.id, selectedMember.teamId, "approve")}
+                    isLoading={actionLoading[selectedMember.member.id]}
+                    className="flex-1 gap-2 text-xs font-mono uppercase tracking-wider animate-none"
                   >
-                    <Eye className="h-3 w-3" />
-                    <span>Expand Side-by-Side</span>
-                  </button>
+                    <ShieldCheck className="h-4 w-4" />
+                    Approve Member
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => handleMemberAction(selectedMember.member.id, selectedMember.teamId, "reject")}
+                    isLoading={actionLoading[selectedMember.member.id]}
+                    className="flex-1 gap-2 text-xs font-mono uppercase tracking-wider animate-none"
+                  >
+                    <ShieldX className="h-4 w-4" />
+                    Reject Member
+                  </Button>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Front View */}
-                  <div className="relative group rounded-sm border border-neutral-850 overflow-hidden bg-neutral-950 aspect-8/5 flex items-center justify-center">
-                    {v.id_front_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={v.id_front_url}
-                        alt="Student ID Front"
-                        className="object-contain w-full h-full"
-                      />
-                    ) : (
-                      <div className="text-center text-neutral-600 font-sans text-xs">
-                        <FileText className="h-8 w-8 mx-auto mb-2 text-neutral-700" />
-                        <span>No Front Image Uploaded</span>
-                      </div>
-                    )}
-                  </div>
-                  {/* Back View */}
-                  <div className="relative group rounded-sm border border-neutral-850 overflow-hidden bg-neutral-950 aspect-8/5 flex items-center justify-center">
-                    {v.id_back_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={v.id_back_url}
-                        alt="Student ID Back"
-                        className="object-contain w-full h-full"
-                      />
-                    ) : (
-                      <div className="text-center text-neutral-600 font-sans text-xs">
-                        <FileText className="h-8 w-8 mx-auto mb-2 text-neutral-700" />
-                        <span>No Back Image Uploaded</span>
-                      </div>
-                    )}
-                  </div>
+              )}
+              {selectedMember.member.verification_status !== "pending" && (
+                <div className="p-5 border-t border-neutral-800/60 text-center">
+                  <VerifBadge status={selectedMember.member.verification_status} />
+                  <p className="text-[10px] text-neutral-600 font-mono mt-2">
+                    This member has already been reviewed.
+                  </p>
                 </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="py-16 text-center border border-dashed border-neutral-800 rounded-md bg-neutral-900/10">
-          <Clock className="h-10 w-10 text-neutral-700 mb-4 mx-auto" />
-          <h3 className="font-heading font-semibold text-neutral-300 mb-1">No Verifications Found</h3>
-          <p className="text-xs text-neutral-500 font-sans max-w-xs mx-auto">
-            There are no student ID documents matching this search or status.
-          </p>
-        </div>
-      )}
-
-      {/* Lightbox / Modal Overlay */}
-      {lightboxImages && (
-        <div className="fixed inset-0 z-50 flex flex-col bg-neutral-950/90 backdrop-blur-md justify-center items-center p-4">
-          <div className="w-full max-w-5xl space-y-4">
-            <div className="flex justify-between items-center pb-2 border-b border-neutral-800">
-              <h3 className="font-heading font-bold text-neutral-50 text-base">
-                Credentials Zoom: {lightboxImages.name}
-              </h3>
-              <button
-                onClick={() => setLightboxImages(null)}
-                className="p-1.5 rounded-full bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 transition-colors text-neutral-400"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-              <div className="border border-neutral-800 rounded-md overflow-hidden bg-neutral-950 aspect-8/5 flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={lightboxImages.front}
-                  alt="Student ID Front Expanded"
-                  className="object-contain w-full h-full max-h-[60vh]"
-                />
-              </div>
-              <div className="border border-neutral-800 rounded-md overflow-hidden bg-neutral-950 aspect-8/5 flex items-center justify-center">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={lightboxImages.back}
-                  alt="Student ID Back Expanded"
-                  className="object-contain w-full h-full max-h-[60vh]"
-                />
-              </div>
-            </div>
+              )}
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
+
+      {/* ──────────────── Submission Viewer Modal ──────────────── */}
+      <AnimatePresence>
+        {viewSubmission && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setViewSubmission(null)}
+              className="fixed inset-0 bg-neutral-950/85 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              transition={{ duration: 0.2 }}
+              className="relative z-10 w-full max-w-lg bg-neutral-900/97 border border-neutral-800 rounded-2xl shadow-level-3 overflow-hidden"
+            >
+              <div className="flex items-center justify-between p-5 border-b border-neutral-800/60">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-neutral-400" />
+                  <h2 className="text-base font-heading font-bold text-neutral-100">Submission Details</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setViewSubmission(null)}
+                  className="p-1.5 rounded text-neutral-500 hover:text-neutral-200 hover:bg-neutral-800 transition-all border-0 bg-transparent cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="p-5 space-y-4 text-xs font-sans">
+                <div className="space-y-1 p-3 rounded bg-neutral-950/60 border border-neutral-800">
+                  <p className="text-[9px] font-mono text-neutral-600 uppercase tracking-widest">Title</p>
+                  <p className="text-neutral-100 font-semibold text-sm">{viewSubmission.title}</p>
+                </div>
+                <div className="space-y-1 p-3 rounded bg-neutral-950/60 border border-neutral-800">
+                  <p className="text-[9px] font-mono text-neutral-600 uppercase tracking-widest">Status</p>
+                  <Badge variant="neutral" className="font-mono capitalize text-[10px]">{viewSubmission.status}</Badge>
+                </div>
+                {viewSubmission.notes && (
+                  <div className="space-y-1 p-3 rounded bg-neutral-950/60 border border-neutral-800">
+                    <p className="text-[9px] font-mono text-neutral-600 uppercase tracking-widest">Notes</p>
+                    <p className="text-neutral-300 leading-relaxed">{viewSubmission.notes}</p>
+                  </div>
+                )}
+                <div className="space-y-1 p-3 rounded bg-neutral-950/60 border border-neutral-800">
+                  <p className="text-[9px] font-mono text-neutral-600 uppercase tracking-widest">Submitted At</p>
+                  <p className="text-neutral-300">{new Date(viewSubmission.submitted_at).toLocaleString()}</p>
+                </div>
+                <a
+                  href={viewSubmission.google_docs_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 rounded border border-neutral-700 text-neutral-200 hover:border-neutral-600 hover:bg-neutral-800/30 transition-all font-mono text-xs uppercase tracking-wider"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Open Submission Document
+                </a>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

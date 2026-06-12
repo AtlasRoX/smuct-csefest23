@@ -7,7 +7,6 @@ import * as z from "zod";
 import useSWR, { mutate } from "swr";
 import {
   User,
-  Phone,
   GraduationCap,
   Sparkles,
   Link as LinkIcon,
@@ -15,12 +14,10 @@ import {
   CheckCircle2,
   AlertCircle,
   Clock,
-  RotateCw,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -83,12 +80,14 @@ interface ProfileDbRecord {
   bio: string | null;
   tshirt_size: string | null;
   verification_status: string | null;
+  profile_complete: boolean | null;
 }
 
 export default function ProfilePage() {
   const [mounted, setMounted] = React.useState(false);
   const [saveLoading, setSaveLoading] = React.useState(false);
   const [message, setMessage] = React.useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [activeTab, setActiveTab] = React.useState<"personal" | "academic" | "developer" | "bio">("personal");
 
   React.useEffect(() => {
     const timer = setTimeout(() => setMounted(true), 0);
@@ -159,12 +158,11 @@ export default function ProfilePage() {
 
   if (!mounted || isLoading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-neutral-900 w-48 rounded" />
-        <div className="h-64 bg-neutral-900 w-full rounded-xl" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="h-40 bg-neutral-900 rounded-xl" />
-          <div className="h-40 bg-neutral-900 rounded-xl" />
+      <div className="space-y-6">
+        <div className="h-8 bg-neutral-900/40 w-48 rounded animate-pulse" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="h-40 bg-neutral-900/40 rounded-xl border border-neutral-800 animate-pulse" />
+          <div className="md:col-span-3 h-96 bg-neutral-900/40 rounded-xl border border-neutral-800 animate-pulse" />
         </div>
       </div>
     );
@@ -173,7 +171,7 @@ export default function ProfilePage() {
   if (error || !profile) {
     return (
       <div className="grow flex flex-col items-center justify-center py-20 px-4 text-center">
-        <AlertCircle className="h-12 w-12 text-error mb-4" />
+        <AlertCircle className="h-12 w-12 text-error mb-4 animate-float" />
         <h3 className="font-heading font-extrabold text-lg text-neutral-300">Failed to load profile</h3>
         <p className="text-neutral-500 font-sans text-sm mt-1 max-w-sm">
           Please check your internet connection or reload the dashboard page to try again.
@@ -182,294 +180,316 @@ export default function ProfilePage() {
     );
   }
 
-  const statusMap = {
-    verified: { label: "Verified Profile", variant: "success" as const, icon: CheckCircle2 },
-    pending: { label: "Pending Verification", variant: "warning" as const, icon: Clock },
-    incomplete: { label: "Incomplete Profile", variant: "error" as const, icon: AlertCircle },
-  };
+  const isComplete = profile.profile_complete || false;
 
-  const status = profile.verification_status || "incomplete";
-  const statusConfig = statusMap[status as keyof typeof statusMap] || statusMap.incomplete;
-  const StatusIcon = statusConfig.icon;
+  const tabs = [
+    { id: "personal", label: "Personal Info", icon: User },
+    { id: "academic", label: "Academic Info", icon: GraduationCap },
+    { id: "developer", label: "Developer links", icon: Sparkles },
+    { id: "bio", label: "Bio & Skills", icon: LinkIcon },
+  ] as const;
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-3xl animate-fade-in">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-900">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-neutral-800/40">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold font-heading text-neutral-50 tracking-tight">
-            MY PROFILE
+          <h1 className="text-xl md:text-2xl font-bold font-heading text-neutral-100 tracking-tight">
+            MY PROFILE SETTINGS
           </h1>
-          <p className="text-xs text-neutral-400 font-sans mt-1">
+          <p className="text-xs text-neutral-500 font-sans mt-1">
             Manage your personal records, contact information, and registration credentials.
           </p>
         </div>
 
-        {/* Verification Status Badge */}
-        <div className="flex items-center gap-2">
-          <Badge variant={statusConfig.variant} className="gap-1.5 px-3 py-1 text-xs uppercase font-sans font-bold tracking-wider">
-            <StatusIcon className="h-3.5 w-3.5" />
-            <span>{statusConfig.label}</span>
-          </Badge>
+        {/* Profile Completeness Badge */}
+        <div className="flex items-center">
+          <div className="flex items-center gap-2 px-3 py-1.5 border border-neutral-800/60 bg-neutral-900/20 rounded">
+            <span className={`h-1.5 w-1.5 rounded-full ${
+              isComplete
+                ? "bg-success shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+                : "bg-error shadow-[0_0_8px_rgba(244,63,94,0.5)]"
+            }`} />
+            <span className="text-[10px] uppercase font-mono tracking-widest text-neutral-400 font-medium">
+              {isComplete ? "Profile Complete" : "Incomplete Profile"}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Main Alert Message */}
       {message && (
         <div
-          className={`flex gap-3 items-start p-4 rounded-xl border ${
+          className={`flex gap-3 items-start p-4 rounded border animate-slide-down ${
             message.type === "success"
-              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
-              : "bg-error/10 border-error/20 text-error-foreground"
+              ? "bg-success/20 border-success/30 text-success"
+              : "bg-error/20 border-error/30 text-error"
           }`}
         >
           {message.type === "success" ? (
-            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400 mt-0.5" />
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-success mt-0.5" />
           ) : (
-            <AlertCircle className="h-5 w-5 shrink-0 text-error mt-0.5" />
+            <AlertCircle className="h-4 w-4 shrink-0 text-error mt-0.5" />
           )}
-          <span className="text-xs sm:text-sm font-sans">{message.text}</span>
+          <span className="text-xs font-mono tracking-wide">{message.text}</span>
         </div>
       )}
 
       {/* Form Area */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* Column 1 & 2: Form Details (Left 70%) */}
-          <div className="lg:col-span-2 space-y-6">
-            
-            {/* Section 1: Basic Info */}
-            <Card className="border-neutral-900 bg-neutral-900/30">
-              <CardHeader className="border-b border-neutral-900 pb-4">
-                <CardTitle className="text-sm uppercase font-mono tracking-widest text-neutral-400 flex items-center gap-2">
-                  <User className="h-4 w-4 text-primary" />
-                  <span>Personal Details</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6 space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="flex flex-col space-y-1.5">
-                    <label className="text-xs font-semibold text-neutral-300 font-sans">Full Name</label>
-                    <Input
-                      placeholder="Your full name"
-                      className="h-10 border-neutral-850 bg-neutral-950/40"
-                      {...register("full_name")}
-                    />
-                    {errors.full_name && (
-                      <span className="text-xs text-error font-sans font-medium">{errors.full_name.message}</span>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col space-y-1.5">
-                    <label className="text-xs font-semibold text-neutral-300 font-sans">Phone Number</label>
-                    <Input
-                      type="tel"
-                      placeholder="e.g. 017XXXXXXXX"
-                      className="h-10 border-neutral-850 bg-neutral-950/40"
-                      {...register("phone")}
-                    />
-                    {errors.phone && (
-                      <span className="text-xs text-error font-sans font-medium">{errors.phone.message}</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-xs font-semibold text-neutral-300 font-sans">Gender</label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-neutral-850 bg-neutral-950/40 px-3 py-2 text-sm text-neutral-200 outline-none focus:border-primary focus:ring-1 focus:ring-primary font-sans"
-                    {...register("gender")}
-                  >
-                    <option value="">Select Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                  </select>
-                  {errors.gender && (
-                    <span className="text-xs text-error font-sans font-medium">{errors.gender.message}</span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Section 2: Academic Info */}
-            <Card className="border-neutral-900 bg-neutral-900/30">
-              <CardHeader className="border-b border-neutral-900 pb-4">
-                <CardTitle className="text-sm uppercase font-mono tracking-widest text-neutral-400 flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4 text-secondary" />
-                  <span>Academic Information</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6 space-y-4">
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-xs font-semibold text-neutral-300 font-sans">University / Institution</label>
-                  <Input
-                    placeholder="e.g. Shanto-Mariam University of Creative Technology"
-                    className="h-10 border-neutral-850 bg-neutral-950/40"
-                    {...register("university")}
-                  />
-                  {errors.university && (
-                    <span className="text-xs text-error font-sans font-medium">{errors.university.message}</span>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="flex flex-col space-y-1.5 sm:col-span-2">
-                    <label className="text-xs font-semibold text-neutral-300 font-sans">Department</label>
-                    <Input
-                      placeholder="e.g. CSE"
-                      className="h-10 border-neutral-850 bg-neutral-950/40"
-                      {...register("department")}
-                    />
-                    {errors.department && (
-                      <span className="text-xs text-error font-sans font-medium">{errors.department.message}</span>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col space-y-1.5">
-                    <label className="text-xs font-semibold text-neutral-300 font-sans">Semester</label>
-                    <Input
-                      placeholder="e.g. 8th"
-                      className="h-10 border-neutral-850 bg-neutral-950/40"
-                      {...register("semester")}
-                    />
-                    {errors.semester && (
-                      <span className="text-xs text-error font-sans font-medium">{errors.semester.message}</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-xs font-semibold text-neutral-300 font-sans">Student ID</label>
-                  <Input
-                    placeholder="Your ID card registration code"
-                    className="h-10 border-neutral-850 bg-neutral-950/40"
-                    {...register("student_id")}
-                  />
-                  {errors.student_id && (
-                    <span className="text-xs text-error font-sans font-medium">{errors.student_id.message}</span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
+          {/* Tabs Navigation (1 column on md+) */}
+          <div className="md:col-span-1 flex flex-row md:flex-col gap-1.5 bg-neutral-900/10 p-1 rounded border border-neutral-800/40 backdrop-blur-sm overflow-x-auto md:overflow-x-visible">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2.5 py-2 px-3 rounded text-xs font-mono tracking-wider capitalize transition-all duration-150 outline-none cursor-pointer text-left shrink-0 w-full ${
+                    activeTab === tab.id
+                      ? "bg-neutral-900 border border-neutral-800/60 text-neutral-100 font-semibold"
+                      : "text-neutral-500 hover:text-neutral-300 hover:bg-neutral-900/40 border border-transparent"
+                  }`}
+                >
+                  <Icon className="h-3.5 w-3.5 shrink-0" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Column 3: Secondary Info (Right 30%) */}
-          <div className="space-y-6">
-            {/* Section 3: Professional Info */}
-            <Card className="border-neutral-900 bg-neutral-900/30">
-              <CardHeader className="border-b border-neutral-900 pb-4">
-                <CardTitle className="text-sm uppercase font-mono tracking-widest text-neutral-400 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-accent" />
-                  <span>Developer Profile</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6 space-y-4">
-                
-                {/* Online Profile */}
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-xs font-semibold text-neutral-300 font-sans">Online Profile URL</label>
-                  <Input
-                    type="url"
-                    placeholder="e.g. https://github.com/username"
-                    className="h-10 border-neutral-850 bg-neutral-950/40 font-mono text-xs"
-                    {...register("github")}
-                  />
-                  {errors.github && (
-                    <span className="text-xs text-error font-sans font-medium">{errors.github.message}</span>
-                  )}
-                </div>
+          {/* Active Tab Panel & Save Button (3 columns on md+) */}
+          <div className="md:col-span-3 space-y-6">
+            {/* Tab 1: Personal Details */}
+            <div className={activeTab === "personal" ? "block" : "hidden"}>
+              <Card className="border-neutral-800/40 bg-neutral-900/10 shadow-none rounded-lg p-5">
+                <CardHeader className="border-b border-neutral-800/40 pb-3 mb-5">
+                  <CardTitle className="text-xs uppercase font-mono tracking-widest text-neutral-400 flex items-center gap-2">
+                    <User className="h-3.5 w-3.5 text-neutral-500" />
+                    <span>Personal Details</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0 space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col space-y-1.5 w-full">
+                      <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">Full Name</label>
+                      <Input
+                        placeholder="Your full name"
+                        className="bg-neutral-950 border-neutral-800/80 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 hover:border-neutral-700/60 transition-all duration-150 text-xs h-9"
+                        error={errors.full_name?.message}
+                        {...register("full_name")}
+                      />
+                    </div>
 
-                {/* Portfolio */}
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-xs font-semibold text-neutral-300 font-sans">Portfolio URL</label>
-                  <Input
-                    type="url"
-                    placeholder="e.g. https://portfolio.com"
-                    className="h-10 border-neutral-850 bg-neutral-950/40 font-mono text-xs"
-                    {...register("portfolio")}
-                  />
-                  {errors.portfolio && (
-                    <span className="text-xs text-error font-sans font-medium">{errors.portfolio.message}</span>
-                  )}
-                </div>
+                    <div className="flex flex-col space-y-1.5 w-full">
+                      <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">Phone Number</label>
+                      <Input
+                        type="tel"
+                        placeholder="e.g. 017XXXXXXXX"
+                        className="bg-neutral-950 border-neutral-800/80 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 hover:border-neutral-700/60 transition-all duration-150 text-xs h-9"
+                        error={errors.phone?.message}
+                        {...register("phone")}
+                      />
+                    </div>
+                  </div>
 
-                {/* T-Shirt Size */}
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-xs font-semibold text-neutral-300 font-sans">T-Shirt Size</label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-neutral-850 bg-neutral-950/40 px-3 py-2 text-sm text-neutral-200 outline-none focus:border-primary focus:ring-1 focus:ring-primary font-sans"
-                    {...register("tshirt_size")}
-                  >
-                    <option value="">Select Size</option>
-                    <option value="S">Small (S)</option>
-                    <option value="M">Medium (M)</option>
-                    <option value="L">Large (L)</option>
-                    <option value="XL">Extra Large (XL)</option>
-                    <option value="XXL">Double Extra Large (XXL)</option>
-                  </select>
-                  {errors.tshirt_size && (
-                    <span className="text-xs text-error font-sans font-medium">{errors.tshirt_size.message}</span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col space-y-1.5 w-full">
+                      <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">Gender</label>
+                      <select
+                        className={`flex h-9 w-full rounded border bg-neutral-950 px-3 py-2 text-xs text-neutral-200 outline-none transition-all duration-150 cursor-pointer font-sans ${
+                          errors.gender
+                            ? "border-rose-900/50 focus:border-rose-950 focus:ring-1 focus:ring-error/20"
+                            : "border-neutral-800/80 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 hover:border-neutral-700/60"
+                        }`}
+                        {...register("gender")}
+                      >
+                        <option value="">Select Gender</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                        <option value="other">Other</option>
+                      </select>
+                      {errors.gender && (
+                        <span className="text-xs text-error font-sans font-medium tracking-tight">
+                          {errors.gender.message}
+                        </span>
+                      )}
+                    </div>
 
-            {/* Section 4: Skills & Bio */}
-            <Card className="border-neutral-900 bg-neutral-900/30">
-              <CardHeader className="border-b border-neutral-900 pb-4">
-                <CardTitle className="text-sm uppercase font-mono tracking-widest text-neutral-400 flex items-center gap-2">
-                  <LinkIcon className="h-4 w-4 text-neutral-400" />
-                  <span>Bio & Skills</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6 space-y-4">
-                
-                {/* Skills */}
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-xs font-semibold text-neutral-300 font-sans">Skills / Tech Stack</label>
-                  <textarea
-                    placeholder="e.g. React, Node.js, Python"
-                    rows={2}
-                    className="flex w-full rounded-md border border-neutral-850 bg-neutral-950/40 px-3 py-2 text-sm text-neutral-200 outline-none focus:border-primary focus:ring-1 focus:ring-primary font-sans placeholder:text-neutral-600 resize-none"
-                    {...register("skills")}
-                  />
-                </div>
+                    <div className="flex flex-col space-y-1.5 w-full">
+                      <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">T-Shirt Size</label>
+                      <select
+                        className={`flex h-9 w-full rounded border bg-neutral-950 px-3 py-2 text-xs text-neutral-200 outline-none transition-all duration-150 cursor-pointer font-sans ${
+                          errors.tshirt_size
+                            ? "border-rose-900/50 focus:border-rose-950 focus:ring-1 focus:ring-error/20"
+                            : "border-neutral-800/80 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 hover:border-neutral-700/60"
+                        }`}
+                        {...register("tshirt_size")}
+                      >
+                        <option value="">Select Size</option>
+                        <option value="S">Small (S)</option>
+                        <option value="M">Medium (M)</option>
+                        <option value="L">Large (L)</option>
+                        <option value="XL">Extra Large (XL)</option>
+                        <option value="XXL">Double Extra Large (XXL)</option>
+                      </select>
+                      {errors.tshirt_size && (
+                        <span className="text-xs text-error font-sans font-medium tracking-tight">
+                          {errors.tshirt_size.message}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
-                {/* Bio */}
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-xs font-semibold text-neutral-300 font-sans">Short Biography</label>
-                  <textarea
-                    placeholder="Tell us about yourself..."
-                    rows={3}
-                    className="flex w-full rounded-md border border-neutral-850 bg-neutral-950/40 px-3 py-2 text-sm text-neutral-200 outline-none focus:border-primary focus:ring-1 focus:ring-primary font-sans placeholder:text-neutral-600 resize-none"
-                    {...register("bio")}
-                  />
-                  {errors.bio && (
-                    <span className="text-xs text-error font-sans font-medium">{errors.bio.message}</span>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            {/* Tab 2: Academic Info */}
+            <div className={activeTab === "academic" ? "block" : "hidden"}>
+              <Card className="border-neutral-800/40 bg-neutral-900/10 shadow-none rounded-lg p-5">
+                <CardHeader className="border-b border-neutral-800/40 pb-3 mb-5">
+                  <CardTitle className="text-xs uppercase font-mono tracking-widest text-neutral-400 flex items-center gap-2">
+                    <GraduationCap className="h-3.5 w-3.5 text-neutral-500" />
+                    <span>Academic Information</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0 space-y-4">
+                  <div className="flex flex-col space-y-1.5 w-full">
+                    <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">University / Institution</label>
+                    <Input
+                      placeholder="e.g. Shanto-Mariam University of Creative Technology"
+                      className="bg-neutral-950 border-neutral-800/80 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 hover:border-neutral-700/60 transition-all duration-150 text-xs h-9"
+                      error={errors.university?.message}
+                      {...register("university")}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex flex-col space-y-1.5 w-full">
+                      <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">Department</label>
+                      <Input
+                        placeholder="e.g. CSE"
+                        className="bg-neutral-950 border-neutral-800/80 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 hover:border-neutral-700/60 transition-all duration-150 text-xs h-9"
+                        error={errors.department?.message}
+                        {...register("department")}
+                      />
+                    </div>
+
+                    <div className="flex flex-col space-y-1.5 w-full">
+                      <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">Semester</label>
+                      <Input
+                        placeholder="e.g. 8th"
+                        className="bg-neutral-950 border-neutral-800/80 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 hover:border-neutral-700/60 transition-all duration-150 text-xs h-9"
+                        error={errors.semester?.message}
+                        {...register("semester")}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col space-y-1.5 w-full">
+                    <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">Student ID</label>
+                    <Input
+                      placeholder="Your ID card registration code"
+                      className="bg-neutral-950 border-neutral-800/80 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 hover:border-neutral-700/60 transition-all duration-150 text-xs h-9"
+                      error={errors.student_id?.message}
+                      {...register("student_id")}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Tab 3: Developer Links */}
+            <div className={activeTab === "developer" ? "block" : "hidden"}>
+              <Card className="border-neutral-800/40 bg-neutral-900/10 shadow-none rounded-lg p-5">
+                <CardHeader className="border-b border-neutral-800/40 pb-3 mb-5">
+                  <CardTitle className="text-xs uppercase font-mono tracking-widest text-neutral-400 flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5 text-neutral-500" />
+                    <span>Developer Profile</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0 space-y-4">
+                  <div className="flex flex-col space-y-1.5 w-full">
+                    <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none font-mono">GitHub Profile Link</label>
+                    <Input
+                      type="url"
+                      placeholder="e.g. github.com/username"
+                      className="bg-neutral-950 border-neutral-800/80 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 hover:border-neutral-700/60 transition-all duration-150 text-xs h-9 font-mono text-xs"
+                      error={errors.github?.message}
+                      {...register("github")}
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-1.5 w-full">
+                    <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none font-mono">Portfolio URL</label>
+                    <Input
+                      type="url"
+                      placeholder="e.g. mysite.com"
+                      className="bg-neutral-950 border-neutral-800/80 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 hover:border-neutral-700/60 transition-all duration-150 text-xs h-9 font-mono text-xs"
+                      error={errors.portfolio?.message}
+                      {...register("portfolio")}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Tab 4: Bio & Skills */}
+            <div className={activeTab === "bio" ? "block" : "hidden"}>
+              <Card className="border-neutral-800/40 bg-neutral-900/10 shadow-none rounded-lg p-5">
+                <CardHeader className="border-b border-neutral-800/40 pb-3 mb-5">
+                  <CardTitle className="text-xs uppercase font-mono tracking-widest text-neutral-400 flex items-center gap-2">
+                    <LinkIcon className="h-3.5 w-3.5 text-neutral-500" />
+                    <span>Bio & Skills</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0 space-y-4">
+                  <div className="flex flex-col space-y-1.5 w-full">
+                    <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">Skills / Tech Stack</label>
+                    <textarea
+                      placeholder="e.g. React, Node.js, Python, Tailwind"
+                      rows={3}
+                      className="flex w-full rounded border border-neutral-800/80 bg-neutral-950 px-3.5 py-2.5 text-xs text-neutral-200 outline-none focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 hover:border-neutral-700/60 transition-all duration-150 font-sans placeholder:text-neutral-600 resize-none"
+                      {...register("skills")}
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-1.5 w-full">
+                    <label className="text-[10px] font-semibold text-neutral-400 font-mono uppercase tracking-widest select-none">Short Biography</label>
+                    <textarea
+                      placeholder="Tell us about yourself, your achievements, and interest areas..."
+                      rows={4}
+                      className={`flex w-full rounded border px-3.5 py-2.5 text-xs text-neutral-200 outline-none transition-all duration-150 font-sans placeholder:text-neutral-600 resize-none ${
+                        errors.bio
+                          ? "border-rose-900/50 focus:border-rose-950 focus:ring-1 focus:ring-error/20"
+                          : "border-neutral-800/80 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 hover:border-neutral-700/60"
+                      }`}
+                      {...register("bio")}
+                    />
+                    {errors.bio && (
+                      <span className="text-xs text-error font-sans font-medium tracking-tight">
+                        {errors.bio.message}
+                      </span>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Save Buttons */}
             <div className="pt-2">
               <Button
                 type="submit"
-                disabled={saveLoading}
-                className="w-full bg-primary hover:bg-primary/95 text-white py-3 h-auto rounded-xl font-sans font-bold flex items-center justify-center gap-2"
+                isLoading={saveLoading}
+                className="w-full py-2.5 rounded border border-neutral-800/85 hover:border-neutral-700 bg-neutral-900 hover:bg-neutral-900/80 text-neutral-250 hover:text-neutral-100 font-mono text-xs uppercase tracking-wider transition-all duration-150 flex items-center justify-center gap-2 active:scale-99"
               >
-                {saveLoading ? (
-                  <RotateCw className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                <span>{saveLoading ? "Saving Changes..." : "Save Profile Details"}</span>
+                {!saveLoading && <Save className="h-3.5 w-3.5" />}
+                <span>Save Profile Details</span>
               </Button>
             </div>
           </div>
-
         </div>
       </form>
     </div>

@@ -71,11 +71,12 @@ export async function GET(req: Request) {
       );
     }
 
-    // 4. Fetch all teams (and their optional project submissions)
+    // 4. Fetch teams in judging_ready, finalist, or selected status (and their optional project submissions)
     const { data: teams, error: teamsErr } = await supabase
       .from("teams")
       .select("id, name, status, created_at, submissions(title, submitted_at)")
-      .eq("competition_id", competitionId);
+      .eq("competition_id", competitionId)
+      .in("status", ["judging_ready", "finalist", "selected"]);
 
     if (teamsErr) throw teamsErr;
 

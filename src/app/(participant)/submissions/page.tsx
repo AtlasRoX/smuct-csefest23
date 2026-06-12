@@ -6,10 +6,10 @@ import {
   Send,
   AlertCircle,
   Check,
-  Calendar,
   ExternalLink,
   Users,
   Clock,
+  Crown,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -21,6 +21,7 @@ interface UserTeam {
   id: string;
   name: string;
   status: string;
+  leader_confirmed: boolean;
   competitions: {
     id: string;
     name: string;
@@ -81,7 +82,7 @@ export default function SubmissionsPage() {
           const ids = memberships.map((m) => m.team_id);
           const { data: teamData, error } = await supabase
             .from("teams")
-            .select("id, name, status, competitions(id, name, submission_start, submission_end)")
+            .select("id, name, status, leader_confirmed, competitions(id, name, submission_start, submission_end)")
             .in("id", ids);
 
           if (error) throw error;
@@ -211,10 +212,10 @@ export default function SubmissionsPage() {
   const isExpired = subEnd && now > subEnd;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-h3 font-heading font-bold text-neutral-50">Project Submissions</h1>
+        <h1 className="text-h3 font-heading font-bold text-neutral-50 tracking-tight">Project Submissions</h1>
         <p className="text-sm text-neutral-400 font-sans mt-1">
           Submit project proposals and Google Docs description links for evaluation.
         </p>
@@ -222,14 +223,14 @@ export default function SubmissionsPage() {
 
       {/* Messages */}
       {errorMsg && (
-        <div className="p-4 rounded-sm bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-lg bg-error/10 border border-error/20 text-xs text-error font-sans font-medium flex items-start gap-2.5">
           <AlertCircle className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-4 rounded-sm bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2">
+        <div className="p-4 rounded-lg bg-success/10 border border-success/20 text-xs text-success font-sans font-medium flex items-start gap-2.5">
           <Check className="h-4.5 w-4.5 shrink-0 mt-0.5" />
           <span>{successMsg}</span>
         </div>
@@ -240,16 +241,16 @@ export default function SubmissionsPage() {
           {/* Main Form/Detail Column */}
           <div className="lg:col-span-2 space-y-6">
             {/* Team Selector card */}
-            <Card variant="default">
-              <CardContent className="p-6 space-y-4">
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-sm font-semibold text-neutral-300 font-sans">
+            <Card variant="glass" className="bg-glass border-glass">
+              <CardContent className="p-6">
+                <div className="flex flex-col space-y-2">
+                  <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider font-sans">
                     Select Active Team Roster
                   </label>
                   <select
                     value={selectedTeamId}
                     onChange={(e) => setSelectedTeamId(e.target.value)}
-                    className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                    className="flex h-11 w-full rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-200 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 hover:border-neutral-700 transition-all duration-150 outline-none font-sans cursor-pointer"
                   >
                     {teams.map((t) => (
                       <option key={t.id} value={t.id}>
@@ -262,53 +263,100 @@ export default function SubmissionsPage() {
             </Card>
 
             {subLoading ? (
-              <div className="h-48 bg-neutral-900/40 rounded-md animate-pulse" />
+              <div className="h-48 bg-neutral-900/40 rounded-xl animate-pulse border border-neutral-850" />
+            ) : !activeTeam?.leader_confirmed ? (
+              /* Leader not confirmed — block submission */
+              <Card variant="glass" className="border-warning/30 bg-warning/10">
+                <CardContent className="p-8 flex flex-col items-center text-center space-y-4">
+                  <div className="h-14 w-14 rounded-full bg-amber-950/30 border border-warning/30 flex items-center justify-center">
+                    <Crown className="h-7 w-7 text-warning" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-base font-heading font-bold text-amber-300">Team Leader Not Confirmed</h3>
+                    <p className="text-xs text-warning/80 font-sans leading-relaxed max-w-sm">
+                      Your team must designate a confirmed leader before submitting a project proposal.
+                      The team leader is responsible for the submission.
+                    </p>
+                  </div>
+                  <Link href="/teams">
+                    <Button
+                      variant="secondary"
+                      className="gap-2 text-xs border-warning/30 text-warning hover:bg-warning/20 hover:border-warning/80 font-mono uppercase tracking-wider py-2 px-4 transition-all"
+                    >
+                      <Crown className="h-3.5 w-3.5" />
+                      Go to Teams → Confirm Leader
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
             ) : submission ? (
               /* Submission details */
-              <Card variant="default" className="border-success/20 bg-success/5">
+              <Card
+                variant="glass"
+                className={
+                  submission.status === "selected"
+                    ? "border-success/20 bg-success/5"
+                    : submission.status === "rejected"
+                    ? "border-error/20 bg-error/5"
+                    : submission.status === "under_review" || submission.status === "submitted"
+                    ? "border-warning/20 bg-warning/5"
+                    : "border-neutral-800/60 bg-neutral-900/10"
+                }
+              >
                 <CardHeader className="flex flex-row justify-between items-start">
-                  <CardTitle>Roster Proposal Info</CardTitle>
-                  <Badge variant="success" className="capitalize">
+                  <CardTitle className="text-md font-heading font-semibold text-neutral-100">Roster Proposal Info</CardTitle>
+                  <Badge
+                    variant={
+                      submission.status === "selected"
+                        ? "success"
+                        : submission.status === "rejected"
+                        ? "error"
+                        : submission.status === "under_review" || submission.status === "submitted"
+                        ? "warning"
+                        : "neutral"
+                    }
+                    className="capitalize font-mono"
+                  >
                     {submission.status}
                   </Badge>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-4 font-sans">
                     <div>
-                      <div className="text-xs text-neutral-500 font-semibold uppercase tracking-wide">
+                      <div className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">
                         Proposal Title
                       </div>
-                      <div className="text-sm text-neutral-100 font-medium mt-1">
+                      <div className="text-sm text-neutral-100 font-semibold mt-1 bg-neutral-950/60 py-2 px-3 rounded-lg border border-neutral-850">
                         {submission.title}
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs text-neutral-500 font-semibold uppercase tracking-wide">
+                      <div className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">
                         Google Docs Rulebook/Proposal Link
                       </div>
-                      <div className="mt-1 flex items-center">
+                      <div className="mt-2.5">
                         <a
                           href={submission.google_docs_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-xs text-accent hover:underline flex items-center gap-1.5"
+                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded border border-neutral-800 bg-neutral-950 text-xs text-neutral-200 hover:border-neutral-700 hover:bg-neutral-900 transition-all duration-155 font-mono uppercase tracking-wider font-semibold"
                         >
                           <span>Open Google Docs URL</span>
-                          <ExternalLink className="h-3.5 w-3.5" />
+                          <ExternalLink className="h-3.5 w-3.5 text-neutral-400" />
                         </a>
                       </div>
                     </div>
                     {submission.notes && (
                       <div>
-                        <div className="text-xs text-neutral-500 font-semibold uppercase tracking-wide">
+                        <div className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">
                           Roster Notes
                         </div>
-                        <div className="text-xs text-neutral-300 mt-1 leading-relaxed whitespace-pre-wrap">
+                        <div className="text-xs text-neutral-300 mt-1.5 leading-relaxed whitespace-pre-wrap bg-neutral-950/40 p-3 rounded-lg border border-neutral-850/60">
                           {submission.notes}
                         </div>
                       </div>
                     )}
-                    <div className="text-xxs text-neutral-500 pt-2 border-t border-neutral-800">
+                    <div className="text-xxs text-neutral-500 pt-3 border-t border-neutral-800 font-mono">
                       Submitted on: {new Date(submission.submitted_at).toLocaleString()}
                     </div>
                   </div>
@@ -344,10 +392,10 @@ export default function SubmissionsPage() {
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
                             disabled={formLoading}
-                            className="flex w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                            className="flex w-full rounded border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-200 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 hover:border-neutral-700 transition-all duration-200 outline-none font-sans resize-none leading-relaxed"
                           />
                         </div>
-                        <Button variant="primary" type="submit" isLoading={formLoading}>
+                        <Button variant="primary" type="submit" isLoading={formLoading} className="w-full justify-center">
                           Update Submission
                         </Button>
                       </form>
@@ -357,9 +405,9 @@ export default function SubmissionsPage() {
               </Card>
             ) : isWindowOpen ? (
               /* Proposal submission form */
-              <Card variant="default">
+              <Card variant="glass" className="bg-glass border-glass">
                 <CardHeader>
-                  <CardTitle>Submit Project Proposal</CardTitle>
+                  <CardTitle className="text-md font-heading">Submit Project Proposal</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSubmit} className="space-y-4">
@@ -389,10 +437,10 @@ export default function SubmissionsPage() {
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                         disabled={formLoading}
-                        className="flex w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                        className="flex w-full rounded border border-neutral-855 bg-neutral-950 px-3 py-2.5 text-sm text-neutral-200 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 hover:border-neutral-700 transition-all duration-200 outline-none font-sans resize-none leading-relaxed"
                       />
                     </div>
-                    <Button variant="primary" type="submit" isLoading={formLoading} className="gap-2">
+                    <Button variant="primary" type="submit" isLoading={formLoading} className="gap-2 w-full justify-center active:scale-[0.99] shadow-level-2 py-3">
                       <Send className="h-4.5 w-4.5" />
                       <span>Submit Proposal</span>
                     </Button>
@@ -401,9 +449,9 @@ export default function SubmissionsPage() {
               </Card>
             ) : (
               /* Window not open status card */
-              <Card variant="default" className="text-center p-8 bg-neutral-900/10">
+              <Card variant="glass" className="text-center p-8 bg-glass border-glass">
                 <CardContent className="space-y-4">
-                  <Clock className="h-10 w-10 text-neutral-700 mx-auto" />
+                  <Clock className="h-10 w-10 text-neutral-600 mx-auto" />
                   <h3 className="font-heading font-semibold text-sm text-neutral-300">
                     Submission Phase Inactive
                   </h3>
@@ -419,35 +467,35 @@ export default function SubmissionsPage() {
             )}
           </div>
 
-          {/* Right Side: Timeline coordinates card */}
+          {/* Right Side: Timeline parameters card */}
           <div className="space-y-6">
             <h2 className="text-lg font-heading font-semibold text-neutral-200">Timeline Parameters</h2>
             {comp ? (
-              <Card variant="default">
+              <Card variant="glass" className="bg-glass border-glass">
                 <CardHeader>
                   <CardTitle className="text-sm font-heading font-semibold text-neutral-300">
                     {comp.name} Timeline
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4 font-sans text-xs">
-                  <div className="flex gap-3 py-1.5 border-b border-neutral-850/60">
-                    <Calendar className="h-4.5 w-4.5 text-accent shrink-0" />
+                <CardContent className="space-y-6 pt-2 font-sans text-xs">
+                  <div className="relative pl-6 pb-6 border-l border-dashed border-neutral-800">
+                    <div className="absolute -left-[5px] top-1.5 h-2.5 w-2.5 rounded-full bg-neutral-400" />
                     <div className="space-y-1">
-                      <div className="font-semibold text-neutral-300">Submissions Open</div>
-                      <div className="text-neutral-500">{subStart?.toLocaleString()}</div>
+                      <div className="font-semibold text-neutral-200">Submissions Open</div>
+                      <div className="text-neutral-500 font-mono text-[11px] mt-0.5">{subStart?.toLocaleString()}</div>
                     </div>
                   </div>
-                  <div className="flex gap-3 py-1.5">
-                    <Calendar className="h-4.5 w-4.5 text-secondary shrink-0" />
+                  <div className="relative pl-6 border-l border-transparent">
+                    <div className="absolute -left-[5px] top-1.5 h-2.5 w-2.5 rounded-full bg-neutral-700" />
                     <div className="space-y-1">
-                      <div className="font-semibold text-neutral-300">Submissions Locked</div>
-                      <div className="text-neutral-500">{subEnd?.toLocaleString()}</div>
+                      <div className="font-semibold text-neutral-200">Submissions Locked</div>
+                      <div className="text-neutral-500 font-mono text-[11px] mt-0.5">{subEnd?.toLocaleString()}</div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             ) : (
-              <Card variant="default">
+              <Card variant="glass" className="bg-glass border-glass">
                 <CardContent className="p-5 text-center text-xs text-neutral-500 font-sans">
                   No competition details matching this team.
                 </CardContent>
@@ -457,7 +505,7 @@ export default function SubmissionsPage() {
         </div>
       ) : (
         /* Empty State */
-        <div className="py-16 text-center border border-dashed border-neutral-800 rounded-md bg-neutral-900/10 space-y-4">
+        <div className="py-16 text-center border border-dashed border-neutral-800 rounded-xl bg-neutral-900/10 space-y-4">
           <Users className="h-10 w-10 text-neutral-700 mx-auto" />
           <div className="space-y-1 max-w-sm mx-auto">
             <h3 className="font-heading font-semibold text-sm text-neutral-300">No Roster Memberships</h3>

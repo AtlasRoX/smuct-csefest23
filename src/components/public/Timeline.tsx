@@ -201,13 +201,17 @@ export function Timeline() {
 
                 {/* Card Wrapper (takes up remaining half on desktop, full-width on mobile) */}
                 <div className={`w-full md:w-1/2 pl-12 pr-4 md:px-0 ${isEven ? "md:pl-0 md:pr-10" : "md:pl-10 md:pr-0"}`}>
-                  <div className="bg-neutral-900/40 backdrop-blur-md border border-neutral-850 p-6 md:p-8 rounded-xl hover:border-primary/40 hover:-translate-y-1 hover:shadow-level-2 transition-all duration-normal group cursor-pointer relative overflow-hidden">
+                  <div className="bg-glass border border-glass p-6 md:p-8 rounded-2xl hover:border-primary/40 hover:-translate-y-1.5 hover:shadow-level-3 transition-all duration-normal group cursor-pointer relative overflow-hidden">
                     {/* Hover Glow Accent Corner */}
-                    <div className="absolute top-0 right-0 w-16 h-16 bg-linear-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-normal" />
+                    <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-normal" />
+                    
+                    {/* Corner Accents */}
+                    <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-accent/40 transition-all duration-300 group-hover:w-4 group-hover:h-4" />
+                    <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-accent/40 transition-all duration-300 group-hover:w-4 group-hover:h-4" />
 
                     <div className="flex items-center gap-2 mb-3">
-                      <Calendar className="w-4 h-4 text-primary" />
-                      <span className="font-mono text-xs font-bold text-primary uppercase tracking-wider">
+                      <Calendar className="w-4 h-4 text-accent animate-pulse" />
+                      <span className="font-mono text-xs font-bold text-accent uppercase tracking-wider">
                         {item.date}
                       </span>
                     </div>
@@ -215,7 +219,7 @@ export function Timeline() {
                     <h3 className="font-heading text-lg font-bold text-neutral-200 group-hover:text-neutral-50 transition-colors mb-2">
                       {item.title}
                     </h3>
-                    <p className="text-neutral-400 font-sans text-xs sm:text-sm leading-relaxed">
+                    <p className="text-neutral-400 font-sans text-xs sm:text-sm leading-relaxed font-light">
                       {item.description}
                     </p>
                   </div>

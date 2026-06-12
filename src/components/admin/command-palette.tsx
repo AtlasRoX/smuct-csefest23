@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search, Compass, Trophy, ShieldAlert, X } from "lucide-react";
 import useSWR from "swr";
 import { Badge } from "@/components/ui/Badge";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 interface CompItem {
   id: string;
@@ -19,6 +20,8 @@ export function CommandPalette() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const router = useRouter();
+
+  useBodyScrollLock(isOpen);
 
   // Load competitions for search
   const { data: compRes } = useSWR<{ success: boolean; data: CompItem[] }>(
@@ -48,7 +51,7 @@ export function CommandPalette() {
   const staticActions = React.useMemo(
     () => [
       { label: "Go to Admin Dashboard", href: "/admin/dashboard", category: "Navigation", icon: Compass },
-      { label: "Go to ID Verifications", href: "/admin/verifications", category: "Navigation", icon: ShieldAlert },
+      { label: "Go to Verifications", href: "/admin/verifications", category: "Navigation", icon: ShieldAlert },
       { label: "Go to Competitions Builder", href: "/admin/competitions", category: "Navigation", icon: Trophy },
       { label: "Go to Submissions Review", href: "/admin/submissions", category: "Navigation", icon: Trophy },
       { label: "Go to Payments Queue", href: "/admin/payments", category: "Navigation", icon: Trophy },

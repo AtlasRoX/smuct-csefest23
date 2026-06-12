@@ -1,11 +1,13 @@
 "use client";
 
 import * as React from "react";
+import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Search, Eye, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import useSWR from "swr";
+import { useSearchParams } from "next/navigation";
 import { Navbar } from "@/components/shared/Navbar";
 import { Footer } from "@/components/shared/Footer";
 import { Input } from "@/components/ui/Input";
@@ -27,16 +29,42 @@ interface Competition {
 }
 
 const COMPETITION_IMAGES: Record<string, string> = {
-  "software-showcase": "https://lh3.googleusercontent.com/aida-public/AB6AXuA_sDktpXuLP2tISJMUZEcQ4oGKbCVVcNP5a4utyyZtBi7Ej5u04f-4z15P1MSAZHG8G8J9yzcTIF94AFSvEBinOXDgHJIpfKIbbfkfS2_u0W5K67FkveR-wyc-XJE8vD1tSGcEBbIGbeq0R6AV1mMs28BeNO-UsyX8SkyjMjJOpiGZ-xlsU_wH-MS-jk_Z1QZCqMbMKyZyxFvICAe7am_VuNLiyEbf-tNGuGlWK3etefYWmooKxmObEtTAvN5Hubc_mi35Al7BYaR0",
-  "iot-showcase": "https://lh3.googleusercontent.com/aida-public/AB6AXuDFVUDWSPAEANjIsD2sxQTMsSZSJj4cJAypasue8WYXlBnLth68CUXTAW9au4ZEgd0YnZJe98SL3qfoadNI6H8qz2p79RCO2DMqmKbkkmkU-lOLpu3ptXY9NL7rbI0l2VBvBkcfxxO03eYlgeeEtMtJYeTUx1ylzt11k6XFat5qFOY6YlmWPcfDW0I0o8szghnvKWfSD3DphEy9cR__yalRVd7gpHHK9rg69Re-Er7oNXMSgPC_GNxebMseXt9TiJ3PMLzj2uXx9Tji",
-  "idea-showcase": "https://lh3.googleusercontent.com/aida-public/AB6AXuCKGHlmkgO9OUf-RDdwzqJtbmiRD5dk84Y8R5IZD8mghvMKlxjfQayu_ChlNaTxFZTqY9iG1Bl_cKKCYN-YHo4T_y8_ylysu_sgUKIfy6uMPzuEqCK7v9xcs8ShtpUjZXzjWJ3m7PnUdt1GoDjHaXT1Vk2Fh28fgfpENV_PML4DqznU68jk7VTa5R_6PYyGxM-rIseMyI4hWN-y0ngIhMMTI0UUIi-9LBCHA1NYQX4i-OEPf7MIwGpMN2mgAfro5D3uIUSgd33mKpMp",
+  // UUID keys from seed_content.sql
+  "e0bb66f8-45e0-4c12-a1f7-418f773b069d": "/software-showcase-logo.png",
+  "318a4a58-89c0-449e-ba60-318df883ba58": "/iot-showcase-logo.png",
+  "dfec0659-6308-42e3-aaf6-dfdc85eb2cfa": "/idea-showcase-logo.png",
+  // Slug keys for safety
+  "software-showcase": "/software-showcase-logo.png",
+  "iot-showcase": "/iot-showcase-logo.png",
+  "idea-showcase": "/idea-showcase-logo.png",
 };
 
-export default function CompetitionsListingPage() {
+function CompetitionsListContent() {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [categoryFilter, setCategoryFilter] = React.useState<"all" | "external" | "internal">("all");
+  const searchParams = useSearchParams();
+  const selectParam = searchParams.get("select");
 
-  const { data, error, isLoading } = useSWR<{ success: boolean; data: Competition[] }>(
+  React.useEffect(() => {
+    if (selectParam) {
+      const shortNameMap: Record<string, string> = {
+        software: "Software",
+        iot: "IoT",
+        idea: "Idea",
+        cp: "Programming",
+        datathon: "Datathon",
+        ctf: "CTF",
+        robo: "Robo",
+        lfr: "LFR",
+        valorant: "Valorant",
+        fifa: "FIFA"
+      };
+      const mappedQuery = shortNameMap[selectParam] || selectParam;
+      setSearchQuery(mappedQuery);
+    }
+  }, [selectParam]);
+
+  const { data, isLoading } = useSWR<{ success: boolean; data: Competition[] }>(
     "/api/public/competitions",
     fetcher
   );
@@ -255,5 +283,21 @@ export default function CompetitionsListingPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function CompetitionsListingPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col min-h-screen bg-background text-on-background bg-grid-pattern animate-pulse">
+        <Navbar />
+        <main className="grow pt-10 pb-20 px-4 md:px-16 max-w-[1280px] mx-auto w-full flex items-center justify-center">
+          <div className="h-10 w-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        </main>
+        <Footer />
+      </div>
+    }>
+      <CompetitionsListContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 const createTeamSchema = z.object({
   name: z.string().min(3, "Team Name must be at least 3 characters"),
@@ -16,6 +17,102 @@ const respondInviteSchema = z.object({
   member_id: z.string().uuid(),
   status: z.enum(["accepted", "rejected"]),
 });
+
+const updateTeamSchema = z.object({
+  team_id: z.string().uuid(),
+  name: z.string().min(3, "Team Name must be at least 3 characters"),
+});
+
+const teamIdOnlySchema = z.object({
+  team_id: z.string().uuid(),
+});
+
+const removeMemberSchema = z.object({
+  team_id: z.string().uuid(),
+  user_id: z.string().uuid(),
+});
+
+const transferLeadershipSchema = z.object({
+  team_id: z.string().uuid(),
+  new_leader_id: z.string().uuid(),
+});
+
+const setLeaderSchema = z.object({
+  team_id: z.string().uuid(),
+  user_id: z.string().uuid(), // the member being designated as leader (can be self)
+});
+
+// Helper: Verify leader status and that registration deadline has not passed
+async function verifyLeaderAndDeadline(supabase: SupabaseClient, teamId: string, userId: string) {
+  const { data: team, error } = await supabase
+    .from("teams")
+    .select("*, competitions(registration_end)")
+    .eq("id", teamId)
+    .single();
+
+  if (error || !team) {
+    return { error: true, status: 404, message: "Team not found." };
+  }
+
+  if (team.leader_id !== userId) {
+    return { error: true, status: 403, message: "Only the team leader can perform this action." };
+  }
+
+  const registrationEnd = new Date(team.competitions.registration_end);
+  if (new Date() > registrationEnd) {
+    return {
+      error: true,
+      status: 400,
+      message: "The registration deadline for this competition has passed. No modifications are allowed.",
+    };
+  }
+
+  return { error: false, team };
+}
+
+// Helper: Verify team membership (excluding leader) and deadline
+async function verifyMembershipAndDeadline(supabase: SupabaseClient, teamId: string, userId: string) {
+  const { data: team, error } = await supabase
+    .from("teams")
+    .select("*, competitions(registration_end)")
+    .eq("id", teamId)
+    .single();
+
+  if (error || !team) {
+    return { error: true, status: 404, message: "Team not found." };
+  }
+
+  const { data: membership, error: memError } = await supabase
+    .from("team_members")
+    .select("*")
+    .eq("team_id", teamId)
+    .eq("user_id", userId)
+    .eq("invitation_status", "accepted")
+    .single();
+
+  if (memError || !membership) {
+    return { error: true, status: 403, message: "You are not a member of this team." };
+  }
+
+  if (membership.role === "leader") {
+    return {
+      error: true,
+      status: 400,
+      message: "Team leader cannot leave the team. You must disband the team or transfer leadership first.",
+    };
+  }
+
+  const registrationEnd = new Date(team.competitions.registration_end);
+  if (new Date() > registrationEnd) {
+    return {
+      error: true,
+      status: 400,
+      message: "The registration deadline for this competition has passed. No modifications are allowed.",
+    };
+  }
+
+  return { error: false, team, membership };
+}
 
 export async function GET(req: Request) {
   try {
@@ -60,7 +157,7 @@ export async function GET(req: Request) {
     const teamIds = memberRecords.map((m) => m.team_id);
     const { data: teams, error } = await supabase
       .from("teams")
-      .select("*, competitions(name, type, min_members, max_members)")
+      .select("*, competitions(name, type, min_members, max_members, eligibility, registration_end, submission_end, rulebook_url, template_link, description)")
       .in("id", teamIds);
 
     if (error) throw new Error(error.message);
@@ -147,16 +244,16 @@ export async function POST(req: Request) {
         );
       }
 
-      // Check user's profile is verified
+      // Check user's profile is complete
       const { data: profile } = await supabase
         .from("profiles")
-        .select("verification_status")
+        .select("profile_complete")
         .eq("id", user.id)
         .single();
 
-      if (!profile || profile.verification_status !== "verified") {
+      if (!profile || !profile.profile_complete) {
         return NextResponse.json(
-          { success: false, message: "Only verified student profiles can create teams." },
+          { success: false, message: "Please complete your profile before creating a team." },
           { status: 403 }
         );
       }
@@ -232,14 +329,27 @@ export async function POST(req: Request) {
       // Check if user has permission to invite (must be team leader)
       const { data: team } = await supabase
         .from("teams")
-        .select("*, competitions(max_members)")
+        .select("*, competitions(max_members, registration_end)")
         .eq("id", parseResult.data.team_id)
         .single();
 
-      if (!team || team.leader_id !== user.id) {
+      if (!team) {
+        return NextResponse.json({ success: false, message: "Team not found." }, { status: 404 });
+      }
+
+      if (team.leader_id !== user.id) {
         return NextResponse.json(
           { success: false, message: "Only the team leader can invite members." },
           { status: 403 }
+        );
+      }
+
+      // Verify deadline
+      const registrationEnd = new Date(team.competitions.registration_end);
+      if (new Date() > registrationEnd) {
+        return NextResponse.json(
+          { success: false, message: "The registration deadline for this competition has passed. Roster editing is locked." },
+          { status: 400 }
         );
       }
 
@@ -328,13 +438,25 @@ export async function POST(req: Request) {
       // Validate invitation belongs to the authenticated user
       const { data: memberRecord } = await supabase
         .from("team_members")
-        .select("*, teams(name, leader_id)")
+        .select("*, teams(name, leader_id, competition_id, competitions(registration_end))")
         .eq("id", parseResult.data.member_id)
         .eq("user_id", user.id)
         .single();
 
       if (!memberRecord) {
         return NextResponse.json({ success: false, message: "Invitation not found." }, { status: 404 });
+      }
+
+      // Check deadline
+      const teamInfo = memberRecord.teams as unknown as { competitions: { registration_end: string } | null } | null;
+      if (teamInfo?.competitions) {
+        const registrationEnd = new Date(teamInfo.competitions.registration_end);
+        if (new Date() > registrationEnd) {
+          return NextResponse.json(
+            { success: false, message: "The registration deadline for this competition has passed. Roster editing is locked." },
+            { status: 400 }
+          );
+        }
       }
 
       if (parseResult.data.status === "accepted") {
@@ -361,6 +483,267 @@ export async function POST(req: Request) {
       }
 
       return NextResponse.json({ success: true, message: `Invitation ${parseResult.data.status}.` });
+    }
+
+    // Action: update team name
+    if (action === "update") {
+      const body = await req.json();
+      const parseResult = updateTeamSchema.safeParse(body);
+      if (!parseResult.success) {
+        return NextResponse.json(
+          { success: false, message: parseResult.error.issues[0]?.message },
+          { status: 400 }
+        );
+      }
+
+      const check = await verifyLeaderAndDeadline(supabase, parseResult.data.team_id, user.id);
+      if (check.error) {
+        return NextResponse.json({ success: false, message: check.message }, { status: check.status });
+      }
+
+      const { error: updateError } = await supabase
+        .from("teams")
+        .update({ name: parseResult.data.name })
+        .eq("id", parseResult.data.team_id);
+
+      if (updateError) {
+        if (updateError.code === "23505") {
+          return NextResponse.json(
+            { success: false, message: "A team with this name already exists in this competition." },
+            { status: 409 }
+          );
+        }
+        throw new Error(updateError.message);
+      }
+
+      return NextResponse.json({ success: true, message: "Team name updated successfully." });
+    }
+
+    // Action: disband team
+    if (action === "disband") {
+      const body = await req.json();
+      const parseResult = teamIdOnlySchema.safeParse(body);
+      if (!parseResult.success) {
+        return NextResponse.json(
+          { success: false, message: parseResult.error.issues[0]?.message },
+          { status: 400 }
+        );
+      }
+
+      const check = await verifyLeaderAndDeadline(supabase, parseResult.data.team_id, user.id);
+      if (check.error) {
+        return NextResponse.json({ success: false, message: check.message }, { status: check.status });
+      }
+
+      // Delete the team (cascades automatically delete membership/submissions/payments)
+      const { error: deleteError } = await supabase
+        .from("teams")
+        .delete()
+        .eq("id", parseResult.data.team_id);
+
+      if (deleteError) throw new Error(deleteError.message);
+
+      return NextResponse.json({ success: true, message: "Team disbanded successfully." });
+    }
+
+    // Action: remove/kick member
+    if (action === "remove_member") {
+      const body = await req.json();
+      const parseResult = removeMemberSchema.safeParse(body);
+      if (!parseResult.success) {
+        return NextResponse.json(
+          { success: false, message: parseResult.error.issues[0]?.message },
+          { status: 400 }
+        );
+      }
+
+      const check = await verifyLeaderAndDeadline(supabase, parseResult.data.team_id, user.id);
+      if (check.error) {
+        return NextResponse.json({ success: false, message: check.message }, { status: check.status });
+      }
+
+      if (parseResult.data.user_id === user.id) {
+        return NextResponse.json(
+          { success: false, message: "You cannot kick yourself from the team. Disband the team or transfer leadership instead." },
+          { status: 400 }
+        );
+      }
+
+      const { error: deleteError } = await supabase
+        .from("team_members")
+        .delete()
+        .eq("team_id", parseResult.data.team_id)
+        .eq("user_id", parseResult.data.user_id);
+
+      if (deleteError) throw new Error(deleteError.message);
+
+      return NextResponse.json({ success: true, message: "Member removed from roster successfully." });
+    }
+
+    // Action: leave team
+    if (action === "leave") {
+      const body = await req.json();
+      const parseResult = teamIdOnlySchema.safeParse(body);
+      if (!parseResult.success) {
+        return NextResponse.json(
+          { success: false, message: parseResult.error.issues[0]?.message },
+          { status: 400 }
+        );
+      }
+
+      const check = await verifyMembershipAndDeadline(supabase, parseResult.data.team_id, user.id);
+      if (check.error) {
+        return NextResponse.json({ success: false, message: check.message }, { status: check.status });
+      }
+
+      const { error: deleteError } = await supabase
+        .from("team_members")
+        .delete()
+        .eq("team_id", parseResult.data.team_id)
+        .eq("user_id", user.id);
+
+      if (deleteError) throw new Error(deleteError.message);
+
+      return NextResponse.json({ success: true, message: "You have left the team successfully." });
+    }
+
+    // Action: transfer leadership
+    if (action === "transfer_leadership") {
+      const body = await req.json();
+      const parseResult = transferLeadershipSchema.safeParse(body);
+      if (!parseResult.success) {
+        return NextResponse.json(
+          { success: false, message: parseResult.error.issues[0]?.message },
+          { status: 400 }
+        );
+      }
+
+      const check = await verifyLeaderAndDeadline(supabase, parseResult.data.team_id, user.id);
+      if (check.error) {
+        return NextResponse.json({ success: false, message: check.message }, { status: check.status });
+      }
+
+      if (parseResult.data.new_leader_id === user.id) {
+        return NextResponse.json(
+          { success: false, message: "You are already the team leader." },
+          { status: 400 }
+        );
+      }
+
+      // Check if new leader is an accepted member of this team
+      const { data: newLeaderMembership, error: membershipError } = await supabase
+        .from("team_members")
+        .select("id")
+        .eq("team_id", parseResult.data.team_id)
+        .eq("user_id", parseResult.data.new_leader_id)
+        .eq("invitation_status", "accepted")
+        .single();
+
+      if (membershipError || !newLeaderMembership) {
+        return NextResponse.json(
+          { success: false, message: "New leader must be an active, accepted member of the team." },
+          { status: 400 }
+        );
+      }
+
+      // Perform transfer
+      // Update team table leader_id
+      const { error: teamUpdateError } = await supabase
+        .from("teams")
+        .update({ leader_id: parseResult.data.new_leader_id })
+        .eq("id", parseResult.data.team_id);
+
+      if (teamUpdateError) throw new Error(teamUpdateError.message);
+
+      // Update role of current leader to member
+      const { error: oldLeaderUpdateError } = await supabase
+        .from("team_members")
+        .update({ role: "member" })
+        .eq("team_id", parseResult.data.team_id)
+        .eq("user_id", user.id);
+
+      if (oldLeaderUpdateError) throw new Error(oldLeaderUpdateError.message);
+
+      // Update role of new leader to leader
+      const { error: newLeaderUpdateError } = await supabase
+        .from("team_members")
+        .update({ role: "leader" })
+        .eq("team_id", parseResult.data.team_id)
+        .eq("user_id", parseResult.data.new_leader_id);
+
+      if (newLeaderUpdateError) throw new Error(newLeaderUpdateError.message);
+
+      return NextResponse.json({ success: true, message: "Leadership transferred successfully." });
+    }
+
+    // Action: set / confirm leader for team (sets leader_confirmed = true)
+    if (action === "set_leader") {
+      const body = await req.json();
+      const parseResult = setLeaderSchema.safeParse(body);
+      if (!parseResult.success) {
+        return NextResponse.json(
+          { success: false, message: parseResult.error.issues[0]?.message },
+          { status: 400 }
+        );
+      }
+
+      // Must be current team leader to designate a leader
+      const check = await verifyLeaderAndDeadline(supabase, parseResult.data.team_id, user.id);
+      if (check.error) {
+        return NextResponse.json({ success: false, message: check.message }, { status: check.status });
+      }
+
+      // Target user must be an accepted member of the team
+      const { data: targetMembership, error: memberErr } = await supabase
+        .from("team_members")
+        .select("id, role")
+        .eq("team_id", parseResult.data.team_id)
+        .eq("user_id", parseResult.data.user_id)
+        .eq("invitation_status", "accepted")
+        .single();
+
+      if (memberErr || !targetMembership) {
+        return NextResponse.json(
+          { success: false, message: "Target user must be an active team member." },
+          { status: 404 }
+        );
+      }
+
+      // If designating a different person as leader, transfer leadership first
+      if (parseResult.data.user_id !== user.id) {
+        // Update team leader_id
+        const { error: teamUpdateError } = await supabase
+          .from("teams")
+          .update({ leader_id: parseResult.data.user_id, leader_confirmed: true })
+          .eq("id", parseResult.data.team_id);
+        if (teamUpdateError) throw new Error(teamUpdateError.message);
+
+        // Demote current leader to member
+        await supabase
+          .from("team_members")
+          .update({ role: "member" })
+          .eq("team_id", parseResult.data.team_id)
+          .eq("user_id", user.id);
+
+        // Promote target to leader
+        await supabase
+          .from("team_members")
+          .update({ role: "leader" })
+          .eq("team_id", parseResult.data.team_id)
+          .eq("user_id", parseResult.data.user_id);
+
+        return NextResponse.json({ success: true, message: "Team leader designated and confirmed successfully." });
+      }
+
+      // Self-confirming as leader
+      const { error: confirmError } = await supabase
+        .from("teams")
+        .update({ leader_confirmed: true })
+        .eq("id", parseResult.data.team_id);
+
+      if (confirmError) throw new Error(confirmError.message);
+
+      return NextResponse.json({ success: true, message: "You are confirmed as the team leader." });
     }
 
     return NextResponse.json({ success: false, message: "Invalid action" }, { status: 400 });

@@ -4,19 +4,42 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Plus,
   Users,
   Trophy,
-  Calendar,
   UserCheck,
+  BookOpen,
+  ExternalLink,
+  FileText,
+  X,
+  Calendar,
+  Flame,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardHeader, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { createClient } from "@/lib/supabase/client";
+import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
+
+function getEmbedUrl(url: string) {
+  if (!url) return "";
+  if (url.includes("drive.google.com")) {
+    let fileId = "";
+    const dMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (dMatch && dMatch[1]) {
+      fileId = dMatch[1];
+    } else {
+      const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (idMatch && idMatch[1]) {
+        fileId = idMatch[1];
+      }
+    }
+    if (fileId) {
+      return `https://drive.google.com/file/d/${fileId}/preview`;
+    }
+  }
+  return url;
+}
 
 interface Profile {
   id: string;
@@ -25,6 +48,7 @@ interface Profile {
   university: string | null;
   verification_status: "incomplete" | "pending" | "verified";
   student_id: string | null;
+  profile_complete: boolean | null;
 }
 
 interface Team {
@@ -33,12 +57,17 @@ interface Team {
   status: string;
   leader_id: string;
   competitions: {
+    id: string;
     name: string;
     type: string;
     entry_fee: number;
+    eligibility: string;
     registration_end: string;
     submission_end: string;
     submission_required: boolean;
+    rulebook_url?: string | null;
+    template_link?: string | null;
+    description?: string | null;
   } | null;
 }
 
@@ -49,44 +78,88 @@ interface CompetitionItem {
   submission_required: boolean;
 }
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.05 } },
+} as const;
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
+} as const;
+
+function StatusBanner({
+  type,
+  title,
+  message,
+  action,
+}: {
+  type: "warning" | "pending" | "success";
+  title: string;
+  message: string;
+  action?: React.ReactNode;
+}) {
+  const config = {
+    warning: {
+      dot: "bg-warning",
+    },
+    pending: {
+      dot: "bg-primary",
+    },
+    success: {
+      dot: "bg-success",
+    },
+  };
+  const c = config[type];
+
+  return (
+    <motion.div
+      variants={itemVariants}
+      className="p-5 rounded-lg border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full shadow-sm"
+    >
+      <div className="flex gap-3 items-start relative z-10">
+        <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${c.dot}`} />
+        <div className="space-y-0.5">
+          <h3 className="font-semibold text-sm text-foreground">{title}</h3>
+          <p className="text-xs text-muted-foreground font-sans leading-relaxed">{message}</p>
+        </div>
+      </div>
+      {action && <div className="relative z-10 shrink-0">{action}</div>}
+    </motion.div>
+  );
+}
+
 export default function DashboardHome() {
   const router = useRouter();
   const [loading, setLoading] = React.useState(true);
   const [profile, setProfile] = React.useState<Profile | null>(null);
   const [teams, setTeams] = React.useState<Team[]>([]);
   const [allCompetitions, setAllCompetitions] = React.useState<CompetitionItem[]>([]);
+  const [selectedCompInfo, setSelectedCompInfo] = React.useState<NonNullable<Team["competitions"]> | null>(null);
+
+  useBodyScrollLock(selectedCompInfo !== null);
   const supabase = createClient();
 
   const loadDashboardData = React.useCallback(
     async (showLoader = false) => {
       if (showLoader) setLoading(true);
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { router.push("/login"); return; }
 
-        if (!user) {
-          router.push("/login");
-          return;
-        }
-
-        // Load profile (always fresh — no cache)
         const { data: profileData } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", user.id)
           .single();
-
         setProfile(profileData);
 
-        // Load all active competitions for general deadlines fallback
         const { data: compList } = await supabase
           .from("competitions")
           .select("name, registration_end, submission_end, submission_required")
           .neq("status", "draft");
         setAllCompetitions((compList as CompetitionItem[]) || []);
 
-        // Load user's teams
         if (profileData) {
           const { data: members } = await supabase
             .from("team_members")
@@ -98,9 +171,8 @@ export default function DashboardHome() {
             const teamIds = members.map((m) => m.team_id);
             const { data: teamData } = await supabase
               .from("teams")
-              .select("*, competitions(name, type, entry_fee, registration_end, submission_end, submission_required)")
+              .select("*, competitions(id, name, type, entry_fee, eligibility, registration_end, submission_end, submission_required, rulebook_url, template_link, description)")
               .in("id", teamIds);
-
             setTeams(teamData || []);
           } else {
             setTeams([]);
@@ -115,26 +187,16 @@ export default function DashboardHome() {
     [supabase, router]
   );
 
-  // Initial load
   React.useEffect(() => {
-    const timer = setTimeout(() => {
-      loadDashboardData(true);
-    }, 0);
+    const timer = setTimeout(() => { loadDashboardData(true); }, 0);
     return () => clearTimeout(timer);
   }, [loadDashboardData]);
 
-  // Re-fetch silently when user comes back to the tab
-  // (so after admin approves, status updates without hard refresh)
   React.useEffect(() => {
-    function handleFocus() {
-      loadDashboardData(false);
-    }
+    function handleFocus() { loadDashboardData(false); }
     function handleVisibilityChange() {
-      if (document.visibilityState === "visible") {
-        loadDashboardData(false);
-      }
+      if (document.visibilityState === "visible") loadDashboardData(false);
     }
-
     window.addEventListener("focus", handleFocus);
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
@@ -144,252 +206,268 @@ export default function DashboardHome() {
   }, [loadDashboardData]);
 
   if (loading) {
-    // Premium skeleton loader
     return (
-      <div className="space-y-6 animate-pulse" suppressHydrationWarning>
-        <div className="h-10 bg-neutral-900 w-1/3 rounded-sm" suppressHydrationWarning />
-        <div className="h-24 bg-neutral-900 w-full rounded-md" suppressHydrationWarning />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6" suppressHydrationWarning>
-          <div className="h-32 bg-neutral-900 rounded-md" suppressHydrationWarning />
-          <div className="h-32 bg-neutral-900 rounded-md" suppressHydrationWarning />
-          <div className="h-32 bg-neutral-900 rounded-md" suppressHydrationWarning />
+      <div className="space-y-6" suppressHydrationWarning>
+        <div className="space-y-2 animate-pulse">
+          <div className="h-9 bg-muted w-56 rounded-lg" suppressHydrationWarning />
+          <div className="h-4 bg-muted/60 w-80 rounded-md" suppressHydrationWarning />
         </div>
-        <div className="h-64 bg-neutral-900 w-full rounded-md" suppressHydrationWarning />
+        <div className="h-20 bg-card rounded-xl border border-border animate-pulse" suppressHydrationWarning />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5" suppressHydrationWarning>
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="h-28 bg-card rounded-xl border border-border animate-pulse" suppressHydrationWarning />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8" suppressHydrationWarning>
+          <div className="lg:col-span-2 space-y-3" suppressHydrationWarning>
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="h-24 bg-card rounded-xl border border-border animate-pulse" suppressHydrationWarning />
+            ))}
+          </div>
+          <div className="h-64 bg-card rounded-xl border border-border animate-pulse" suppressHydrationWarning />
+        </div>
       </div>
     );
   }
 
-  // Check if profile details are incomplete
-  const isIncomplete =
-    !profile ||
-    !profile.phone ||
-    !profile.university ||
-    profile.verification_status === "incomplete";
+  const isIncomplete = !profile || !profile.profile_complete;
+
+  const registeredTeams = teams.filter((t) => t.status !== "forming");
 
   return (
-    <div className="space-y-8">
-      {/* Page Title & Profile Name */}
-      <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
+    <motion.div
+      variants={containerVariants}
+      initial="hidden"
+      animate="show"
+      className="space-y-8"
+    >
+      {/* Page Header */}
+      <motion.div variants={itemVariants} className="flex flex-col md:flex-row justify-between md:items-end gap-4 border-b border-border pb-5">
         <div>
-          <h1 className="text-h3 font-heading font-bold text-neutral-50">
-            Welcome back, {profile?.full_name || "Innovator"}
+          <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest mb-1">
+            Participant Portal
+          </p>
+          <h1 className="text-2xl md:text-3xl font-heading font-bold text-foreground tracking-tight">
+            Welcome back,{" "}
+            <span className="text-foreground">{profile?.full_name?.split(" ")[0] || "Innovator"}</span>
           </h1>
-          <p className="text-sm text-neutral-400 font-sans mt-1">
-            Manage your rosters, register for events, and monitor submission timelines.
+          <p className="text-xs text-muted-foreground font-sans mt-1">
+            Manage your teams, track submissions, and stay on top of deadlines.
           </p>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Warnings & Alerts */}
+      {/* Status Banners */}
       {isIncomplete && (
-        <div className="p-4 rounded-md bg-warning/10 border border-warning/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex gap-3 items-start">
-            <AlertTriangle className="h-5 w-5 text-warning shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <h3 className="font-heading font-semibold text-sm text-neutral-200">
-                Profile Setup Required
-              </h3>
-              <p className="text-xs text-neutral-400 font-sans leading-relaxed">
-                You must complete your profile and upload your student ID to register for competitions.
-              </p>
-            </div>
-          </div>
-          <Link href="/profile-setup">
-            <Button variant="primary" className="text-xs py-2 px-4 shrink-0">
-              Complete Profile Setup
-            </Button>
-          </Link>
-        </div>
+        <StatusBanner
+          type="warning"
+          title="Profile Setup Required"
+          message="Complete your profile and upload your student ID to unlock competition registration."
+          action={
+            <Link href="/profile-setup">
+              <Button variant="primary" className="text-xs py-2 px-4 shadow-sm">
+                Complete Profile
+              </Button>
+            </Link>
+          }
+        />
       )}
 
-      {/* Profile Verification status banner */}
-      {!isIncomplete && profile?.verification_status === "pending" && (
-        <div className="p-4 rounded-md bg-primary/10 border border-primary/20 flex items-start gap-3">
-          <Clock className="h-5 w-5 text-accent shrink-0 mt-0.5" />
+      {!isIncomplete && teams.length === 0 && (
+        <StatusBanner
+          type="success"
+          title="Profile Complete — Competition Access Unlocked!"
+          message="Your profile is complete. You can now create or join teams and register for competitions."
+          action={
+            <Link href="/teams">
+              <Button variant="primary" className="text-xs py-2 px-4 shadow-sm">
+                Create a Team
+              </Button>
+            </Link>
+          }
+        />
+      )}
+
+      {/* Stats Grid */}
+      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* Profile Status */}
+        <div className="rounded-lg border border-border bg-card p-5 shadow-sm flex items-center justify-between w-full hover:border-neutral-350 transition-colors cursor-default">
           <div className="space-y-1">
-            <h3 className="font-heading font-semibold text-sm text-neutral-200">
-              Student ID Review Pending
-            </h3>
-            <p className="text-xs text-neutral-400 font-sans leading-relaxed">
-              Your student ID verification is currently pending review by festival organizers. Competition access unlocks once verified.
-            </p>
+            <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase tracking-widest block">
+              Profile Status
+            </span>
+            <h4 className={`text-base font-heading font-bold capitalize font-mono ${
+              !isIncomplete ? "text-success" : "text-destructive"
+            }`}>
+              {!isIncomplete ? "Complete" : "Incomplete"}
+            </h4>
+          </div>
+          <div className="p-2.5 rounded border border-border bg-muted text-muted-foreground">
+            <UserCheck className="h-4 w-4" />
           </div>
         </div>
-      )}
 
-      {/* Verified success banner — shown after admin approves */}
-      {profile?.verification_status === "verified" && teams.length === 0 && (
-        <div className="p-4 rounded-md bg-success/10 border border-success/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex gap-3 items-start">
-            <CheckCircle className="h-5 w-5 text-success shrink-0 mt-0.5" />
-            <div className="space-y-1">
-              <h3 className="font-heading font-semibold text-sm text-neutral-200">
-                You&apos;re Verified — Competition Access Unlocked!
-              </h3>
-              <p className="text-xs text-neutral-400 font-sans leading-relaxed">
-                Your student ID has been verified. You can now create or join teams and register for competitions.
-              </p>
-            </div>
+        {/* Teams */}
+        <div className="rounded-lg border border-border bg-card p-5 shadow-sm flex items-center justify-between w-full hover:border-neutral-350 transition-colors cursor-default">
+          <div className="space-y-1">
+            <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase tracking-widest block">
+              My Teams
+            </span>
+            <h4 className="text-2xl font-heading font-bold text-foreground font-mono leading-none">
+              {teams.length}
+            </h4>
           </div>
-          <Link href="/teams">
-            <Button variant="primary" className="text-xs py-2 px-4 shrink-0 bg-success hover:bg-success/90 border-success">
-              Create a Team
-            </Button>
-          </Link>
+          <div className="p-2.5 rounded border border-border bg-muted text-muted-foreground">
+            <Users className="h-4 w-4" />
+          </div>
         </div>
-      )}
 
-      {/* Overview Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Verification Widget */}
-        <Card variant="default">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div className="space-y-1.5">
-              <span className="text-xs font-semibold text-neutral-500 font-sans uppercase tracking-wider">
-                Verification Status
-              </span>
-              <h4 className="text-lg font-heading font-bold text-neutral-200 capitalize">
-                {profile?.verification_status || "Incomplete"}
-              </h4>
-            </div>
-            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-sm">
-              {profile?.verification_status === "verified" ? (
-                <CheckCircle className="h-6 w-6 text-success" />
-              ) : profile?.verification_status === "pending" ? (
-                <Clock className="h-6 w-6 text-warning" />
-              ) : (
-                <UserCheck className="h-6 w-6 text-neutral-500" />
+        {/* Competitions */}
+        <div className="rounded-lg border border-border bg-card p-5 shadow-sm flex items-center justify-between w-full hover:border-neutral-350 transition-colors cursor-default">
+          <div className="space-y-1">
+            <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase tracking-widest block">
+              Registered
+            </span>
+            <h4 className="text-2xl font-heading font-bold text-foreground font-mono leading-none">
+              {registeredTeams.length}
+            </h4>
+          </div>
+          <div className="p-2.5 rounded border border-border bg-muted text-muted-foreground">
+            <Trophy className="h-4 w-4" />
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Main Content */}
+      <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+        {/* Teams List */}
+        <div className="lg:col-span-2 space-y-5">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <Users className="h-4.5 w-4.5 text-muted-foreground" />
+              <h2 className="text-base font-heading font-semibold text-foreground">My Teams</h2>
+              {teams.length > 0 && (
+                <span className="text-[10px] font-mono bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded font-bold">
+                  {teams.length}
+                </span>
               )}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Registered Teams Counter */}
-        <Card variant="default">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div className="space-y-1.5">
-              <span className="text-xs font-semibold text-neutral-500 font-sans uppercase tracking-wider">
-                My Teams
-              </span>
-              <h4 className="text-lg font-heading font-bold text-neutral-200 font-mono">
-                {teams.length}
-              </h4>
-            </div>
-            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-sm">
-              <Users className="h-6 w-6 text-accent" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Competition Registrations Counter */}
-        <Card variant="default">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div className="space-y-1.5">
-              <span className="text-xs font-semibold text-neutral-500 font-sans uppercase tracking-wider">
-                Competitions
-              </span>
-              <h4 className="text-lg font-heading font-bold text-neutral-200 font-mono">
-                {teams.filter((t) => t.status !== "forming").length}
-              </h4>
-            </div>
-            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-sm">
-              <Trophy className="h-6 w-6 text-secondary" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Main Panel Content: Teams and registrations */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Left Side: Active Teams */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-heading font-semibold text-neutral-200">My Teams</h2>
             <Link href="/teams">
               <Button
                 variant="secondary"
-                disabled={profile?.verification_status !== "verified"}
-                className="text-xs py-1.5 px-3 gap-1.5"
+                disabled={isIncomplete}
+                className="text-xs py-1.5 px-3 h-auto gap-1.5 shadow-sm"
               >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Create Team</span>
+                <span>Manage Teams</span>
               </Button>
             </Link>
           </div>
 
           {teams.length > 0 ? (
-            <div className="space-y-4">
-              {teams.map((team) => (
-                <Card key={team.id} hoverable className="p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="space-y-1.5">
-                    <h3 className="font-heading font-semibold text-base text-neutral-200">
-                      {team.name}
-                    </h3>
-                    <div className="flex flex-wrap items-center gap-2.5 text-xs font-sans text-neutral-400">
-                      <span>{team.competitions?.name}</span>
-                      <span className="w-1 h-1 rounded-full bg-neutral-700" />
-                      <span className="capitalize">{team.competitions?.type}</span>
-                    </div>
-                  </div>
-                  <div>
-                    <Badge
-                      variant={
-                        team.status === "finalist"
-                          ? "success"
-                          : team.status === "submitted"
-                          ? "primary"
-                          : team.status === "rejected"
-                          ? "error"
-                          : "neutral"
-                      }
-                      className="capitalize"
+            <div className="space-y-3">
+              {teams.map((team, idx) => {
+                const isFinalist = team.status === "finalist";
+                const isSelected = team.status === "selected";
+                const isRejected = team.status === "rejected";
+                const isForming = team.status === "forming";
+
+                const badgeVariant =
+                  isFinalist || isSelected
+                    ? "success"
+                    : isRejected
+                    ? "error"
+                    : isForming
+                    ? "warning"
+                    : team.status === "submitted" || team.status === "registered"
+                    ? "primary"
+                    : "neutral";
+
+                return (
+                  <motion.div
+                    key={team.id}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                  >
+                    <div
+                      className="p-4 border border-border bg-card hover:border-neutral-350 transition-colors duration-150 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full group shadow-sm"
                     >
-                      {team.status}
-                    </Badge>
-                  </div>
-                </Card>
-              ))}
+                      <div className="space-y-1 flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-heading font-semibold text-sm text-foreground truncate">
+                            {team.name}
+                          </h3>
+                          <Badge variant={badgeVariant} className="capitalize text-[10px] py-0.5 px-2 font-mono">
+                            {team.status}
+                          </Badge>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 text-xs font-sans text-muted-foreground">
+                          <span className="font-medium text-foreground/80">{team.competitions?.name}</span>
+                          <span className="w-1 h-1 rounded-full bg-border" />
+                          <span className="capitalize">{team.competitions?.type}</span>
+                        </div>
+                      </div>
+
+                      {team.competitions && (
+                        <button
+                          onClick={() => setSelectedCompInfo(team.competitions)}
+                          className="shrink-0 text-xs py-1.5 px-3 rounded border border-border bg-muted text-muted-foreground hover:text-foreground flex items-center gap-1.5 cursor-pointer hover:bg-muted/80 transition-colors shadow-sm"
+                        >
+                          <BookOpen className="h-3.5 w-3.5 text-muted-foreground/85" />
+                          <span>View Rules</span>
+                        </button>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           ) : (
-            /* Custom standard empty state illustration CTA card */
-            <div className="py-12 border border-dashed border-neutral-800 rounded-md text-center bg-neutral-900/10 space-y-4">
-              <Users className="h-10 w-10 text-neutral-700 mx-auto" />
-              <div className="space-y-1 max-w-sm mx-auto">
-                <h3 className="font-heading font-semibold text-sm text-neutral-300">No Teams Joined</h3>
-                <p className="text-xs text-neutral-500 font-sans leading-relaxed">
-                  You are not a member of any teams yet. Create a new team or accept an invitation to join one.
+            <div className="py-14 border border-dashed border-border rounded-lg text-center bg-card space-y-4 shadow-sm">
+              <div className="p-3 bg-muted border border-border rounded-full w-fit mx-auto text-muted-foreground">
+                <Users className="h-6 w-6" />
+              </div>
+              <div className="space-y-1 max-w-xs mx-auto">
+                <h3 className="font-heading font-semibold text-foreground text-sm">No Active Teams</h3>
+                <p className="text-xs text-muted-foreground font-sans leading-relaxed">
+                  You haven&apos;t joined any teams. Create a new team or accept a pending invitation.
                 </p>
               </div>
-              <div className="pt-2">
-                <Link href="/teams">
-                  <Button
-                    variant="primary"
-                    disabled={profile?.verification_status !== "verified"}
-                    className="text-xs"
-                  >
-                    Get Started
-                  </Button>
-                </Link>
-              </div>
+              <Link href="/teams">
+                <Button
+                  variant="primary"
+                  disabled={isIncomplete}
+                  className="text-xs gap-1.5 mx-auto shadow-sm"
+                >
+                  Create Team
+                </Button>
+              </Link>
             </div>
           )}
         </div>
 
-        {/* Right Side: Timelines and Announcements */}
-        <div className="space-y-6">
-          <h2 className="text-lg font-heading font-semibold text-neutral-200">Deadlines</h2>
-          <Card variant="default">
-            <CardHeader>
-              <h3 className="text-sm font-semibold font-heading text-neutral-300">
-                {teams.length > 0 ? "My Deadlines" : "Upcoming Deadlines"}
-              </h3>
-            </CardHeader>
-            <CardContent className="space-y-4 font-sans text-xs">
+        {/* Right: Deadlines */}
+        <div className="space-y-5">
+          <div className="flex items-center gap-2">
+            <Flame className="h-4.5 w-4.5 text-muted-foreground" />
+            <h2 className="text-base font-heading font-semibold text-foreground">Deadlines</h2>
+          </div>
+
+          <div className="border border-border bg-card p-5 rounded-lg shadow-sm">
+            <div className="pb-3 mb-4 border-b border-border">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {teams.length > 0 ? "My Deadlines" : "Upcoming Deadlines"}
+                </h3>
+              </div>
+            </div>
+            <div className="font-sans text-xs">
               {(() => {
                 const formatDeadlineDate = (dateStr: string) => {
                   try {
                     return new Date(dateStr).toLocaleDateString("en-US", {
-                      month: "long",
+                      month: "short",
                       day: "numeric",
                       year: "numeric",
                     });
@@ -398,22 +476,32 @@ export default function DashboardHome() {
                   }
                 };
 
-                const deadlinesToDisplay: { label: string; date: string; compName: string }[] = [];
+                const isUpcoming = (dateStr: string) => {
+                  try {
+                    return new Date(dateStr) > new Date();
+                  } catch {
+                    return false;
+                  }
+                };
+
+                const deadlinesToDisplay: { label: string; date: string; compName: string; dateStr: string }[] = [];
 
                 if (teams.length > 0) {
                   teams.forEach((team) => {
                     if (team.competitions) {
                       const comp = team.competitions;
                       deadlinesToDisplay.push({
-                        label: "Registration Close",
+                        label: "Registration Closes",
                         date: formatDeadlineDate(comp.registration_end),
                         compName: comp.name,
+                        dateStr: comp.registration_end,
                       });
                       if (comp.submission_required) {
                         deadlinesToDisplay.push({
-                          label: "Proposal Submission Close",
+                          label: "Submission Closes",
                           date: formatDeadlineDate(comp.submission_end),
                           compName: comp.name,
+                          dateStr: comp.submission_end,
                         });
                       }
                     }
@@ -421,47 +509,183 @@ export default function DashboardHome() {
                 } else {
                   allCompetitions.forEach((comp) => {
                     deadlinesToDisplay.push({
-                      label: "Registration Close",
+                      label: "Registration Closes",
                       date: formatDeadlineDate(comp.registration_end),
                       compName: comp.name,
+                      dateStr: comp.registration_end,
                     });
                     if (comp.submission_required) {
                       deadlinesToDisplay.push({
-                        label: "Proposal Submission Close",
+                        label: "Submission Closes",
                         date: formatDeadlineDate(comp.submission_end),
                         compName: comp.name,
+                        dateStr: comp.submission_end,
                       });
                     }
                   });
                 }
 
                 if (deadlinesToDisplay.length > 0) {
-                  return deadlinesToDisplay.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className={`flex gap-3 py-1.5 ${
-                        idx < deadlinesToDisplay.length - 1 ? "border-b border-neutral-800/40" : ""
-                      }`}
-                    >
-                      <Calendar className="h-4.5 w-4.5 text-accent shrink-0" />
-                      <div className="space-y-1">
-                        <div className="font-semibold text-neutral-300">
-                          {item.compName} - {item.label}
-                        </div>
-                        <div className="text-neutral-500">{item.date}</div>
-                      </div>
+                  return (
+                    <div className="relative pl-5 space-y-5">
+                      <div className="absolute left-1.5 top-2 bottom-2 w-px bg-border" />
+                      {deadlinesToDisplay.map((item, idx) => {
+                        const upcoming = isUpcoming(item.dateStr);
+                        return (
+                          <div key={idx} className="relative group">
+                            <div className={`absolute -left-[19px] top-1.5 w-2 h-2 rounded-full border border-border bg-card z-10 transition-colors ${
+                              upcoming ? "group-hover:border-primary" : ""
+                            }`} />
+                            <div className="space-y-0.5">
+                              <div className={`font-medium leading-snug ${upcoming ? "text-foreground" : "text-muted-foreground line-through"}`}>
+                                {item.compName}
+                              </div>
+                              <div className="text-[10px] text-muted-foreground">{item.label}</div>
+                              <div className={`font-mono text-[9px] ${upcoming ? "text-primary font-semibold" : "text-muted-foreground"}`}>
+                                {item.date}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ));
+                  );
                 }
 
                 return (
-                  <div className="text-neutral-500 text-center py-4">No upcoming deadlines.</div>
+                  <div className="text-muted-foreground text-center py-6 font-sans text-xs">
+                    No upcoming deadlines.
+                  </div>
                 );
               })()}
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+
+      {/* Rules & Instructions Modal */}
+      <AnimatePresence>
+        {selectedCompInfo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedCompInfo(null)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.98, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98, y: 10 }}
+              transition={{ duration: 0.18, ease: "easeOut" }}
+              className="w-full max-w-3xl bg-card border border-border rounded-lg p-6 shadow-level-3 relative z-10 space-y-5 max-h-[85vh] overflow-y-auto font-sans text-foreground"
+            >
+              {/* Modal Header */}
+              <div className="flex justify-between items-start border-b border-border pb-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="accent" className="text-[10px] uppercase font-mono font-bold tracking-widest py-0.5 px-2 rounded">
+                      {selectedCompInfo.type}
+                    </Badge>
+                  </div>
+                  <h3 className="text-lg font-bold font-heading text-foreground tracking-tight mt-1">
+                    {selectedCompInfo.name}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setSelectedCompInfo(null)}
+                  className="p-1.5 rounded border border-border bg-muted hover:bg-muted/80 transition-colors text-muted-foreground hover:text-foreground cursor-pointer"
+                >
+                  <X className="h-4.5 w-4.5" />
+                </button>
+              </div>
+
+              <div className="space-y-5">
+                {/* Description */}
+                {selectedCompInfo.description && (
+                  <div className="space-y-1.5">
+                    <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest font-mono">Overview</h4>
+                    <p className="text-sm text-foreground/80 leading-relaxed font-sans">
+                      {selectedCompInfo.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Quick Stats */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 border border-border bg-muted p-4 rounded-lg">
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground font-mono block">Entry Fee</span>
+                    <span className="text-sm font-semibold text-foreground block">
+                      {Number(selectedCompInfo.entry_fee) === 0 ? "Free" : `৳${selectedCompInfo.entry_fee}`}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground font-mono block">Eligibility</span>
+                    <span className="text-sm font-semibold text-foreground block capitalize">
+                      {selectedCompInfo.eligibility || "Open"}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground font-mono block">Template</span>
+                    {selectedCompInfo.template_link ? (
+                      <a
+                        href={selectedCompInfo.template_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-semibold text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1"
+                      >
+                        <span>Download</span>
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Not required</span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Rulebook */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center flex-wrap gap-2">
+                    <h4 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest font-mono">Official Rulebook</h4>
+                    {selectedCompInfo.rulebook_url && (
+                      <a href={selectedCompInfo.rulebook_url} target="_blank" rel="noopener noreferrer">
+                        <Button variant="secondary" className="text-[10px] py-1 px-2.5 h-auto gap-1 rounded border border-border bg-card text-foreground hover:bg-muted shadow-sm">
+                          <span>Open in Drive</span>
+                          <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      </a>
+                    )}
+                  </div>
+
+                  {selectedCompInfo.rulebook_url ? (
+                    <div className="w-full aspect-[16/9] rounded border border-border bg-background overflow-hidden">
+                      <iframe
+                        src={getEmbedUrl(selectedCompInfo.rulebook_url)}
+                        className="w-full h-full border-0"
+                        allow="autoplay"
+                      />
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center border border-dashed border-border rounded bg-muted">
+                      <FileText className="h-6 w-6 text-muted-foreground/60 mx-auto mb-2" />
+                      <p className="text-xs text-muted-foreground leading-normal max-w-sm mx-auto">
+                        No rulebook has been uploaded yet. Check back later or consult the coordinator desk.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-3 border-t border-border">
+                <Button variant="secondary" onClick={() => setSelectedCompInfo(null)} className="text-xs py-2 px-4 rounded border border-border bg-card text-foreground hover:bg-muted shadow-sm">
+                  Close
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }

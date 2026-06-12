@@ -13,7 +13,7 @@ import {
   Eye,
   Info,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
@@ -42,6 +42,10 @@ type Competition = {
   champion_prize: string;
   runner_up_prize: string;
   status: "draft" | "published" | "registration_open" | "registration_closed" | "archived";
+  show_in_hero?: boolean;
+  short_name?: string;
+  hero_capacity?: number;
+  rounds_count?: number;
 };
 
 const defaultCompState: Competition = {
@@ -67,6 +71,10 @@ const defaultCompState: Competition = {
   champion_prize: "",
   runner_up_prize: "",
   status: "draft",
+  show_in_hero: false,
+  short_name: "",
+  hero_capacity: 80,
+  rounds_count: 1,
 };
 
 export default function AdminCompetitionsPage() {
@@ -139,6 +147,10 @@ export default function AdminCompetitionsPage() {
       registration_end: formatDateForInput(comp.registration_end),
       submission_start: formatDateForInput(comp.submission_start),
       submission_end: formatDateForInput(comp.submission_end),
+      show_in_hero: comp.show_in_hero ?? false,
+      short_name: comp.short_name || "",
+      hero_capacity: comp.hero_capacity ?? 80,
+      rounds_count: comp.rounds_count ?? 1,
     });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -166,6 +178,10 @@ export default function AdminCompetitionsPage() {
         entry_fee: Number(formData.entry_fee),
         min_members: Number(formData.min_members),
         max_members: Number(formData.max_members),
+        show_in_hero: Boolean(formData.show_in_hero),
+        short_name: formData.short_name || "",
+        hero_capacity: Number(formData.hero_capacity ?? 80),
+        rounds_count: Number(formData.rounds_count ?? 1),
       };
 
       const res = await fetch("/api/admin/competitions", {
@@ -230,42 +246,47 @@ export default function AdminCompetitionsPage() {
 
       {/* Main layout views */}
       {showForm ? (
-        <Card variant="default" className="border-primary/20 bg-neutral-900/40">
-          <CardHeader>
-            <CardTitle>{formData.id ? "Edit Competition" : "Build New Competition"}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleFormSubmit} className="space-y-6">
-              {/* Row 1: Name and Type */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input
-                  label="Competition Name"
-                  placeholder="e.g. Speed Programming Contest"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  disabled={formLoading}
-                  required
-                />
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-sm font-medium text-neutral-300 font-sans">Type</label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value as Competition["type"] })}
+        <div className="space-y-6">
+          <form onSubmit={handleFormSubmit} className="space-y-6">
+            {/* Section 1: Basic Information */}
+            <Card variant="glass" className="bg-glass border-glass p-6">
+              <CardHeader className="p-0 mb-6">
+                <CardTitle className="text-base font-semibold text-neutral-100 flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded bg-primary/10 text-primary text-xs font-mono font-bold">1</span>
+                  <span>Basic Information & Media</span>
+                </CardTitle>
+                <CardDescription className="text-xxs text-neutral-500 mt-1">
+                  Define the core identity, descriptions, and media assets of the competition.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0 space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <Input
+                    label="Competition Name"
+                    placeholder="e.g. Speed Programming Contest"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     disabled={formLoading}
                     required
-                    className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
-                  >
-                    {["Showcase", "Programming", "Security", "Robotics", "Esports", "Custom"].map((t) => (
-                      <option key={t} value={t}>
-                        {t}
-                      </option>
-                    ))}
-                  </select>
+                  />
+                  <div className="flex flex-col space-y-1.5 w-full">
+                    <label className="text-sm font-medium text-neutral-300 font-sans select-none">Type</label>
+                    <select
+                      value={formData.type}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value as Competition["type"] })}
+                      disabled={formLoading}
+                      required
+                      className="flex h-10 w-full rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 outline-none transition-all duration-200 font-sans cursor-pointer"
+                    >
+                      {["Showcase", "Programming", "Security", "Robotics", "Esports", "Custom"].map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-              </div>
 
-              {/* Row 2: Descriptions */}
-              <div className="space-y-4">
                 <Input
                   label="Short Description"
                   placeholder="Quick summary snippet displayed on public catalog cards..."
@@ -274,6 +295,7 @@ export default function AdminCompetitionsPage() {
                   disabled={formLoading}
                   required
                 />
+
                 <div className="flex flex-col space-y-1.5">
                   <label className="text-sm font-medium text-neutral-300 font-sans">Full Description</label>
                   <textarea
@@ -283,20 +305,213 @@ export default function AdminCompetitionsPage() {
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     disabled={formLoading}
                     required
-                    className="flex w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
+                    className="flex w-full rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 outline-none transition-all duration-200 font-sans"
                   />
                 </div>
-              </div>
 
-              {/* Row 3: Rules, Cover URL */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input
-                  label="Cover Image URL"
-                  placeholder="https://example.com/cover.png"
-                  value={formData.cover_image_url}
-                  onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
-                  disabled={formLoading}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <Input
+                    label="Cover Image URL"
+                    placeholder="https://example.com/cover.png"
+                    value={formData.cover_image_url}
+                    onChange={(e) => setFormData({ ...formData, cover_image_url: e.target.value })}
+                    disabled={formLoading}
+                  />
+                  <Input
+                    label="Banner Image URL"
+                    placeholder="https://example.com/banner.png"
+                    value={formData.banner_image_url || ""}
+                    onChange={(e) => setFormData({ ...formData, banner_image_url: e.target.value })}
+                    disabled={formLoading}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 2: Participation Details & Finances */}
+            <Card variant="glass" className="bg-glass border-glass p-6">
+              <CardHeader className="p-0 mb-6">
+                <CardTitle className="text-base font-semibold text-neutral-100 flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded bg-primary/10 text-primary text-xs font-mono font-bold">2</span>
+                  <span>Participation Parameters & Finances</span>
+                </CardTitle>
+                <CardDescription className="text-xxs text-neutral-500 mt-1">
+                  Establish eligibility criteria, team sizes, registration fees, and prize structures.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0 space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
+                  <div className="flex flex-col space-y-1.5 w-full">
+                    <label className="text-sm font-medium text-neutral-300 font-sans select-none">Eligibility</label>
+                    <select
+                      value={formData.eligibility}
+                      onChange={(e) => setFormData({ ...formData, eligibility: e.target.value as Competition["eligibility"] })}
+                      disabled={formLoading}
+                      required
+                      className="flex h-10 w-full rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 outline-none transition-all duration-200 font-sans cursor-pointer"
+                    >
+                      <option value="both">Both (Internal & External)</option>
+                      <option value="internal">Internal (SMUCT only)</option>
+                      <option value="external">External only</option>
+                    </select>
+                  </div>
+                  <Input
+                    label="Entry Fee (BDT)"
+                    type="number"
+                    min="0"
+                    value={formData.entry_fee}
+                    onChange={(e) => setFormData({ ...formData, entry_fee: parseFloat(e.target.value) || 0 })}
+                    disabled={formLoading}
+                    required
+                  />
+                  <div className="flex flex-col space-y-1.5 w-full">
+                    <label className="text-sm font-medium text-neutral-300 font-sans select-none">Rounds Count</label>
+                    <select
+                      value={formData.rounds_count || 1}
+                      onChange={(e) => setFormData({ ...formData, rounds_count: parseInt(e.target.value) || 1 })}
+                      disabled={formLoading}
+                      required
+                      className="flex h-10 w-full rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-200 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 outline-none transition-all duration-200 font-sans cursor-pointer"
+                    >
+                      <option value={1}>1 Round (Direct Pay)</option>
+                      <option value={2}>2 Rounds (Review First, Pay After)</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col space-y-1.5 w-full">
+                    <label className="text-sm font-medium text-neutral-300 font-sans select-none">Publish Status</label>
+                    <select
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value as Competition["status"] })}
+                      disabled={formLoading}
+                      required
+                      className="flex h-10 w-full rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 outline-none transition-all duration-200 font-sans cursor-pointer"
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="published">Published (Listed on catalog)</option>
+                      <option value="registration_open">Registration Open</option>
+                      <option value="registration_closed">Registration Closed</option>
+                      <option value="archived">Archived</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  <Input
+                    label="Total Prize Pool"
+                    placeholder="e.g. 50,000 BDT"
+                    value={formData.prize_pool}
+                    onChange={(e) => setFormData({ ...formData, prize_pool: e.target.value })}
+                    disabled={formLoading}
+                  />
+                  <Input
+                    label="Champion Prize"
+                    placeholder="e.g. 25,000 BDT + Crest"
+                    value={formData.champion_prize}
+                    onChange={(e) => setFormData({ ...formData, champion_prize: e.target.value })}
+                    disabled={formLoading}
+                  />
+                  <Input
+                    label="Runner-up Prize"
+                    placeholder="e.g. 15,000 BDT + Crest"
+                    value={formData.runner_up_prize}
+                    onChange={(e) => setFormData({ ...formData, runner_up_prize: e.target.value })}
+                    disabled={formLoading}
+                  />
+                </div>
+
+                <div className="p-4 rounded-xl bg-neutral-950 border border-neutral-850 space-y-4">
+                  <div className="text-xs font-semibold text-neutral-400 uppercase tracking-wider font-mono">Team Formation Limits</div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 items-end">
+                    <Input
+                      label="Min Team Members"
+                      type="number"
+                      min="1"
+                      value={formData.min_members}
+                      onChange={(e) => setFormData({ ...formData, min_members: parseInt(e.target.value) || 1 })}
+                      disabled={formLoading}
+                      required
+                    />
+                    <Input
+                      label="Max Team Members"
+                      type="number"
+                      min="1"
+                      value={formData.max_members}
+                      onChange={(e) => setFormData({ ...formData, max_members: parseInt(e.target.value) || 1 })}
+                      disabled={formLoading}
+                      required
+                    />
+                     <label className="relative flex items-center gap-3 p-3 rounded border border-neutral-800 bg-neutral-950/40 hover:bg-neutral-900/50 cursor-pointer select-none transition-all duration-200 text-xs font-mono uppercase tracking-wider text-neutral-350">
+                      <input
+                        type="checkbox"
+                        checked={formData.solo_allowed}
+                        onChange={(e) => setFormData({ ...formData, solo_allowed: e.target.checked })}
+                        disabled={formLoading}
+                        className="rounded border-neutral-750 bg-neutral-950 text-neutral-300 focus:ring-neutral-800 h-4 w-4 cursor-pointer"
+                      />
+                      <span>Solo Allowed</span>
+                    </label>
+                    <label className="relative flex items-center gap-3 p-3 rounded border border-neutral-800 bg-neutral-950/40 hover:bg-neutral-900/50 cursor-pointer select-none transition-all duration-200 text-xs font-mono uppercase tracking-wider text-neutral-350">
+                      <input
+                        type="checkbox"
+                        checked={formData.team_allowed}
+                        onChange={(e) => setFormData({ ...formData, team_allowed: e.target.checked })}
+                        disabled={formLoading}
+                        className="rounded border-neutral-750 bg-neutral-950 text-neutral-300 focus:ring-neutral-800 h-4 w-4 cursor-pointer"
+                      />
+                      <span>Teams Allowed</span>
+                    </label>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 3: Timelines & Payment Info */}
+            <Card variant="glass" className="bg-glass border-glass p-6">
+              <CardHeader className="p-0 mb-6">
+                <CardTitle className="text-base font-semibold text-neutral-100 flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded bg-primary/10 text-primary text-xs font-mono font-bold">3</span>
+                  <span>Timelines & Instruction Guides</span>
+                </CardTitle>
+                <CardDescription className="text-xxs text-neutral-500 mt-1">
+                  Configure scheduling milestones, rulebook links, and specific bKash/Nagad billing details.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0 space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <Input
+                    label="Registration Start Date"
+                    type="datetime-local"
+                    value={formData.registration_start}
+                    onChange={(e) => setFormData({ ...formData, registration_start: e.target.value })}
+                    disabled={formLoading}
+                    required
+                  />
+                  <Input
+                    label="Registration End Date"
+                    type="datetime-local"
+                    value={formData.registration_end}
+                    onChange={(e) => setFormData({ ...formData, registration_end: e.target.value })}
+                    disabled={formLoading}
+                    required
+                  />
+                  <Input
+                    label="Submission Start Date"
+                    type="datetime-local"
+                    value={formData.submission_start}
+                    onChange={(e) => setFormData({ ...formData, submission_start: e.target.value })}
+                    disabled={formLoading}
+                    required
+                  />
+                  <Input
+                    label="Submission End Date"
+                    type="datetime-local"
+                    value={formData.submission_end}
+                    onChange={(e) => setFormData({ ...formData, submission_end: e.target.value })}
+                    disabled={formLoading}
+                    required
+                  />
+                </div>
+
                 <Input
                   label="Rulebook Document URL"
                   placeholder="https://drive.google.com/rulebook.pdf"
@@ -304,203 +519,77 @@ export default function AdminCompetitionsPage() {
                   onChange={(e) => setFormData({ ...formData, rulebook_url: e.target.value })}
                   disabled={formLoading}
                 />
-              </div>
 
-              {/* Row 4: Team limits & Solo Toggles */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 p-4 rounded-sm bg-neutral-950 border border-neutral-850 items-end">
                 <div className="flex flex-col space-y-1.5">
-                  <label className="text-sm font-medium text-neutral-300 font-sans">Min Team Members</label>
-                  <input
+                  <label className="text-sm font-medium text-neutral-300 font-sans">Payment Instructions</label>
+                  <textarea
+                    rows={3}
+                    placeholder="bKash/Nagad Merchant Number details, instruction details..."
+                    value={formData.payment_instructions}
+                    onChange={(e) => setFormData({ ...formData, payment_instructions: e.target.value })}
+                    disabled={formLoading}
+                    className="flex w-full rounded border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-200 placeholder:text-neutral-600 focus:border-neutral-700 focus:ring-1 focus:ring-neutral-700/20 outline-none transition-all duration-200 font-sans"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 4: Hero Section & Telemetry Display Config */}
+            <Card variant="glass" className="bg-glass border-glass p-6">
+              <CardHeader className="p-0 mb-6">
+                <CardTitle className="text-base font-semibold text-neutral-100 flex items-center gap-2">
+                  <span className="flex h-6 w-6 items-center justify-center rounded bg-primary/10 text-primary text-xs font-mono font-bold">4</span>
+                  <span>Hero Section & Telemetry Display Config</span>
+                </CardTitle>
+                <CardDescription className="text-xxs text-neutral-500 mt-1">
+                  Configure settings specifically for displaying this competition in the home page hero rotator.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0 space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 items-end">
+                  <label className="relative flex items-center gap-3 p-3 rounded border border-neutral-800 bg-neutral-950/40 hover:bg-neutral-900/50 cursor-pointer select-none transition-all duration-200 text-xs font-mono uppercase tracking-wider text-neutral-350">
+                    <input
+                      type="checkbox"
+                      checked={formData.show_in_hero || false}
+                      onChange={(e) => setFormData({ ...formData, show_in_hero: e.target.checked })}
+                      disabled={formLoading}
+                      className="rounded border-neutral-750 bg-neutral-950 text-neutral-300 focus:ring-neutral-800 h-4 w-4 cursor-pointer"
+                    />
+                    <span>Show in Hero Rotator</span>
+                  </label>
+                  <Input
+                    label="Hero Abbreviation (3-4 Chars)"
+                    placeholder="e.g. SOFT, IoT, CP"
+                    maxLength={10}
+                    value={formData.short_name || ""}
+                    onChange={(e) => setFormData({ ...formData, short_name: e.target.value })}
+                    disabled={formLoading}
+                  />
+                  <Input
+                    label="Telemetry Filled Percentage (%)"
                     type="number"
-                    min={1}
-                    value={formData.min_members}
-                    onChange={(e) => setFormData({ ...formData, min_members: parseInt(e.target.value) || 1 })}
+                    min="0"
+                    max="100"
+                    placeholder="e.g. 80"
+                    value={formData.hero_capacity ?? 80}
+                    onChange={(e) => setFormData({ ...formData, hero_capacity: parseInt(e.target.value) || 0 })}
                     disabled={formLoading}
-                    required
-                    className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
                   />
                 </div>
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-sm font-medium text-neutral-300 font-sans">Max Team Members</label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={formData.max_members}
-                    onChange={(e) => setFormData({ ...formData, max_members: parseInt(e.target.value) || 1 })}
-                    disabled={formLoading}
-                    required
-                    className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
-                  />
-                </div>
-                <label className="flex items-center gap-3 py-2.5 cursor-pointer text-sm font-sans text-neutral-300">
-                  <input
-                    type="checkbox"
-                    checked={formData.solo_allowed}
-                    onChange={(e) => setFormData({ ...formData, solo_allowed: e.target.checked })}
-                    disabled={formLoading}
-                    className="w-4 h-4 rounded border-neutral-800 bg-neutral-950 text-primary focus:ring-0"
-                  />
-                  <span>Solo Allowed</span>
-                </label>
-                <label className="flex items-center gap-3 py-2.5 cursor-pointer text-sm font-sans text-neutral-300">
-                  <input
-                    type="checkbox"
-                    checked={formData.team_allowed}
-                    onChange={(e) => setFormData({ ...formData, team_allowed: e.target.checked })}
-                    disabled={formLoading}
-                    className="w-4 h-4 rounded border-neutral-800 bg-neutral-950 text-primary focus:ring-0"
-                  />
-                  <span>Teams Allowed</span>
-                </label>
-              </div>
+              </CardContent>
+            </Card>
 
-              {/* Row 5: Eligibility, Fees, & Status */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-sm font-medium text-neutral-300 font-sans">Eligibility</label>
-                  <select
-                    value={formData.eligibility}
-                    onChange={(e) => setFormData({ ...formData, eligibility: e.target.value as Competition["eligibility"] })}
-                    disabled={formLoading}
-                    required
-                    className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
-                  >
-                    <option value="both">Both (Internal & External)</option>
-                    <option value="internal">Internal (SMUCT only)</option>
-                    <option value="external">External only</option>
-                  </select>
-                </div>
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-sm font-medium text-neutral-300 font-sans">Entry Fee (BDT)</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={formData.entry_fee}
-                    onChange={(e) => setFormData({ ...formData, entry_fee: parseFloat(e.target.value) || 0 })}
-                    disabled={formLoading}
-                    required
-                    className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
-                  />
-                </div>
-                <div className="flex flex-col space-y-1.5">
-                  <label className="text-sm font-medium text-neutral-300 font-sans">Publish Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value as Competition["status"] })}
-                    disabled={formLoading}
-                    required
-                    className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
-                  >
-                    <option value="draft">Draft</option>
-                    <option value="published">Published (Listed on catalog)</option>
-                    <option value="registration_open">Registration Open</option>
-                    <option value="registration_closed">Registration Closed</option>
-                    <option value="archived">Archived</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Row 6: Prizes */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Input
-                  label="Total Prize Pool"
-                  placeholder="e.g. 50,000 BDT"
-                  value={formData.prize_pool}
-                  onChange={(e) => setFormData({ ...formData, prize_pool: e.target.value })}
-                  disabled={formLoading}
-                />
-                <Input
-                  label="Champion Prize"
-                  placeholder="e.g. 25,000 BDT + Crest"
-                  value={formData.champion_prize}
-                  onChange={(e) => setFormData({ ...formData, champion_prize: e.target.value })}
-                  disabled={formLoading}
-                />
-                <Input
-                  label="Runner-up Prize"
-                  placeholder="e.g. 15,000 BDT + Crest"
-                  value={formData.runner_up_prize}
-                  onChange={(e) => setFormData({ ...formData, runner_up_prize: e.target.value })}
-                  disabled={formLoading}
-                />
-              </div>
-
-              {/* Row 7: Date/Time Timelines */}
-              <div className="p-4 rounded-sm bg-neutral-950 border border-neutral-850 space-y-4">
-                <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider font-sans">Timeline Configurations</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="flex flex-col space-y-1.5">
-                    <label className="text-sm font-medium text-neutral-300 font-sans">Registration Start</label>
-                    <input
-                      type="datetime-local"
-                      value={formData.registration_start}
-                      onChange={(e) => setFormData({ ...formData, registration_start: e.target.value })}
-                      disabled={formLoading}
-                      required
-                      className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
-                    />
-                  </div>
-                  <div className="flex flex-col space-y-1.5">
-                    <label className="text-sm font-medium text-neutral-300 font-sans">Registration End</label>
-                    <input
-                      type="datetime-local"
-                      value={formData.registration_end}
-                      onChange={(e) => setFormData({ ...formData, registration_end: e.target.value })}
-                      disabled={formLoading}
-                      required
-                      className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
-                    />
-                  </div>
-                  <div className="flex flex-col space-y-1.5">
-                    <label className="text-sm font-medium text-neutral-300 font-sans">Submission Start</label>
-                    <input
-                      type="datetime-local"
-                      value={formData.submission_start}
-                      onChange={(e) => setFormData({ ...formData, submission_start: e.target.value })}
-                      disabled={formLoading}
-                      required
-                      className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
-                    />
-                  </div>
-                  <div className="flex flex-col space-y-1.5">
-                    <label className="text-sm font-medium text-neutral-300 font-sans">Submission End</label>
-                    <input
-                      type="datetime-local"
-                      value={formData.submission_end}
-                      onChange={(e) => setFormData({ ...formData, submission_end: e.target.value })}
-                      disabled={formLoading}
-                      required
-                      className="flex h-10 w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 outline-none font-mono"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Row 8: Payment Instructions */}
-              <div className="flex flex-col space-y-1.5">
-                <label className="text-sm font-medium text-neutral-300 font-sans">Payment Instructions</label>
-                <textarea
-                  rows={3}
-                  placeholder="bKash/Nagad Merchant Number details, instruction details..."
-                  value={formData.payment_instructions}
-                  onChange={(e) => setFormData({ ...formData, payment_instructions: e.target.value })}
-                  disabled={formLoading}
-                  className="flex w-full rounded-sm border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-50 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
-                />
-              </div>
-
-              {/* Submit / Cancel Buttons */}
-              <div className="flex gap-4 pt-2">
-                <Button variant="primary" type="submit" isLoading={formLoading}>
-                  {formData.id ? "Update Competition" : "Create Competition"}
-                </Button>
-                <Button variant="secondary" type="button" onClick={() => setShowForm(false)} disabled={formLoading}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+            {/* Action Triggers */}
+            <div className="flex gap-4 pt-2 justify-end">
+              <Button variant="ghost" type="button" onClick={() => setShowForm(false)} disabled={formLoading} className="active:scale-[0.98]">
+                Cancel
+              </Button>
+              <Button variant="primary" type="submit" isLoading={formLoading} className="bg-neutral-100 hover:bg-neutral-200 text-neutral-900 border border-transparent text-xs font-mono uppercase tracking-wider py-2 px-5 active:scale-[0.98] rounded cursor-pointer">
+                {formData.id ? "Update Competition Parameters" : "Create Competition Record"}
+              </Button>
+            </div>
+          </form>
+        </div>
       ) : (
         /* Catalog list */
         <>
@@ -513,14 +602,19 @@ export default function AdminCompetitionsPage() {
           ) : competitions.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {competitions.map((comp) => (
-                <Card key={comp.id} variant="default" className="border-neutral-800/80 p-6 flex flex-col justify-between gap-4">
-                  <div className="space-y-3">
+                <Card
+                  key={comp.id}
+                  variant="glass"
+                  hoverable
+                  className="bg-glass border-glass p-6 flex flex-col justify-between gap-5 relative overflow-hidden group"
+                >
+                  <div className="space-y-4">
                     <div className="flex justify-between items-start gap-4">
                       <div className="space-y-1">
-                        <span className="text-xxs font-semibold font-mono text-accent uppercase tracking-wide">
+                        <span className="text-xxs font-semibold font-mono text-neutral-400 uppercase tracking-widest">
                           {comp.type}
                         </span>
-                        <h3 className="font-heading font-bold text-base text-neutral-150">
+                        <h3 className="font-heading font-bold text-base text-neutral-100 group-hover:text-neutral-50 transition-colors">
                           {comp.name}
                         </h3>
                       </div>
@@ -534,7 +628,7 @@ export default function AdminCompetitionsPage() {
                             ? "primary"
                             : "warning"
                         }
-                        className="capitalize shrink-0"
+                        className="capitalize shrink-0 font-mono text-xxs"
                       >
                         {comp.status.replace("_", " ")}
                       </Badge>
@@ -544,31 +638,31 @@ export default function AdminCompetitionsPage() {
                       {comp.short_description || comp.description}
                     </p>
 
-                    <div className="grid grid-cols-2 gap-3 pt-2 text-xxs font-sans text-neutral-400 border-t border-neutral-850/60">
-                      <div className="flex items-center gap-1.5">
-                        <Users className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
-                        <span>Size: {comp.min_members}-{comp.max_members} Devs</span>
+                    <div className="grid grid-cols-2 gap-3.5 pt-3.5 text-xxs font-sans text-neutral-405 border-t border-neutral-800/40">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-neutral-500 shrink-0" />
+                        <span>Size: <span className="font-semibold text-neutral-200 font-mono">{comp.min_members}-{comp.max_members}</span> devs</span>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <DollarSign className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
-                        <span>Fee: {comp.entry_fee} BDT</span>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4 text-neutral-500 shrink-0" />
+                        <span>Fee: <span className="font-semibold text-neutral-200 font-mono">{comp.entry_fee} BDT</span></span>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <Info className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
-                        <span className="capitalize">Target: {comp.eligibility}</span>
+                      <div className="flex items-center gap-2">
+                        <Info className="h-4 w-4 text-neutral-500 shrink-0" />
+                        <span className="capitalize">Target: <span className="font-semibold text-neutral-200 font-mono">{comp.eligibility}</span></span>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5 text-neutral-500 shrink-0" />
-                        <span>Ends: {new Date(comp.registration_end).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-2">
+                        <Trophy className="h-4 w-4 text-neutral-500 shrink-0" />
+                        <span>Rounds: <span className="font-semibold text-neutral-200 font-mono">{comp.rounds_count ?? 1} Round(s)</span></span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex gap-2.5 pt-3 border-t border-neutral-850/60">
+                  <div className="flex gap-3 pt-3 border-t border-neutral-850/60 items-center">
                     <Button
                       variant="secondary"
                       onClick={() => handleEdit(comp)}
-                      className="text-xs py-1.5 px-3 flex items-center gap-1.5 grow justify-center"
+                      className="text-xs py-2 px-3.5 flex items-center gap-1.5 grow justify-center font-semibold bg-neutral-900 border border-neutral-800 hover:border-neutral-700 hover:bg-neutral-800"
                     >
                       <Edit className="h-3.5 w-3.5" />
                       <span>Edit Configuration</span>
@@ -580,8 +674,12 @@ export default function AdminCompetitionsPage() {
                         rel="noreferrer"
                         className="shrink-0"
                       >
-                        <Button variant="ghost" className="p-2 border border-neutral-800 hover:bg-neutral-900" aria-label="View rulebook">
-                          <Eye className="h-3.5 w-3.5 text-neutral-400" />
+                        <Button
+                          variant="ghost"
+                          className="p-2.5 h-9 w-9 rounded-lg border border-neutral-800 hover:bg-neutral-850 hover:border-neutral-700 flex items-center justify-center transition-colors"
+                          aria-label="View rulebook"
+                        >
+                          <Eye className="h-4 w-4 text-neutral-400" />
                         </Button>
                       </a>
                     )}
@@ -590,7 +688,7 @@ export default function AdminCompetitionsPage() {
               ))}
             </div>
           ) : (
-            <div className="py-16 text-center border border-dashed border-neutral-800 rounded-md bg-neutral-900/10">
+            <div className="py-16 text-center border border-dashed border-neutral-800 rounded-lg bg-neutral-900/10">
               <Trophy className="h-10 w-10 text-neutral-700 mb-4 mx-auto" />
               <h3 className="font-heading font-semibold text-neutral-300 mb-1">No Competitions Created</h3>
               <p className="text-xs text-neutral-500 font-sans max-w-xs mx-auto mb-4">

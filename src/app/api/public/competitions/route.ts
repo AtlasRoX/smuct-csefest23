@@ -34,6 +34,9 @@ interface CompetitionDb {
   status: string;
   created_at: string;
   updated_at: string;
+  show_in_hero: boolean | null;
+  short_name: string | null;
+  hero_capacity: number | null;
 }
 
 function mapCompetition(c: CompetitionDb) {
@@ -74,6 +77,9 @@ function mapCompetition(c: CompetitionDb) {
     status: c.status,
     createdAt: c.created_at,
     updatedAt: c.updated_at,
+    showInHero: c.show_in_hero ?? false,
+    shortName: c.short_name || "",
+    heroCapacity: c.hero_capacity ?? 80,
     // Add camelCase fallback names to make transitions 100% safe
     short_description: c.short_description || "",
     prize_pool: c.prize_pool || "TBD",
@@ -81,6 +87,9 @@ function mapCompetition(c: CompetitionDb) {
     runner_up_prize: c.runner_up_prize || "TBD",
     second_runner_up: c.second_runner_up || "TBD",
     entry_fee: Number(c.entry_fee),
+    show_in_hero: c.show_in_hero ?? false,
+    short_name: c.short_name || "",
+    hero_capacity: c.hero_capacity ?? 80,
   };
 }
 

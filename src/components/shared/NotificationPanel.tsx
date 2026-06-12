@@ -11,7 +11,7 @@ import {
   CheckCheck,
   X,
 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+
 
 interface Notification {
   id: string;

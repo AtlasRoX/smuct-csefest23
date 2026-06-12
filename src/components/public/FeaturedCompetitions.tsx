@@ -23,9 +23,14 @@ interface Competition {
 }
 
 const COMPETITION_FALLBACK_IMAGES: Record<string, string> = {
-  "software-showcase": "https://lh3.googleusercontent.com/aida-public/AB6AXuA_sDktpXuLP2tISJMUZEcQ4oGKbCVVcNP5a4utyyZtBi7Ej5u04f-4z15P1MSAZHG8G8J9yzcTIF94AFSvEBinOXDgHJIpfKIbbfkfS2_u0W5K67FkveR-wyc-XJE8vD1tSGcEBbIGbeq0R6AV1mMs28BeNO-UsyX8SkyjMjJOpiGZ-xlsU_wH-MS-jk_Z1QZCqMbMKyZyxFvICAe7am_VuNLiyEbf-tNGuGlWK3etefYWmooKxmObEtTAvN5Hubc_mi35Al7BYaR0",
-  "iot-showcase": "https://lh3.googleusercontent.com/aida-public/AB6AXuDFVUDWSPAEANjIsD2sxQTMsSZSJj4cJAypasue8WYXlBnLth68CUXTAW9au4ZEgd0YnZJe98SL3qfoadNI6H8qz2p79RCO2DMqmKbkkmkU-lOLpu3ptXY9NL7rbI0l2VBvBkcfxxO03eYlgeeEtMtJYeTUx1ylzt11k6XFat5qFOY6YlmWPcfDW0I0o8szghnvKWfSD3DphEy9cR__yalRVd7gpHHK9rg69Re-Er7oNXMSgPC_GNxebMseXt9TiJ3PMLzj2uXx9Tji",
-  "idea-showcase": "https://lh3.googleusercontent.com/aida-public/AB6AXuCKGHlmkgO9OUf-RDdwzqJtbmiRD5dk84Y8R5IZD8mghvMKlxjfQayu_ChlNaTxFZTqY9iG1Bl_cKKCYN-YHo4T_y8_ylysu_sgUKIfy6uMPzuEqCK7v9xcs8ShtpUjZXzjWJ3m7PnUdt1GoDjHaXT1Vk2Fh28fgfpENV_PML4DqznU68jk7VTa5R_6PYyGxM-rIseMyI4hWN-y0ngIhMMTI0UUIi-9LBCHA1NYQX4i-OEPf7MIwGpMN2mgAfro5D3uIUSgd33mKpMp",
+  // UUID keys from seed_content.sql
+  "e0bb66f8-45e0-4c12-a1f7-418f773b069d": "/software-showcase-logo.png",
+  "318a4a58-89c0-449e-ba60-318df883ba58": "/iot-showcase-logo.png",
+  "dfec0659-6308-42e3-aaf6-dfdc85eb2cfa": "/idea-showcase-logo.png",
+  // Slug keys for safety
+  "software-showcase": "/software-showcase-logo.png",
+  "iot-showcase": "/iot-showcase-logo.png",
+  "idea-showcase": "/idea-showcase-logo.png",
 };
 
 export function FeaturedCompetitions() {
@@ -117,56 +122,59 @@ export function FeaturedCompetitions() {
           return (
             <div
               key={comp.id}
-              className="relative bg-neutral-900/40 rounded-xl flex flex-col group border border-neutral-850 transition-all duration-normal hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(99,102,241,0.15)] overflow-hidden"
+              className="relative bg-glass border border-glass hover:border-primary/40 rounded-2xl flex flex-col group transition-all duration-normal hover:-translate-y-1.5 hover:shadow-level-3 overflow-hidden"
             >
+              {/* Hover gradient glow */}
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-complex pointer-events-none" />
+
               {/* Cover image header */}
-              <div className="relative h-36 overflow-hidden rounded-t-xl">
-                <div className="absolute inset-0 bg-linear-to-t from-neutral-950/90 to-transparent z-10" />
+              <div className="relative h-44 overflow-hidden rounded-t-2xl">
+                <div className="absolute inset-0 bg-linear-to-t from-neutral-950/90 via-neutral-950/25 to-transparent z-10" />
                 <Image
                   src={coverImage}
                   alt={comp.name}
                   fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="object-cover group-hover:scale-[1.03] transition-transform duration-complex"
                   sizes="(max-width: 768px) 100vw, 380px"
                 />
                 <div className="absolute top-4 right-4 z-20">
-                  <span className="bg-primary/20 backdrop-blur-md border border-primary/40 text-primary px-3 py-1 rounded-full text-[10px] font-bold font-sans">
+                  <span className="bg-primary/25 backdrop-blur-md border border-primary/40 text-primary px-3.5 py-1 rounded-full text-[10px] font-bold font-mono tracking-wider">
                     {comp.teamSize.toUpperCase()}
                   </span>
                 </div>
               </div>
 
               {/* Content */}
-              <div className="p-5 grow flex flex-col justify-between">
+              <div className="p-6 grow flex flex-col justify-between relative z-10 select-text">
                 <div>
                   <div className="flex justify-between items-start mb-3 gap-2">
-                    <h3 className="font-heading font-extrabold text-xl text-neutral-100 group-hover:text-neutral-50 transition-colors">
+                    <h3 className="font-heading font-extrabold text-xl text-neutral-100 group-hover:text-neutral-50 transition-colors tracking-tight">
                       {comp.name}
                     </h3>
-                    <Badge variant="accent" className="text-[9px] font-mono shrink-0 uppercase">
+                    <Badge variant="accent" className="text-[9px] font-mono shrink-0 uppercase tracking-wider">
                       {comp.eligibility}
                     </Badge>
                   </div>
-                  <p className="text-neutral-400 text-xs sm:text-sm mb-4 line-clamp-2 leading-relaxed font-sans">
+                  <p className="text-neutral-400 text-xs sm:text-sm mb-4 line-clamp-2 leading-relaxed font-sans font-light">
                     {comp.shortDescription}
                   </p>
                 </div>
 
-                <div className="mt-auto space-y-3">
-                  <div className="flex justify-between items-center py-3 border-y border-neutral-850/60">
-                    <span className="text-[10px] font-bold text-neutral-500 uppercase font-sans">Prize Pool</span>
-                    <span className="font-mono text-secondary text-sm font-extrabold">{comp.prizePool}</span>
+                <div className="mt-auto space-y-4">
+                  <div className="flex justify-between items-center py-3.5 border-y border-neutral-850/60 font-mono">
+                    <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-wider">Prize Pool</span>
+                    <span className="text-secondary text-sm font-black">{comp.prizePool}</span>
                   </div>
                   <div className="flex gap-3">
                     <Link href="/register" className="grow">
-                      <Button className="w-full bg-primary hover:bg-primary/95 text-white py-2.5 h-auto rounded-lg text-xs font-bold font-sans">
+                      <Button className="w-full bg-primary hover:bg-primary/95 text-white py-2.5 h-auto rounded-xl text-xs font-bold font-sans">
                         Register
                       </Button>
                     </Link>
                     <Link href={`/competitions/${comp.id}`}>
                       <Button
                         variant="secondary"
-                        className="px-3 border border-neutral-800 hover:border-neutral-700 bg-neutral-900/40 text-neutral-400 hover:text-neutral-200 py-2.5 h-auto rounded-lg"
+                        className="px-3 border border-neutral-800 hover:border-neutral-700 bg-neutral-900/40 text-neutral-400 hover:text-neutral-200 py-2.5 h-auto rounded-xl"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>

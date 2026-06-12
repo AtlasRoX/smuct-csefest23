@@ -8,23 +8,25 @@ import {
   Percent,
   Download,
   BarChart3,
-  Calendar,
   Sparkles,
+  LineChart as LineIcon,
 } from "lucide-react";
 import useSWR from "swr";
 import {
   ResponsiveContainer,
-  AreaChart,
-  Area,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
   BarChart,
   Bar,
   Cell,
+  CartesianGrid,
 } from "recharts";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
+import { motion } from "framer-motion";
 
 interface CompItem {
   id: string;
@@ -45,7 +47,58 @@ interface AnalyticsData {
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
-const CHART_COLORS = ["#8B5CF6", "#06B6D4", "#A78BFA", "#3B82F6", "#10B981"];
+const SOLID_COLORS = [
+  "var(--color-primary)",
+  "var(--color-secondary)",
+  "var(--color-tertiary)",
+  "var(--color-success)",
+  "var(--color-warning)"
+];
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    color?: string;
+    fill?: string;
+    name?: string;
+    value: number | string;
+  }>;
+  label?: string;
+}
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-neutral-950 border border-neutral-850 rounded p-2.5 shadow-level-2 min-w-[120px] text-left">
+        <p className="text-[9px] font-mono text-neutral-500 uppercase tracking-widest mb-1">{label}</p>
+        <div className="space-y-1">
+          {payload.map((entry, index: number) => {
+            const color = entry.color || entry.fill;
+            const displayColor = typeof color === "string" && color.startsWith("url")
+              ? (color.includes("Primary") ? "var(--color-primary)"
+                : color.includes("Secondary") ? "var(--color-secondary)"
+                : color.includes("Tertiary") ? "var(--color-tertiary)"
+                : color.includes("Success") ? "var(--color-success)"
+                : "var(--color-warning)")
+              : color;
+            return (
+              <div key={index} className="flex items-center justify-between gap-4">
+                <span className="text-[11px] font-sans text-neutral-400 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: displayColor || "transparent" }} />
+                  {entry.name}
+                </span>
+                <span className="text-[11px] font-mono font-bold text-neutral-200">
+                  {entry.value.toLocaleString()}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
 
 export default function AdminAnalyticsPage() {
   const [exportType, setExportType] = React.useState<"teams" | "payments" | "rankings">("teams");
@@ -69,25 +122,25 @@ export default function AdminAnalyticsPage() {
     if (selectedCompId) {
       url += `&competition_id=${selectedCompId}`;
     }
-    // Trigger download
     window.location.href = url;
   };
 
   if (isLoading) {
     return (
-      <div className="space-y-8 animate-pulse">
-        <div className="space-y-2">
-          <div className="h-8 bg-neutral-900 w-1/4 rounded-sm" />
-          <div className="h-4 bg-neutral-900 w-1/3 rounded-sm" />
+      <div className="space-y-8">
+        <div className="space-y-2 animate-pulse">
+          <div className="h-7 bg-neutral-800/60 w-1/4 rounded-lg" />
+          <div className="h-4 bg-neutral-800/40 w-1/3 rounded-md" />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="h-28 bg-neutral-900 rounded-md" />
+            <div key={i} className="h-28 bg-neutral-800/40 rounded-xl border border-neutral-800 animate-pulse" />
           ))}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <div className="h-72 bg-neutral-900 rounded-md" />
-          <div className="h-72 bg-neutral-900 rounded-md" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-72 bg-neutral-800/40 rounded-xl border border-neutral-800 animate-pulse" />
+          ))}
         </div>
       </div>
     );
@@ -95,10 +148,10 @@ export default function AdminAnalyticsPage() {
 
   if (analyticsErr || !analytics) {
     return (
-      <div className="py-12 text-center">
-        <div className="p-4 rounded-sm bg-error/10 border border-error/20 max-w-md mx-auto text-error text-sm font-sans font-medium">
-          <p>Failed to load analytics dashboard. Please try again.</p>
-          <Button variant="secondary" className="mt-4 text-xs" onClick={() => window.location.reload()}>
+      <div className="py-20 text-center border border-dashed border-neutral-800 rounded-xl bg-neutral-900/20">
+        <div className="max-w-sm mx-auto space-y-4">
+          <p className="text-sm text-error font-sans">Failed to load analytics dashboard.</p>
+          <Button variant="secondary" className="text-xs" onClick={() => window.location.reload()}>
             Retry
           </Button>
         </div>
@@ -106,123 +159,108 @@ export default function AdminAnalyticsPage() {
     );
   }
 
+  const statCards = [
+    {
+      label: "Total Revenue",
+      value: `৳${analytics.summary.totalRevenue.toLocaleString()}`,
+      icon: Banknote,
+    },
+    {
+      label: "Avg Teams / Comp",
+      value: String(analytics.summary.averageTeamsPerComp),
+      icon: Users,
+    },
+    {
+      label: "Verification Rate",
+      value: `${analytics.summary.verifiedRatio}%`,
+      icon: Percent,
+    },
+  ];
+
   return (
-    <div className="space-y-8">
-      {/* Title */}
-      <div>
-        <h1 className="text-h3 font-heading font-bold text-neutral-50">Analytics & Insights</h1>
-        <p className="text-sm text-neutral-400 font-sans mt-1">
-          Review participant conversion rates, registration growth timelines, college distributions, and collections reports.
-        </p>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-8"
+    >
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-neutral-850 pb-5">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <LineIcon className="h-4.5 w-4.5 text-neutral-500" />
+            <span className="text-xs font-mono text-neutral-500 uppercase tracking-widest">Admin Panel</span>
+          </div>
+          <h1 className="text-2xl md:text-3xl font-heading font-bold text-neutral-50 tracking-tight">Analytics & Insights</h1>
+          <p className="text-xs text-neutral-400 font-sans mt-1">
+            Registration growth, university distribution, competition shares, and collections reports.
+          </p>
+        </div>
       </div>
 
-      {/* Grid Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {/* Total Revenue */}
-        <Card variant="default">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div className="space-y-1.5">
-              <span className="text-xs font-semibold text-neutral-500 font-sans uppercase tracking-wider">
-                Total Revenue
-              </span>
-              <h4 className="text-2xl font-heading font-bold text-success font-mono">
-                ৳{analytics.summary.totalRevenue.toLocaleString()}
-              </h4>
-            </div>
-            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-sm">
-              <Banknote className="h-6 w-6 text-success" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Avg Teams Per Comp */}
-        <Card variant="default">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div className="space-y-1.5">
-              <span className="text-xs font-semibold text-neutral-500 font-sans uppercase tracking-wider">
-                Avg Teams / Comp
-              </span>
-              <h4 className="text-2xl font-heading font-bold text-neutral-200 font-mono">
-                {analytics.summary.averageTeamsPerComp}
-              </h4>
-            </div>
-            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-sm">
-              <Users className="h-6 w-6 text-accent" />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Verification Ratio */}
-        <Card variant="default">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div className="space-y-1.5">
-              <span className="text-xs font-semibold text-neutral-500 font-sans uppercase tracking-wider">
-                Student Verification Rate
-              </span>
-              <h4 className="text-2xl font-heading font-bold text-neutral-200 font-mono">
-                {analytics.summary.verifiedRatio}%
-              </h4>
-            </div>
-            <div className="p-3 bg-neutral-950 border border-neutral-800 rounded-sm">
-              <Percent className="h-6 w-6 text-secondary" />
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+        {statCards.map((card, i) => (
+          <motion.div
+            key={card.label}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+          >
+            <Card variant="glass" className="border-neutral-800/40 bg-neutral-900/10 hover:border-neutral-700/60 transition-all duration-150 p-5 rounded-lg flex items-center justify-between w-full relative group">
+              <div className="space-y-1">
+                <span className="text-[10px] font-semibold text-neutral-500 font-sans uppercase tracking-widest block">{card.label}</span>
+                <h4 className="text-2xl font-heading font-bold font-mono text-neutral-200">{card.value}</h4>
+              </div>
+              <div className="p-2.5 rounded border border-neutral-850 bg-neutral-950 text-neutral-400 transition-colors group-hover:text-neutral-200">
+                <card.icon className="h-4.5 w-4.5" />
+              </div>
+            </Card>
+          </motion.div>
+        ))}
       </div>
 
-      {/* Main Analytics Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Chart 1: Registration Trend Over Time */}
-        <Card variant="default">
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold text-neutral-300 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-accent" />
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Chart 1: Registration Trend */}
+        <Card variant="glass" className="border-neutral-800/40 bg-neutral-900/10 rounded-lg p-5">
+          <CardHeader className="p-0 pb-3 mb-3">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-neutral-400 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-neutral-500" />
               <span>Registration Trend (Last 15 Days)</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 h-64">
+          <CardContent className="p-0 h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={analytics.registrationTrends} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="date" stroke="#525252" fontSize={10} tickLine={false} />
-                <YAxis stroke="#525252" fontSize={10} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: "#171717", borderColor: "#262626", borderRadius: "4px" }}
-                  labelStyle={{ color: "#a3a3a3", fontSize: "11px", fontFamily: "sans-serif" }}
-                  itemStyle={{ color: "#f5f5f5", fontSize: "11px", fontFamily: "sans-serif" }}
-                />
-                <Area type="monotone" dataKey="count" name="Registrations" stroke="#8B5CF6" strokeWidth={2} fillOpacity={1} fill="url(#colorCount)" />
-              </AreaChart>
+              <LineChart data={analytics.registrationTrends} margin={{ top: 5, right: 10, left: -28, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line-color)" vertical={false} />
+                <XAxis dataKey="date" stroke="var(--color-neutral-700)" fontSize={9} tickLine={false} axisLine={false} tick={{ fill: "var(--color-neutral-500)" }} />
+                <YAxis stroke="var(--color-neutral-700)" fontSize={9} tickLine={false} axisLine={false} tick={{ fill: "var(--color-neutral-500)" }} />
+                <Tooltip content={<CustomTooltip />} cursor={{ stroke: "var(--color-neutral-800)", strokeWidth: 1 }} />
+                <Line type="monotone" dataKey="count" name="Registrations" stroke="var(--color-primary)" strokeWidth={2} dot={{ r: 2, fill: "var(--color-primary)", strokeWidth: 0 }} activeDot={{ r: 4, strokeWidth: 0 }} />
+              </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Chart 2: Competitions Roster Shares */}
-        <Card variant="default">
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold text-neutral-300 flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-secondary" />
+        {/* Chart 2: Teams by Competition */}
+        <Card variant="glass" className="border-neutral-800/40 bg-neutral-900/10 rounded-lg p-5">
+          <CardHeader className="p-0 pb-3 mb-3">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-neutral-400 flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-neutral-500" />
               <span>Registered Teams by Competition</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 h-64">
+          <CardContent className="p-0 h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={analytics.competitionShares} margin={{ top: 10, right: 10, left: -25, bottom: 0 }}>
-                <XAxis dataKey="name" stroke="#525252" fontSize={9} tickLine={false} tickFormatter={(value) => value.substring(0, 10) + "..."} />
-                <YAxis stroke="#525252" fontSize={10} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: "#171717", borderColor: "#262626", borderRadius: "4px" }}
-                  labelStyle={{ color: "#a3a3a3", fontSize: "11px" }}
-                  itemStyle={{ color: "#f5f5f5", fontSize: "11px" }}
-                />
-                <Bar dataKey="teamsCount" name="Teams" radius={[4, 4, 0, 0]}>
-                  {analytics.competitionShares.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+              <BarChart data={analytics.competitionShares} margin={{ top: 5, right: 10, left: -28, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line-color)" vertical={false} />
+                <XAxis dataKey="name" stroke="var(--color-neutral-700)" fontSize={9} tickLine={false} axisLine={false} tickFormatter={(v) => v.substring(0, 10) + (v.length > 10 ? "…" : "")} tick={{ fill: "var(--color-neutral-500)" }} />
+                <YAxis stroke="var(--color-neutral-700)" fontSize={9} tickLine={false} axisLine={false} tick={{ fill: "var(--color-neutral-500)" }} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--color-neutral-900)", opacity: 0.15 }} />
+                <Bar dataKey="teamsCount" name="Teams" radius={[2, 2, 0, 0]}>
+                  {analytics.competitionShares.map((_, index) => (
+                    <Cell key={`cell-${index}`} fill={SOLID_COLORS[index % SOLID_COLORS.length]} />
                   ))}
                 </Bar>
               </BarChart>
@@ -230,55 +268,45 @@ export default function AdminAnalyticsPage() {
           </CardContent>
         </Card>
 
-        {/* Chart 3: Top Participating Universities */}
-        <Card variant="default">
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold text-neutral-300 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-accent" />
-              <span>Top 5 Universities Leaderboard</span>
+        {/* Chart 3: University Leaderboard */}
+        <Card variant="glass" className="border-neutral-800/40 bg-neutral-900/10 rounded-lg p-5">
+          <CardHeader className="p-0 pb-3 mb-3">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-neutral-400 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-neutral-500" />
+              <span>Top 5 Universities</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 h-64">
+          <CardContent className="p-0 h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                layout="vertical"
-                data={analytics.universityStats}
-                margin={{ top: 10, right: 10, left: 10, bottom: 5 }}
-              >
-                <XAxis type="number" stroke="#525252" fontSize={10} tickLine={false} />
-                <YAxis dataKey="university" type="category" stroke="#525252" fontSize={9} tickLine={false} width={100} tickFormatter={(val) => val.substring(0, 15)} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: "#171717", borderColor: "#262626", borderRadius: "4px" }}
-                  labelStyle={{ color: "#a3a3a3", fontSize: "11px" }}
-                  itemStyle={{ color: "#f5f5f5", fontSize: "11px" }}
-                />
-                <Bar dataKey="count" name="Participants" fill="#06B6D4" radius={[0, 4, 4, 0]} />
+              <BarChart layout="vertical" data={analytics.universityStats} margin={{ top: 5, right: 10, left: 10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line-color)" horizontal={false} />
+                <XAxis type="number" stroke="var(--color-neutral-700)" fontSize={9} tickLine={false} axisLine={false} tick={{ fill: "var(--color-neutral-500)" }} />
+                <YAxis dataKey="university" type="category" stroke="var(--color-neutral-700)" fontSize={9} tickLine={false} axisLine={false} width={90} tickFormatter={(val) => val.substring(0, 12)} tick={{ fill: "var(--color-neutral-500)" }} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--color-neutral-900)", opacity: 0.15 }} />
+                <Bar dataKey="count" name="Participants" fill="var(--color-primary)" radius={[0, 2, 2, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
-        {/* Chart 4: Payment Collections split */}
-        <Card variant="default">
-          <CardHeader>
-            <CardTitle className="text-sm font-semibold text-neutral-300 flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-accent" />
+        {/* Chart 4: Gateway Collections */}
+        <Card variant="glass" className="border-neutral-800/40 bg-neutral-900/10 rounded-lg p-5">
+          <CardHeader className="p-0 pb-3 mb-3">
+            <CardTitle className="text-xs font-semibold uppercase tracking-wider text-neutral-400 flex items-center gap-2">
+              <Banknote className="h-4 w-4 text-neutral-500" />
               <span>Gateway Collections Split</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 h-64">
+          <CardContent className="p-0 h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={analytics.paymentCollections} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                <XAxis dataKey="method" stroke="#525252" fontSize={10} tickLine={false} />
-                <YAxis stroke="#525252" fontSize={10} tickLine={false} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: "#171717", borderColor: "#262626", borderRadius: "4px" }}
-                  labelStyle={{ color: "#a3a3a3", fontSize: "11px" }}
-                  itemStyle={{ color: "#f5f5f5", fontSize: "11px" }}
-                />
-                <Bar dataKey="total" name="Amount (৳)" radius={[4, 4, 0, 0]}>
-                  <Cell fill="#d32f2f" />
-                  <Cell fill="#ff6d00" />
+              <BarChart data={analytics.paymentCollections} margin={{ top: 5, right: 10, left: -12, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line-color)" vertical={false} />
+                <XAxis dataKey="method" stroke="var(--color-neutral-700)" fontSize={9} tickLine={false} axisLine={false} tick={{ fill: "var(--color-neutral-500)" }} />
+                <YAxis stroke="var(--color-neutral-700)" fontSize={9} tickLine={false} axisLine={false} tick={{ fill: "var(--color-neutral-500)" }} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--color-neutral-900)", opacity: 0.15 }} />
+                <Bar dataKey="total" name="Amount (৳)" radius={[2, 2, 0, 0]}>
+                  <Cell fill="var(--color-primary)" />
+                  <Cell fill="var(--color-secondary)" />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -286,64 +314,66 @@ export default function AdminAnalyticsPage() {
         </Card>
       </div>
 
-      {/* CSV Export Console Card */}
-      <Card variant="default" className="max-w-2xl">
-        <CardHeader>
-          <CardTitle className="text-md flex items-center gap-2 text-neutral-200">
-            <Download className="h-5 w-5 text-accent" />
-            <span>CSV Data Export Center</span>
+      {/* CSV Export Card */}
+      <Card variant="glass" className="border-neutral-800/40 bg-neutral-900/10 max-w-2xl p-5 rounded-lg">
+        <CardHeader className="p-0 pb-3 mb-4 border-b border-neutral-850">
+          <CardTitle className="flex items-center gap-2 text-neutral-300">
+            <Download className="h-4.5 w-4.5 text-neutral-500" />
+            <span className="text-xs font-semibold uppercase tracking-wider">CSV Data Export</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-6 space-y-6 font-sans text-xs">
-          <p className="text-neutral-500 leading-relaxed">
-            Download standard RFC 4180 CSV spreadsheet collections directly from the database. Select filters to refine output size.
+        <CardContent className="space-y-5 font-sans text-xs p-0 pt-1">
+          <p className="text-neutral-400 leading-relaxed">
+            Download RFC 4180 CSV spreadsheets directly from the database. Filter by type and competition.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Export Type */}
             <div className="space-y-1.5">
-              <label className="font-semibold text-neutral-400">Export Category</label>
-              <select
-                className="flex h-10 w-full rounded-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
-                value={exportType}
-                onChange={(e) => setExportType(e.target.value as "teams" | "payments" | "rankings")}
-              >
-                <option value="teams">Teams & Members List</option>
-                <option value="payments">Approved Payments History</option>
-                <option value="rankings">Recalculated Competition Rankings</option>
-              </select>
+              <label className="font-semibold text-neutral-500 text-[10px] font-mono uppercase tracking-widest block">Export Category</label>
+              <div className="relative">
+                <select
+                  className="flex h-10 w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3.5 py-2 text-xs text-neutral-200 focus:border-neutral-700 hover:border-neutral-700/80 outline-none font-sans cursor-pointer appearance-none pr-10 transition-colors"
+                  value={exportType}
+                  onChange={(e) => setExportType(e.target.value as "teams" | "payments" | "rankings")}
+                >
+                  <option value="teams">Teams & Members List</option>
+                  <option value="payments">Approved Payments History</option>
+                  <option value="rankings">Competition Rankings</option>
+                </select>
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
             </div>
 
-            {/* Competition Filter */}
             <div className="space-y-1.5">
-              <label className="font-semibold text-neutral-400">Refine by Competition (Optional)</label>
-              <select
-                className="flex h-10 w-full rounded-sm border border-neutral-850 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none font-sans"
-                value={selectedCompId}
-                onChange={(e) => setSelectedCompId(e.target.value)}
-              >
-                <option value="">All Competitions</option>
-                {competitions.map((comp) => (
-                  <option key={comp.id} value={comp.id}>
-                    {comp.name}
-                  </option>
-                ))}
-              </select>
+              <label className="font-semibold text-neutral-500 text-[10px] font-mono uppercase tracking-widest block">Competition Filter</label>
+              <div className="relative">
+                <select
+                  className="flex h-10 w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3.5 py-2 text-xs text-neutral-200 focus:border-neutral-700 hover:border-neutral-700/80 outline-none font-sans cursor-pointer appearance-none pr-10 transition-colors"
+                  value={selectedCompId}
+                  onChange={(e) => setSelectedCompId(e.target.value)}
+                >
+                  <option value="">All Competitions</option>
+                  {competitions.map((comp) => (
+                    <option key={comp.id} value={comp.id}>{comp.name}</option>
+                  ))}
+                </select>
+                <div className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-neutral-500">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-neutral-850 flex justify-end">
-            <Button
-              variant="primary"
-              onClick={handleExport}
-              className="bg-accent border-accent hover:bg-accent/90 gap-1.5 text-xs font-semibold py-2 px-5"
-            >
-              <Download className="h-4 w-4" />
-              <span>Export CSV Spreadsheet</span>
+          <div className="flex justify-end pt-4 border-t border-neutral-850">
+            <Button variant="primary" onClick={handleExport} className="gap-1.5 text-xs py-2 px-5 font-semibold bg-neutral-50 border border-neutral-200 hover:bg-neutral-200 text-neutral-950 hover:scale-[1.01] transition-transform rounded">
+              <Download className="h-3.5 w-3.5" />
+              Export CSV
             </Button>
           </div>
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 }

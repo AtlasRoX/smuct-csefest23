@@ -99,7 +99,8 @@ INSERT INTO public.competitions (
   id, name, type, description, short_description, eligibility, 
   solo_allowed, team_allowed, min_members, max_members, 
   registration_start, registration_end, submission_start, submission_end, 
-  entry_fee, status, prize_pool, champion_prize, runner_up_prize, second_runner_up
+  entry_fee, status, prize_pool, champion_prize, runner_up_prize, second_runner_up,
+  show_in_hero, short_name, hero_capacity
 )
 VALUES 
 (
@@ -122,7 +123,10 @@ VALUES
   '1,50,000 BDT',
   '75,000 BDT',
   '50,000 BDT',
-  '25,000 BDT'
+  '25,000 BDT',
+  true,
+  'SOFT',
+  85
 ),
 (
   '318a4a58-89c0-449e-ba60-318df883ba58',
@@ -144,7 +148,10 @@ VALUES
   '1,80,000 BDT',
   '90,000 BDT',
   '60,000 BDT',
-  '30,000 BDT'
+  '30,000 BDT',
+  true,
+  'IoT',
+  75
 ),
 (
   'dfec0659-6308-42e3-aaf6-dfdc85eb2cfa',
@@ -166,7 +173,10 @@ VALUES
   '90,000 BDT',
   '45,000 BDT',
   '30,000 BDT',
-  '15,000 BDT'
+  '15,000 BDT',
+  true,
+  'IDEA',
+  90
 )
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
@@ -187,4 +197,7 @@ ON CONFLICT (id) DO UPDATE SET
   prize_pool = EXCLUDED.prize_pool,
   champion_prize = EXCLUDED.champion_prize,
   runner_up_prize = EXCLUDED.runner_up_prize,
-  second_runner_up = EXCLUDED.second_runner_up;
+  second_runner_up = EXCLUDED.second_runner_up,
+  show_in_hero = EXCLUDED.show_in_hero,
+  short_name = EXCLUDED.short_name,
+  hero_capacity = EXCLUDED.hero_capacity;

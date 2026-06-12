@@ -25,6 +25,10 @@ const competitionValidationSchema = z.object({
   champion_prize: z.string().optional().nullable(),
   runner_up_prize: z.string().optional().nullable(),
   status: z.enum(["draft", "published", "registration_open", "registration_closed", "archived"]).default("draft"),
+  show_in_hero: z.boolean().default(false),
+  short_name: z.string().max(10).optional().nullable(),
+  hero_capacity: z.number().int().min(0).max(100).default(80),
+  rounds_count: z.number().int().min(1).max(2).default(1),
 });
 
 // GET list of all competitions for admin view (including draft ones)

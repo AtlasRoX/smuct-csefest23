@@ -77,7 +77,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${inter.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${spaceGrotesk.variable} ${inter.variable} ${geistMono.variable} antialiased`}
       suppressHydrationWarning
     >
       <head>
@@ -97,7 +97,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full bg-neutral-950 text-neutral-50 font-sans antialiased flex flex-col" suppressHydrationWarning>
+      <body className="min-h-screen bg-neutral-950 text-neutral-50 font-sans antialiased flex flex-col" suppressHydrationWarning>
         {children}
         {process.env.NODE_ENV === "development" && <Agentation />}
       </body>

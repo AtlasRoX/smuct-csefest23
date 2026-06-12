@@ -8,7 +8,7 @@ const paymentSubmissionSchema = z.object({
   team_id: z.string().uuid("Invalid team ID format"),
   amount: z.number().positive("Amount must be a positive number"),
   transaction_id: z.string().min(6, "Transaction ID must be at least 6 characters"),
-  method: z.enum(["bkash", "nagad"]),
+  method: z.string().min(2, "Payment method is required"),
   screenshot_base64: z.string().min(1, "Screenshot image is required"),
 });
 
@@ -161,9 +161,25 @@ export async function POST(req: Request) {
       );
     }
 
+    // Verify the payment method is active in the database
+    const { data: activeMethod } = await supabase
+      .from("payment_methods")
+      .select("id")
+      .eq("name", method)
+      .eq("active", true)
+      .limit(1)
+      .maybeSingle();
+
+    if (!activeMethod) {
+      return NextResponse.json(
+        { success: false, message: `The payment method "${method}" is not supported or currently inactive.` },
+        { status: 400 }
+      );
+    }
+
     // 5. Verify flow state eligibility
-    // External competitions require proposal selection before payment
-    if (comp.eligibility === "external" && teamRecord.status !== "selected") {
+    // 2-round competitions require proposal selection (clearing round 1) before payment
+    if (comp.rounds_count === 2 && teamRecord.status !== "selected") {
       // If payment has already been submitted or rejected, the team status might still be something else.
       // But they can pay only if their proposal is selected.
       // Let's verify if they have any existing payment that was rejected or needs resubmission.
@@ -179,7 +195,7 @@ export async function POST(req: Request) {
 
       if (!canResubmit) {
         return NextResponse.json(
-          { success: false, message: "External teams can only pay after their proposal is selected." },
+          { success: false, message: "For 2-round competitions, payment is only open after clearing Round 1 verification." },
           { status: 400 }
         );
       }

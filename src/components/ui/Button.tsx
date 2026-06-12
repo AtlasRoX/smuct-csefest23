@@ -3,7 +3,7 @@ import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "ghost" | "destructive";
+  variant?: "primary" | "secondary" | "ghost" | "destructive" | "success";
   isLoading?: boolean;
 }
 
@@ -25,6 +25,8 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
               "bg-transparent text-neutral-400 hover:text-neutral-50 hover:bg-neutral-800/40": variant === "ghost",
               // Destructive: Red accent filled, premium lift & shadow
               "bg-error hover:bg-error/90 text-white hover:shadow-level-2 hover:-translate-y-[1px] active:translate-y-0 border border-error/20": variant === "destructive",
+              // Success: Green filled, premium lift & shadow
+              "bg-success hover:bg-success/90 text-white hover:shadow-level-2 hover:-translate-y-[1px] active:translate-y-0 border border-success/20": variant === "success",
             },
             className
           )
@@ -36,7 +38,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             <span className={clsx(
               "w-4 h-4 border-2 rounded-full animate-spin",
               {
-                "border-white/20 border-t-white": variant === "primary" || variant === "destructive",
+                "border-white/20 border-t-white": variant === "primary" || variant === "destructive" || variant === "success",
                 "border-neutral-50/20 border-t-neutral-50": variant === "secondary" || variant === "ghost",
               }
             )} />
