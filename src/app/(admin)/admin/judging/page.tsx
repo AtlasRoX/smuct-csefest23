@@ -10,10 +10,10 @@ import {
   AlertCircle,
   Sliders,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Input } from "@/components/ui/Input";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
@@ -363,7 +363,7 @@ export default function AdminJudgingPage() {
                       <tbody className="divide-y divide-neutral-850/30">
                         {teams.map((t) => (
                           <tr key={t.id} className="hover:bg-neutral-900/20 transition-colors">
-                          <td className="py-4 px-6 text-center font-mono font-bold text-neutral-350 text-sm">
+                            <td className="py-4 px-6 text-center font-mono font-bold text-neutral-350 text-sm">
                               {t.rank_position ? `#${t.rank_position}` : "—"}
                             </td>
                             <td className="py-4 px-6 font-medium text-neutral-100">
@@ -618,3 +618,4 @@ export default function AdminJudgingPage() {
     </div>
   );
 }
+

@@ -43,41 +43,15 @@ export async function GET() {
 
     const teamIds = teams.map((t) => t.id);
 
-    // 4. Fetch team members with profile data
+    // 4. Fetch team members with profile data from the coalescing view
     const { data: members, error: membersError } = await supabase
-      .from("team_members")
-      .select("id, team_id, user_id, role, invitation_status, verification_status, joined_at")
+      .from("v_team_members")
+      .select("member_id, team_id, user_id, role, invitation_status, verification_status, joined_at, full_name, email, phone, gender, university, department, semester, student_id, github, portfolio, skills, bio, tshirt_size, id_front_url, id_back_url")
       .in("team_id", teamIds);
 
     if (membersError) throw new Error(membersError.message);
 
-    // 5. Fetch profiles for all member user_ids
-    const userIds = [...new Set((members || []).map((m) => m.user_id))];
-
-    const { data: profiles, error: profilesError } = await supabase
-      .from("profiles")
-      .select("id, full_name, phone, gender, university, department, semester, student_id, github, skills, bio, tshirt_size, profile_complete")
-      .in("id", userIds);
-
-    if (profilesError) throw new Error(profilesError.message);
-
-    // 6. Fetch emails from users table
-    const { data: users, error: usersError } = await supabase
-      .from("users")
-      .select("id, email")
-      .in("id", userIds);
-
-    if (usersError) throw new Error(usersError.message);
-
-    // 7. Fetch student ID card images from student_verifications
-    const { data: verifications, error: verifError } = await supabase
-      .from("student_verifications")
-      .select("user_id, id_front_url, id_back_url, status")
-      .in("user_id", userIds);
-
-    if (verifError) throw new Error(verifError.message);
-
-    // 8. Fetch submissions for all teams
+    // 5. Fetch submissions for all teams
     const { data: submissions, error: submissionsError } = await supabase
       .from("submissions")
       .select("id, team_id, title, google_docs_url, notes, status, submitted_at")
@@ -85,44 +59,38 @@ export async function GET() {
 
     if (submissionsError) throw new Error(submissionsError.message);
 
-    // 9. Assemble the result
+    // 6. Assemble the result
     const result = teams.map((team) => {
       const teamMembers = (members || [])
         .filter((m) => m.team_id === team.id)
         .map((m) => {
-          const profile = (profiles || []).find((p) => p.id === m.user_id) || null;
-          const user = (users || []).find((u) => u.id === m.user_id) || null;
-          const verification = (verifications || []).find((v) => v.user_id === m.user_id) || null;
-
           return {
-            id: m.id,
+            id: m.member_id,
             user_id: m.user_id,
             role: m.role,
             invitation_status: m.invitation_status,
             verification_status: m.verification_status,
             joined_at: m.joined_at,
-            profile: profile
+            profile: {
+              full_name: m.full_name || "",
+              email: m.email || "",
+              phone: m.phone || "",
+              gender: m.gender || "",
+              university: m.university || "",
+              department: m.department || "",
+              semester: m.semester || "",
+              student_id: m.student_id || "",
+              github: m.github || "",
+              skills: m.skills || "",
+              bio: m.bio || "",
+              tshirt_size: m.tshirt_size || "",
+              profile_complete: true,
+            },
+            id_card: m.id_front_url && m.id_back_url
               ? {
-                  full_name: profile.full_name || "",
-                  email: user?.email || "",
-                  phone: profile.phone || "",
-                  gender: profile.gender || "",
-                  university: profile.university || "",
-                  department: profile.department || "",
-                  semester: profile.semester || "",
-                  student_id: profile.student_id || "",
-                  github: profile.github || "",
-                  skills: profile.skills || "",
-                  bio: profile.bio || "",
-                  tshirt_size: profile.tshirt_size || "",
-                  profile_complete: profile.profile_complete || false,
-                }
-              : null,
-            id_card: verification
-              ? {
-                  front_url: verification.id_front_url,
-                  back_url: verification.id_back_url,
-                  status: verification.status,
+                  front_url: m.id_front_url,
+                  back_url: m.id_back_url,
+                  status: m.verification_status,
                 }
               : null,
           };

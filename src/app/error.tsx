@@ -1,8 +1,8 @@
-"use client";
+﻿"use client";
 
 import { useEffect } from "react";
 import { AlertTriangle, RefreshCcw } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 export default function GlobalError({
   error,
@@ -63,3 +63,4 @@ export default function GlobalError({
     </div>
   );
 }
+

@@ -4,18 +4,19 @@ import { twMerge } from "tailwind-merge";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "ghost" | "destructive" | "success";
+  size?: "default" | "sm" | "xs" | "lg" | "icon" | "icon-sm";
   isLoading?: boolean;
 }
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", isLoading, disabled, children, ...props }, ref) => {
+  ({ className, variant = "primary", size = "default", isLoading, disabled, children, ...props }, ref) => {
     return (
       <button
         ref={ref}
         disabled={disabled || isLoading}
         className={twMerge(
           clsx(
-            "relative inline-flex items-center justify-center font-sans font-semibold rounded-lg text-sm transition-all duration-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 disabled:pointer-events-none py-2.5 px-5 select-none cursor-pointer active:scale-[0.98]",
+            "relative inline-flex items-center justify-center font-sans font-semibold rounded-lg text-sm transition-all duration-normal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 disabled:pointer-events-none select-none cursor-pointer active:scale-[0.98]",
             {
               // Primary: Deep Indigo filled, premium lift & shadow
               "bg-primary hover:bg-primary/90 text-white hover:shadow-level-2 hover:-translate-y-[1px] active:translate-y-0 border border-primary/20": variant === "primary",
@@ -27,6 +28,15 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
               "bg-error hover:bg-error/90 text-white hover:shadow-level-2 hover:-translate-y-[1px] active:translate-y-0 border border-error/20": variant === "destructive",
               // Success: Green filled, premium lift & shadow
               "bg-success hover:bg-success/90 text-white hover:shadow-level-2 hover:-translate-y-[1px] active:translate-y-0 border border-success/20": variant === "success",
+            },
+            {
+              // Sizes
+              "py-2.5 px-5 text-sm": size === "default",
+              "py-1.5 px-3.5 text-xs": size === "sm",
+              "py-1 px-2.5 text-[10px]": size === "xs",
+              "py-3 px-6 text-base": size === "lg",
+              "h-10 w-10 p-0 flex items-center justify-center": size === "icon",
+              "h-8 w-8 p-0 flex items-center justify-center": size === "icon-sm",
             },
             className
           )

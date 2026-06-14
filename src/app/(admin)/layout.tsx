@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -23,7 +23,7 @@ import {
   ChevronRight,
   Search,
 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { CommandPalette } from "@/components/admin/command-palette";
 import { motion, AnimatePresence } from "framer-motion";
@@ -448,3 +448,4 @@ export default function AdminLayout({
     </div>
   );
 }
+

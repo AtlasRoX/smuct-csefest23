@@ -2,15 +2,30 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { uploadImage } from "@/lib/cloudinary";
 
 const createTeamSchema = z.object({
   name: z.string().min(3, "Team Name must be at least 3 characters"),
   competition_id: z.string().uuid("Please select a valid competition"),
 });
 
-const inviteMemberSchema = z.object({
+const addMemberSchema = z.object({
   team_id: z.string().uuid(),
+  full_name: z.string().min(2, "Full Name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
+  phone: z.string().min(10, "Phone number must be valid"),
+  gender: z.string().min(1, "Gender is required"),
+  university: z.string().min(2, "University is required"),
+  department: z.string().min(2, "Department is required"),
+  semester: z.string().min(1, "Semester is required"),
+  student_id: z.string().min(2, "Student ID is required"),
+  tshirt_size: z.string().min(1, "T-shirt size is required"),
+  github: z.string().url("Please enter a valid GitHub profile URL").or(z.literal("")).optional().nullable(),
+  portfolio: z.string().url("Please enter a valid portfolio URL").or(z.literal("")).optional().nullable(),
+  skills: z.string().optional().nullable(),
+  bio: z.string().max(250, "Bio must be under 250 characters").optional().nullable(),
+  id_front_base64: z.string().min(1, "Front image is required"),
+  id_back_base64: z.string().min(1, "Back image is required"),
 });
 
 const respondInviteSchema = z.object({
@@ -29,7 +44,8 @@ const teamIdOnlySchema = z.object({
 
 const removeMemberSchema = z.object({
   team_id: z.string().uuid(),
-  user_id: z.string().uuid(),
+  user_id: z.string().uuid().optional().nullable(),
+  member_id: z.string().uuid().optional().nullable(),
 });
 
 const transferLeadershipSchema = z.object({
@@ -165,41 +181,36 @@ export async function GET(req: Request) {
     // Fetch rosters for each team
     const teamsWithRosters = await Promise.all(
       teams.map(async (team) => {
-        interface DbMemberJoin {
-          id: string;
-          role: "leader" | "member";
-          invitation_status: "pending" | "accepted" | "rejected";
-          user_id: string;
-          profiles: {
-            full_name: string;
-            university: string | null;
-          } | null;
-          users: {
-            email: string;
-          } | null;
-        }
-
         const { data: members } = await supabase
-          .from("team_members")
-          .select("id, role, invitation_status, user_id, profiles(full_name, university), users(email)")
+          .from("v_team_members")
+          .select("member_id, role, invitation_status, verification_status, user_id, full_name, email, phone, gender, university, department, semester, student_id, github, portfolio, skills, bio, tshirt_size, id_front_url, id_back_url")
           .eq("team_id", team.id);
 
-        const rawMembers = (members || []) as unknown as DbMemberJoin[];
+        const rawMembers = members || [];
         const mappedMembers = rawMembers.map((m) => {
-          const prof = m.profiles;
-          const usr = m.users;
           return {
-            id: m.id,
+            id: m.member_id,
             role: m.role,
             invitation_status: m.invitation_status,
+            verification_status: m.verification_status,
             user_id: m.user_id,
-            profiles: prof
-              ? {
-                  full_name: prof.full_name,
-                  university: prof.university || "",
-                  email: usr?.email || "",
-                }
-              : null,
+            profiles: {
+              full_name: m.full_name,
+              university: m.university || "",
+              email: m.email || "",
+              phone: m.phone || "",
+              gender: m.gender || "",
+              department: m.department || "",
+              semester: m.semester || "",
+              student_id: m.student_id || "",
+              github: m.github || "",
+              portfolio: m.portfolio || "",
+              skills: m.skills || "",
+              bio: m.bio || "",
+              tshirt_size: m.tshirt_size || "",
+              id_front_url: m.id_front_url || "",
+              id_back_url: m.id_back_url || "",
+            },
           };
         });
 
@@ -315,10 +326,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, data: team });
     }
 
-    // Action: invite a member
-    if (action === "invite") {
+    // Action: add a team member directly (replacing old invite flow)
+    if (action === "add_member") {
       const body = await req.json();
-      const parseResult = inviteMemberSchema.safeParse(body);
+      const parseResult = addMemberSchema.safeParse(body);
       if (!parseResult.success) {
         return NextResponse.json(
           { success: false, message: parseResult.error.issues[0]?.message },
@@ -326,11 +337,30 @@ export async function POST(req: Request) {
         );
       }
 
-      // Check if user has permission to invite (must be team leader)
+      const {
+        team_id,
+        full_name,
+        email,
+        phone,
+        gender,
+        university,
+        department,
+        semester,
+        student_id,
+        tshirt_size,
+        github,
+        portfolio,
+        skills,
+        bio,
+        id_front_base64,
+        id_back_base64,
+      } = parseResult.data;
+
+      // Check if user has permission to add (must be team leader)
       const { data: team } = await supabase
         .from("teams")
-        .select("*, competitions(max_members, registration_end)")
-        .eq("id", parseResult.data.team_id)
+        .select("*, competitions(max_members, registration_end, competition_id:id)")
+        .eq("id", team_id)
         .single();
 
       if (!team) {
@@ -339,7 +369,7 @@ export async function POST(req: Request) {
 
       if (team.leader_id !== user.id) {
         return NextResponse.json(
-          { success: false, message: "Only the team leader can invite members." },
+          { success: false, message: "Only the team leader can add members." },
           { status: 403 }
         );
       }
@@ -367,61 +397,78 @@ export async function POST(req: Request) {
         );
       }
 
-      // Find user by email securely using RPC (bypasses RLS check for target user identification)
-      const { data: targetUserId, error: rpcError } = await supabase
-        .rpc("get_user_id_by_email", { target_email: parseResult.data.email });
+      // Verify that this email is not already registered in another team for the same competition
+      // 1. Get all team IDs for this competition
+      const { data: competitionTeams } = await supabase
+        .from("teams")
+        .select("id")
+        .eq("competition_id", team.competitions.competition_id);
+      
+      const compTeamIds = competitionTeams?.map((t) => t.id) || [];
 
-      if (rpcError || !targetUserId) {
-        return NextResponse.json(
-          { success: false, message: "User not found on platform. Ask them to sign up first!" },
-          { status: 404 }
-        );
-      }
+      if (compTeamIds.length > 0) {
+        // 2. Check if any member in these teams matches this email
+        const { data: duplicateMember } = await supabase
+          .from("v_team_members")
+          .select("member_id, team_id")
+          .in("team_id", compTeamIds)
+          .eq("email", email.trim().toLowerCase());
 
-      const verifiedUserId = targetUserId as unknown as string;
-
-      // Check if target user is already in a team for this competition
-      const { data: targetMembership } = await supabase
-        .from("team_members")
-        .select("id, team_id, teams(competition_id)")
-        .eq("user_id", verifiedUserId)
-        .eq("invitation_status", "accepted");
-
-      const targetInSameComp = targetMembership?.some(
-        (m) => {
-          const teamInfo = m.teams as unknown as { competition_id: string } | null;
-          return teamInfo?.competition_id === team.competition_id;
-        }
-      );
-
-      if (targetInSameComp) {
-        return NextResponse.json(
-          { success: false, message: "User is already registered in a team for this competition." },
-          { status: 409 }
-        );
-      }
-
-      // Create pending invitation
-      const { error: inviteError } = await supabase.from("team_members").insert({
-        team_id: team.id,
-        user_id: verifiedUserId,
-        role: "member",
-        invitation_status: "pending",
-      });
-
-      if (inviteError) {
-        if (inviteError.code === "23505") {
+        if (duplicateMember && duplicateMember.length > 0) {
           return NextResponse.json(
-            { success: false, message: "An invitation has already been sent to this user." },
+            { success: false, message: "This email is already registered in a team for this competition." },
             { status: 409 }
           );
         }
-        throw new Error(inviteError.message);
       }
 
-      // In-app notification is handled automatically via database trigger (tr_invitation_notification)
+      // Upload Student ID card front/back to Cloudinary
+      const frontUpload = await uploadImage(
+        id_front_base64,
+        `csefest/verifications/${team.id}/${email.replace(/[^a-zA-Z0-9]/g, "_")}/front`
+      );
 
-      return NextResponse.json({ success: true, message: "Invitation sent successfully." });
+      const backUpload = await uploadImage(
+        id_back_base64,
+        `csefest/verifications/${team.id}/${email.replace(/[^a-zA-Z0-9]/g, "_")}/back`
+      );
+
+      // Create accepted member record directly
+      const { error: insertError } = await supabase.from("team_members").insert({
+        team_id: team.id,
+        user_id: null,
+        role: "member",
+        invitation_status: "accepted",
+        joined_at: new Date().toISOString(),
+        verification_status: "pending",
+        full_name,
+        email: email.trim().toLowerCase(),
+        phone,
+        gender,
+        university,
+        department,
+        semester,
+        student_id,
+        tshirt_size,
+        github: github || null,
+        portfolio: portfolio || null,
+        skills: skills || null,
+        bio: bio || null,
+        id_front_url: frontUpload.secure_url,
+        id_back_url: backUpload.secure_url,
+      });
+
+      if (insertError) {
+        if (insertError.code === "23505") {
+          return NextResponse.json(
+            { success: false, message: "This user is already a member of the team." },
+            { status: 409 }
+          );
+        }
+        throw new Error(insertError.message);
+      }
+
+      return NextResponse.json({ success: true, message: "Teammate registered successfully." });
     }
 
     // Action: respond to invitation (accept / reject)
@@ -562,19 +609,24 @@ export async function POST(req: Request) {
         return NextResponse.json({ success: false, message: check.message }, { status: check.status });
       }
 
-      if (parseResult.data.user_id === user.id) {
+      // Check if trying to remove self
+      const memberQuery = parseResult.data.member_id 
+        ? supabase.from("team_members").select("user_id").eq("id", parseResult.data.member_id).single()
+        : supabase.from("team_members").select("user_id").eq("team_id", parseResult.data.team_id).eq("user_id", parseResult.data.user_id).single();
+      
+      const { data: memberToQuery } = await memberQuery;
+      if (memberToQuery && memberToQuery.user_id === user.id) {
         return NextResponse.json(
           { success: false, message: "You cannot kick yourself from the team. Disband the team or transfer leadership instead." },
           { status: 400 }
         );
       }
 
-      const { error: deleteError } = await supabase
-        .from("team_members")
-        .delete()
-        .eq("team_id", parseResult.data.team_id)
-        .eq("user_id", parseResult.data.user_id);
+      const deleteQuery = parseResult.data.member_id
+        ? supabase.from("team_members").delete().eq("id", parseResult.data.member_id)
+        : supabase.from("team_members").delete().eq("team_id", parseResult.data.team_id).eq("user_id", parseResult.data.user_id);
 
+      const { error: deleteError } = await deleteQuery;
       if (deleteError) throw new Error(deleteError.message);
 
       return NextResponse.json({ success: true, message: "Member removed from roster successfully." });

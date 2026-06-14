@@ -49,19 +49,47 @@ export async function POST(req: Request) {
       `csefest/verifications/${user.id}/back`
     );
 
-    // 4. Create database transaction (Manual multi-table mutations)
-    // Insert/update verification record
-    const { error: verifyError } = await supabase
+    // 4. Insert or update verification record.
+    // We do an explicit check first because the RLS policy only permits INSERT
+    // for regular users (no UPDATE policy), so .upsert() would violate the
+    // unique constraint when a record already exists.
+    const { data: existing } = await supabase
       .from("student_verifications")
-      .upsert({
-        user_id: user.id,
-        id_front_url: frontUpload.secure_url,
-        id_back_url: backUpload.secure_url,
-        status: "pending",
-      });
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-    if (verifyError) {
-      throw new Error(verifyError.message);
+    if (existing) {
+      // Row exists — use admin-privileged update via service role is not
+      // available here, so we rely on the "Admins" policy not applying.
+      // Instead, re-submit means we just update via the allowed admin policy.
+      // For participant re-submissions we patch directly:
+      const { error: updateError } = await supabase
+        .from("student_verifications")
+        .update({
+          id_front_url: frontUpload.secure_url,
+          id_back_url: backUpload.secure_url,
+          status: "pending",
+        })
+        .eq("user_id", user.id);
+
+      if (updateError) {
+        throw new Error(`Failed to update verification: ${updateError.message}`);
+      }
+    } else {
+      // No existing row — safe to insert
+      const { error: insertError } = await supabase
+        .from("student_verifications")
+        .insert({
+          user_id: user.id,
+          id_front_url: frontUpload.secure_url,
+          id_back_url: backUpload.secure_url,
+          status: "pending",
+        });
+
+      if (insertError) {
+        throw new Error(`Failed to create verification: ${insertError.message}`);
+      }
     }
 
     // Update profile status

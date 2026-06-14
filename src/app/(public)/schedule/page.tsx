@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -6,7 +6,7 @@ import { ArrowLeft, Clock, MapPin, Calendar } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/shared/Navbar";
 import { Footer } from "@/components/shared/Footer";
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/badge";
 
 interface ScheduleItem {
   time: string;
@@ -276,3 +276,4 @@ export default function SchedulePage() {
     </div>
   );
 }
+

@@ -24,8 +24,8 @@ import {
   Cell,
   CartesianGrid,
 } from "recharts";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 
 interface CompItem {
@@ -162,7 +162,7 @@ export default function AdminAnalyticsPage() {
   const statCards = [
     {
       label: "Total Revenue",
-      value: `৳${analytics.summary.totalRevenue.toLocaleString()}`,
+      value: `${analytics.summary.totalRevenue.toLocaleString()} BDT`,
       icon: Banknote,
     },
     {
@@ -255,7 +255,7 @@ export default function AdminAnalyticsPage() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={analytics.competitionShares} margin={{ top: 5, right: 10, left: -28, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--grid-line-color)" vertical={false} />
-                <XAxis dataKey="name" stroke="var(--color-neutral-700)" fontSize={9} tickLine={false} axisLine={false} tickFormatter={(v) => v.substring(0, 10) + (v.length > 10 ? "…" : "")} tick={{ fill: "var(--color-neutral-500)" }} />
+                <XAxis dataKey="name" stroke="var(--color-neutral-700)" fontSize={9} tickLine={false} axisLine={false} tickFormatter={(v) => v.substring(0, 10) + (v.length > 10 ? "..." : "")} tick={{ fill: "var(--color-neutral-500)" }} />
                 <YAxis stroke="var(--color-neutral-700)" fontSize={9} tickLine={false} axisLine={false} tick={{ fill: "var(--color-neutral-500)" }} />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--color-neutral-900)", opacity: 0.15 }} />
                 <Bar dataKey="teamsCount" name="Teams" radius={[2, 2, 0, 0]}>
@@ -304,7 +304,7 @@ export default function AdminAnalyticsPage() {
                 <XAxis dataKey="method" stroke="var(--color-neutral-700)" fontSize={9} tickLine={false} axisLine={false} tick={{ fill: "var(--color-neutral-500)" }} />
                 <YAxis stroke="var(--color-neutral-700)" fontSize={9} tickLine={false} axisLine={false} tick={{ fill: "var(--color-neutral-500)" }} />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: "var(--color-neutral-900)", opacity: 0.15 }} />
-                <Bar dataKey="total" name="Amount (৳)" radius={[2, 2, 0, 0]}>
+                <Bar dataKey="total" name="Amount (BDT)" radius={[2, 2, 0, 0]}>
                   <Cell fill="var(--color-primary)" />
                   <Cell fill="var(--color-secondary)" />
                 </Bar>
@@ -377,3 +377,4 @@ export default function AdminAnalyticsPage() {
     </motion.div>
   );
 }
+

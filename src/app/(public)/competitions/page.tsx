@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { Suspense } from "react";
@@ -10,9 +10,9 @@ import useSWR from "swr";
 import { useSearchParams } from "next/navigation";
 import { Navbar } from "@/components/shared/Navbar";
 import { Footer } from "@/components/shared/Footer";
-import { Input } from "@/components/ui/Input";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -60,7 +60,9 @@ function CompetitionsListContent() {
         fifa: "FIFA"
       };
       const mappedQuery = shortNameMap[selectParam] || selectParam;
-      setSearchQuery(mappedQuery);
+      setTimeout(() => {
+        setSearchQuery(mappedQuery);
+      }, 0);
     }
   }, [selectParam]);
 
@@ -301,3 +303,4 @@ export default function CompetitionsListingPage() {
     </Suspense>
   );
 }
+

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -9,8 +9,8 @@ import {
   ChevronLeft,
   Star,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 
 interface CompetitionItem {
@@ -298,3 +298,4 @@ export default function PublicFinalistsPage() {
     </div>
   );
 }
+

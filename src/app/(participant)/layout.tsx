@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -17,7 +17,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { NotificationPanel } from "@/components/shared/NotificationPanel";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -339,3 +339,4 @@ export default function ParticipantLayout({
     </div>
   );
 }
+

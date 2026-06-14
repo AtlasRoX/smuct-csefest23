@@ -14,10 +14,10 @@ import {
   ArrowUp,
   ArrowDown,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Input } from "@/components/ui/Input";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 interface Announcement {
@@ -1210,3 +1210,4 @@ export default function AdminCMSPage() {
   );
 
 }
+

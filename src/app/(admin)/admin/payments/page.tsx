@@ -16,10 +16,10 @@ import {
   Edit,
   Trash2,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Input } from "@/components/ui/Input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
@@ -47,6 +47,15 @@ interface PaymentItem {
   } | null;
 }
 
+interface PaymentGateway {
+  id: string;
+  name: string;
+  display_name: string;
+  number: string;
+  instructions: string | null;
+  active: boolean;
+}
+
 export default function AdminPaymentsPage() {
   const [payments, setPayments] = React.useState<PaymentItem[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -58,10 +67,10 @@ export default function AdminPaymentsPage() {
   const [activeTab, setActiveTab] = React.useState<"queue" | "config">("queue");
 
   // Payment methods configuration state
-  const [methods, setMethods] = React.useState<any[]>([]);
+  const [methods, setMethods] = React.useState<PaymentGateway[]>([]);
   const [methodsLoading, setMethodsLoading] = React.useState(false);
   const [showMethodForm, setShowMethodForm] = React.useState(false);
-  const [editingMethod, setEditingMethod] = React.useState<any | null>(null);
+  const [editingMethod, setEditingMethod] = React.useState<PaymentGateway | null>(null);
   const [methodFormData, setMethodFormData] = React.useState({
     id: "",
     name: "",
@@ -179,7 +188,7 @@ export default function AdminPaymentsPage() {
     }
   };
 
-  const handleToggleActive = async (methodItem: any) => {
+  const handleToggleActive = async (methodItem: PaymentGateway) => {
     setErrorMsg(null);
     setSuccessMsg(null);
     try {
@@ -218,7 +227,7 @@ export default function AdminPaymentsPage() {
     }
   };
 
-  const handleEditMethodClick = (methodItem: any) => {
+  const handleEditMethodClick = (methodItem: PaymentGateway) => {
     setEditingMethod(methodItem);
     setMethodFormData({
       id: methodItem.id,
@@ -350,7 +359,7 @@ export default function AdminPaymentsPage() {
           </div>
           <div className="flex items-center gap-1.5 text-[10px] font-mono bg-success/10 border border-success/20 text-success px-3 py-1 rounded">
             <Check className="h-3 w-3" />
-            <span>৳{totalRevenue.toLocaleString()} collected</span>
+            <span>{totalRevenue.toLocaleString()} BDT collected</span>
           </div>
         </div>
       </div>
@@ -483,7 +492,7 @@ export default function AdminPaymentsPage() {
                             {!amountMatches && isPending && (
                               <Badge variant="error" className="flex items-center gap-1 text-[10px] font-mono py-0.5 rounded px-2 font-semibold">
                                 <AlertTriangle className="h-2.5 w-2.5" />
-                                <span>Fee Mismatch (Expected ৳{expectedFee})</span>
+                                <span>Fee Mismatch (Expected {expectedFee} BDT)</span>
                               </Badge>
                             )}
                           </div>
@@ -500,7 +509,7 @@ export default function AdminPaymentsPage() {
                           <div className="p-2 rounded bg-neutral-950 border border-neutral-850 space-y-0.5">
                             <p className="text-neutral-600 text-[9px] uppercase tracking-widest font-mono">Amount</p>
                             <p className={`font-semibold font-mono ${amountMatches ? "text-neutral-200" : "text-error"}`}>
-                              ৳{p.amount}
+                              {p.amount} BDT
                             </p>
                           </div>
                           <div className="p-2 rounded bg-neutral-950 border border-neutral-850 space-y-0.5">
@@ -793,3 +802,4 @@ export default function AdminPaymentsPage() {
     </motion.div>
   );
 }
+

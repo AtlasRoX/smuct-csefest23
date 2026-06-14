@@ -22,12 +22,16 @@ import {
   Search,
   Calendar,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Input } from "@/components/ui/Input";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import { motion } from "framer-motion";
+import { DashboardStats } from "@/components/stats";
+import { RevenueChart } from "@/components/revenue-chart";
+import { RefundReturnRateChart } from "@/components/refund-return-rate-chart";
+import { CategoryRankChart, CategoryMixDatum } from "@/components/category-rank-chart";
 
 interface VerificationItem {
   id: string;
@@ -115,6 +119,9 @@ export default function AdminDashboardPage() {
     totalSubmissions: 0,
     selectedSubmissions: 0,
   });
+  const [revenueTrend, setRevenueTrend] = React.useState<{ date: string; revenue: number }[]>([]);
+  const [submissionTrend, setSubmissionTrend] = React.useState<{ day: string; submissions: number }[]>([]);
+  const [competitionMix, setCompetitionMix] = React.useState<CategoryMixDatum[]>([]);
   const [pendingVerifications, setPendingVerifications] = React.useState<VerificationItem[]>([]);
   const [auditLogs, setAuditLogs] = React.useState<AuditLogItem[]>([]);
   const [logSearch, setLogSearch] = React.useState("");
@@ -148,11 +155,34 @@ export default function AdminDashboardPage() {
 
         const { data: approvedPayments, error: payErr } = await supabase
           .from("payments")
-          .select("amount")
+          .select("amount, created_at")
           .eq("status", "approved");
         if (payErr) throw payErr;
 
         const revSum = (approvedPayments || []).reduce((acc, p) => acc + Number(p.amount), 0);
+
+        // Generate the last 90 days YYYY-MM-DD
+        const dates90: string[] = [];
+        for (let i = 89; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const formatted = d.toISOString().split("T")[0];
+          dates90.push(formatted);
+        }
+
+        const revenueByDate: Record<string, number> = {};
+        approvedPayments?.forEach((p) => {
+          if (p.created_at) {
+            const dateStr = new Date(p.created_at).toISOString().split("T")[0];
+            revenueByDate[dateStr] = (revenueByDate[dateStr] || 0) + Number(p.amount);
+          }
+        });
+
+        const revTrendData = dates90.map((date) => ({
+          date,
+          revenue: revenueByDate[date] || 0,
+        }));
+        setRevenueTrend(revTrendData);
 
         const { count: pendingPayCount, error: pendingPayErr } = await supabase
           .from("payments")
@@ -162,7 +192,7 @@ export default function AdminDashboardPage() {
 
         const { data: submissionsData, error: subErr } = await supabase
           .from("submissions")
-          .select("status");
+          .select("submitted_at, status");
         if (subErr) throw subErr;
 
         let totalSubs = 0, selectedSubs = 0;
@@ -172,6 +202,66 @@ export default function AdminDashboardPage() {
             if (s.status === "selected") selectedSubs++;
           });
         }
+
+        // Submissions trend (last 7 days)
+        const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const last7Days: { day: string; dateStr: string }[] = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date();
+          d.setDate(d.getDate() - i);
+          const dayName = daysOfWeek[d.getDay()];
+          last7Days.push({
+            day: dayName,
+            dateStr: d.toISOString().split("T")[0],
+          });
+        }
+
+        const submissionsByDate: Record<string, number> = {};
+        submissionsData?.forEach((s) => {
+          const dateField = s.submitted_at;
+          if (dateField) {
+            const dateStr = new Date(dateField).toISOString().split("T")[0];
+            submissionsByDate[dateStr] = (submissionsByDate[dateStr] || 0) + 1;
+          }
+        });
+
+        const subTrendData = last7Days.map((item) => ({
+          day: item.day,
+          submissions: submissionsByDate[item.dateStr] || 0,
+        }));
+        setSubmissionTrend(subTrendData);
+
+        // Competition popularity mix
+        const { data: teamsData, error: teamsErr } = await supabase
+          .from("teams")
+          .select("id, competition_id");
+        if (teamsErr) throw teamsErr;
+
+        const { data: competitionsData, error: compsErr } = await supabase
+          .from("competitions")
+          .select("id, name");
+        if (compsErr) throw compsErr;
+
+        const compMap: Record<string, string> = {};
+        competitionsData?.forEach((c) => {
+          compMap[c.id] = c.name;
+        });
+
+        const counts: Record<string, number> = {};
+        let totalTeamsCount = 0;
+        teamsData?.forEach((t) => {
+          if (t.competition_id) {
+            const compName = compMap[t.competition_id] || "Unknown";
+            counts[compName] = (counts[compName] || 0) + 1;
+            totalTeamsCount++;
+          }
+        });
+
+        const compMixData = Object.entries(counts).map(([category, count]) => ({
+          category,
+          share: totalTeamsCount > 0 ? Math.round((count / totalTeamsCount) * 100) : 0,
+        }));
+        setCompetitionMix(compMixData);
 
         setStats({
           totalUsers: total,
@@ -368,49 +458,25 @@ export default function AdminDashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Total Registrations"
-          value={stats.totalUsers}
-          icon={Users}
-          accent="neutral"
-          delay={0}
-        />
-        <StatCard
-          label="Revenue Collected"
-          value={`৳${stats.totalRevenue.toLocaleString()}`}
-          icon={Banknote}
-          accent="success"
-          delay={1}
-        />
-        <StatCard
-          label="Pending Payments"
-          value={stats.pendingPayments}
-          icon={Clock}
-          accent="warning"
-          badge={
-            stats.pendingPayments > 0 ? (
-              <Badge variant="warning" className="text-[9px] px-1.5 py-0.5 animate-pulse font-mono font-bold rounded-sm shadow-sm bg-warning/10 text-warning border-warning/20">
-                Action
-              </Badge>
-            ) : undefined
-          }
-          delay={2}
-        />
-        <StatCard
-          label="Proposals Selected"
-          value={
-            <>
-              {stats.selectedSubmissions}
-              <span className="text-sm text-muted-foreground font-sans font-normal ml-1">
-                / {stats.totalSubmissions}
-              </span>
-            </>
-          }
-          icon={FileCode}
-          accent="primary"
-          delay={3}
+        <DashboardStats
+          stats={{
+            totalUsers: stats.totalUsers,
+            totalTeams: stats.totalTeams,
+            totalRevenue: stats.totalRevenue,
+            verificationRate: verificationPercent,
+          }}
         />
       </div>
+
+      {/* Charts Grid */}
+      <motion.div
+        variants={itemVariants}
+        className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-4"
+      >
+        <RevenueChart data={revenueTrend} />
+        <RefundReturnRateChart data={submissionTrend} totalSubmissions={stats.totalSubmissions} />
+        <CategoryRankChart data={competitionMix} className="md:col-span-2" />
+      </motion.div>
 
       {/* Main Content Layout (matching CRM column layout) */}
       <motion.div
@@ -463,7 +529,7 @@ export default function AdminDashboardPage() {
                           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                             <span className="font-mono">{v.profiles?.student_id || "N/A"}</span>
                             <span className="w-1 h-1 rounded-full bg-border" />
-                            <span className="truncate max-w-[150px]">{v.profiles?.university || "—"}</span>
+                            <span className="truncate max-w-[150px]">{v.profiles?.university || "\u2014"}</span>
                             <span className="w-1 h-1 rounded-full bg-border" />
                             <span className="text-[10px] font-mono">
                               {new Date(v.created_at).toLocaleDateString()}
@@ -553,7 +619,7 @@ export default function AdminDashboardPage() {
                               </p>
                               {log.resource_id && (
                                 <p className="text-[10px] text-muted-foreground font-mono">
-                                  ref: <span>{log.resource_id.slice(0, 16)}…</span>
+                                  ref: <span>{log.resource_id.slice(0, 16)}...</span>
                                 </p>
                               )}
                             </div>
@@ -686,3 +752,4 @@ export default function AdminDashboardPage() {
     </motion.div>
   );
 }
+

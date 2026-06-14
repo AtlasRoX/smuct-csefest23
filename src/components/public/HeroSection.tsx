@@ -4,9 +4,9 @@ import * as React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import useSWR from "swr";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
-// ─── Countdown Hook ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Countdown Hook â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type CountdownTick = { days: number; hours: number; minutes: number; seconds: number };
 
 function useCountdown(target: Date): CountdownTick {
@@ -144,7 +144,25 @@ const STATIC_FALLBACK_TRACKS: Track[] = [
   }
 ];
 
-function mapDbCompToTrack(comp: any): Track {
+interface DbCompetition {
+  id: string;
+  name: string;
+  type: string;
+  status: string;
+  shortName?: string;
+  short_name?: string;
+  prizePool?: string;
+  prize_pool?: string;
+  heroCapacity?: number;
+  hero_capacity?: number;
+  shortDescription?: string;
+  short_description?: string;
+  description?: string;
+  showInHero?: boolean;
+  show_in_hero?: boolean;
+}
+
+function mapDbCompToTrack(comp: DbCompetition): Track {
   let category = comp.type || "Showcase";
   if (comp.type === "Showcase") {
     if (comp.name.toLowerCase().includes("software")) {
@@ -187,7 +205,7 @@ function mapDbCompToTrack(comp: any): Track {
   };
 }
 
-// ─── Actual Technology & Event Logo SVGs ────────────────────────────────────
+// â”€â”€â”€ Actual Technology & Event Logo SVGs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export function LogoIcon({ name, className = "", size = 24 }: { name: string; className?: string; size?: number }) {
   const norm = name.toLowerCase().trim();
 
@@ -195,7 +213,7 @@ export function LogoIcon({ name, className = "", size = 24 }: { name: string; cl
   if (norm.includes("next")) {
     return (
       <svg viewBox="0 0 180 180" width={size} height={size} className={className}>
-        <circle cx="90" cy="90" r="90" fill="currentColor" className="text-neutral-900 dark:text-neutral-800" />
+        <circle cx="90" cy="90" r="90" fill="currentColor" className="opacity-10" />
         <path d="M140 135 L75 52 L60 52 L60 128 L73 128 L73 75 L130 148 Z" fill="white" />
         <rect x="117" y="52" width="13" height="76" fill="white" />
       </svg>
@@ -205,8 +223,8 @@ export function LogoIcon({ name, className = "", size = 24 }: { name: string; cl
   // React (Orbital electron loops)
   if (norm.includes("react")) {
     return (
-      <svg viewBox="-11.5 -10.23 23 20.46" width={size} height={size} className={className} stroke="#61dafb" fill="none">
-        <circle cx="0" cy="0" r="2.05" fill="#61dafb" />
+      <svg viewBox="-11.5 -10.23 23 20.46" width={size} height={size} className={className} stroke="currentColor" fill="none">
+        <circle cx="0" cy="0" r="2.05" fill="currentColor" />
         <g strokeWidth="1">
           <ellipse rx="11" ry="4.2" />
           <ellipse rx="11" ry="4.2" transform="rotate(60)" />
@@ -220,8 +238,8 @@ export function LogoIcon({ name, className = "", size = 24 }: { name: string; cl
   if (norm.includes("typescript") || norm === "ts") {
     return (
       <svg viewBox="0 0 100 100" width={size} height={size} className={className}>
-        <rect width="100%" height="100%" fill="#3178c6" rx="8" />
-        <text x="85" y="80" fontFamily="system-ui, sans-serif" fontWeight="bold" fontSize="50" fill="white" textAnchor="end">TS</text>
+        <rect width="100%" height="100%" fill="currentColor" className="opacity-10" rx="8" />
+        <text x="85" y="80" fontFamily="system-ui, sans-serif" fontWeight="bold" fontSize="50" fill="currentColor" textAnchor="end">TS</text>
       </svg>
     );
   }
@@ -230,7 +248,7 @@ export function LogoIcon({ name, className = "", size = 24 }: { name: string; cl
   if (norm.includes("tailwind")) {
     return (
       <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none">
-        <path d="M12.001 4.8c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624C13.666 10.618 15.027 12 18.001 12c3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C16.335 6.182 14.974 4.8 12.001 4.8zm-6 7.2c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624 1.177 1.194 2.538 2.576 5.512 2.576 3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C10.335 13.382 8.974 12 6.001 12z" fill="#38bdf8" />
+        <path d="M12.001 4.8c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624C13.666 10.618 15.027 12 18.001 12c3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C16.335 6.182 14.974 4.8 12.001 4.8zm-6 7.2c-3.2 0-5.2 1.6-6 4.8 1.2-1.6 2.6-2.2 4.2-1.8.913.228 1.565.89 2.288 1.624 1.177 1.194 2.538 2.576 5.512 2.576 3.2 0 5.2-1.6 6-4.8-1.2 1.6-2.6 2.2-4.2 1.8-.913-.228-1.565-.89-2.288-1.624C10.335 13.382 8.974 12 6.001 12z" fill="currentColor" />
       </svg>
     );
   }
@@ -239,7 +257,7 @@ export function LogoIcon({ name, className = "", size = 24 }: { name: string; cl
   if (norm.includes("python")) {
     return (
       <svg viewBox="0 0 110 110" width={size} height={size} className={className}>
-        <path d="M55 5C41.3 5 30.6 8.5 28.5 15.6l2 6.6c0 0 7.9-2.5 19.3-2.5s20.2 6.5 20.2 14.5v9.8H39c-12 0-21.6 7.4-21.6 19.3v11c0 12 9.6 19.3 21.6 19.3h9.8V84c0 12 9.6 21.6 21.6 21.6s21.6-9.6 21.6-21.6v-9.8c12 0 21.6-7.4 21.6-19.3v-11c0-12-9.6-19.3-21.6-19.3H90.2V35.6c0-12-9.6-21.6-21.6-21.6c-4 0-9.6.2-13.6 11zm-9.8 19.6c2.7 0 4.9 2.2 4.9 4.9s-2.2 4.9-4.9 4.9s-4.9-2.2-4.9-4.9s2.2-4.9 4.9-4.9zm29.4 49c2.7 0 4.9 2.2 4.9 4.9s-2.2 4.9-4.9 4.9s-4.9-2.2-4.9-4.9s2.2-4.9 4.9-4.9z" fill="#3776ab" />
+        <path d="M55 5C41.3 5 30.6 8.5 28.5 15.6l2 6.6c0 0 7.9-2.5 19.3-2.5s20.2 6.5 20.2 14.5v9.8H39c-12 0-21.6 7.4-21.6 19.3v11c0 12 9.6 19.3 21.6 19.3h9.8V84c0 12 9.6 21.6 21.6 21.6s21.6-9.6 21.6-21.6v-9.8c12 0 21.6-7.4 21.6-19.3v-11c0-12-9.6-19.3-21.6-19.3H90.2V35.6c0-12-9.6-21.6-21.6-21.6c-4 0-9.6.2-13.6 11zm-9.8 19.6c2.7 0 4.9 2.2 4.9 4.9s-2.2 4.9-4.9 4.9s-4.9-2.2-4.9-4.9s2.2-4.9 4.9-4.9zm29.4 49c2.7 0 4.9 2.2 4.9 4.9s-2.2 4.9-4.9 4.9s-4.9-2.2-4.9-4.9s2.2-4.9 4.9-4.9z" fill="currentColor" />
       </svg>
     );
   }
@@ -248,8 +266,8 @@ export function LogoIcon({ name, className = "", size = 24 }: { name: string; cl
   if (norm.includes("c++") || norm === "cpp") {
     return (
       <svg viewBox="0 0 100 100" width={size} height={size} className={className}>
-        <polygon points="50,5 95,27.5 95,72.5 50,95 5,72.5 5,27.5" fill="#00599c" opacity="0.3" stroke="#00599c" strokeWidth="4" />
-        <text x="50" y="60" fontFamily="sans-serif" fontWeight="bold" fontSize="34" fill="#00599c" textAnchor="middle">C++</text>
+        <polygon points="50,5 95,27.5 95,72.5 50,95 5,72.5 5,27.5" fill="currentColor" className="opacity-10" stroke="currentColor" strokeWidth="4" />
+        <text x="50" y="60" fontFamily="sans-serif" fontWeight="bold" fontSize="34" fill="currentColor" textAnchor="middle">C++</text>
       </svg>
     );
   }
@@ -258,9 +276,9 @@ export function LogoIcon({ name, className = "", size = 24 }: { name: string; cl
   if (norm.includes("html")) {
     return (
       <svg viewBox="0 0 512 512" width={size} height={size} className={className}>
-        <path d="M108.4 0h295.1l-26.6 448.9-121 34.6-121-34.6z" fill="#e34f26" opacity="0.3" stroke="#e34f26" strokeWidth="20" />
-        <path d="M256 32v415.7l93.7-26.8 21.8-356.2z" fill="#f06529" />
-        <path d="M256 166.4H178l5.8 63.8h72.2V320l-71.8-19.4-4.6-51h-33.8l9.2 101 101 28V166.4zm0 0h78.2l-7.2 78.2H256v63.8l72.2-19.4 6.8-78.2h33.8l-12 138-100.8 28.2V166.4z" fill="white" />
+        <path d="M108.4 0h295.1l-26.6 448.9-121 34.6-121-34.6z" fill="currentColor" className="opacity-10" stroke="currentColor" strokeWidth="20" />
+        <path d="M256 32v415.7l93.7-26.8 21.8-356.2z" fill="currentColor" />
+        <path d="M256 166.4H178l5.8 63.8h72.2V320l-71.8-19.4-4.6-51h-33.8l9.2 101 101 28V166.4zm0 0h78.2l-7.2 78.2H256v63.8l72.2-19.4 6.8-78.2h33.8l-12 138-100.8 28.2V166.4z" fill="currentColor" />
       </svg>
     );
   }
@@ -268,8 +286,8 @@ export function LogoIcon({ name, className = "", size = 24 }: { name: string; cl
   // SQL / Supabase (Amber/Green lightning bolt)
   if (norm.includes("supabase") || norm.includes("sql") || norm.includes("database")) {
     return (
-      <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" stroke="#3ecf8e" strokeWidth="2">
-        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="#3ecf8e" fillOpacity="0.25" />
+      <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor" className="opacity-20" />
       </svg>
     );
   }
@@ -277,7 +295,7 @@ export function LogoIcon({ name, className = "", size = 24 }: { name: string; cl
   // VALORANT (Official segmented V logo shape)
   if (norm.includes("valorant") || norm === "val") {
     return (
-      <svg viewBox="0 0 100 100" width={size} height={size} className={className} fill="#ff4655">
+      <svg viewBox="0 0 100 100" width={size} height={size} className={className} fill="currentColor">
         <path d="M18 16 L45 16 L28 84 L18 84 Z" />
         <path d="M82 16 L60 84 L50 84 L65 48 L82 16 Z" />
         <path d="M52 16 L82 16 L65 48 L55 16 Z" />
@@ -288,8 +306,8 @@ export function LogoIcon({ name, className = "", size = 24 }: { name: string; cl
   // FIFA (Globe grid/football shape)
   if (norm.includes("fifa")) {
     return (
-      <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" stroke="#0077c0" strokeWidth="2">
-        <circle cx="12" cy="12" r="10" fill="#0077c0" fillOpacity="0.2" />
+      <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10" fill="currentColor" className="opacity-10" />
         <path d="M12 2v20M2 12h20M12 2c2.76 0 5 4.48 5 10s-2.24 10-5 10-5-4.48-5-10 2.24-10 5-10z" />
       </svg>
     );
@@ -298,8 +316,8 @@ export function LogoIcon({ name, className = "", size = 24 }: { name: string; cl
   // Cyber CTF (Segmented flag shape)
   if (norm.includes("ctf") || norm.includes("cyber") || norm.includes("security")) {
     return (
-      <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" stroke="#f43f5e" strokeWidth="2">
-        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7" fill="#f43f5e" fillOpacity="0.25" />
+      <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7" fill="currentColor" className="opacity-20" />
       </svg>
     );
   }
@@ -307,11 +325,11 @@ export function LogoIcon({ name, className = "", size = 24 }: { name: string; cl
   // Datathon (AI/Neural connections)
   if (norm.includes("datathon") || norm.includes("data") || norm.includes("ml")) {
     return (
-      <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" stroke="#a855f7" strokeWidth="2">
-        <circle cx="12" cy="5" r="2.5" fill="#a855f7" fillOpacity="0.3" />
-        <circle cx="5" cy="12" r="2.5" fill="#a855f7" fillOpacity="0.3" />
-        <circle cx="19" cy="12" r="2.5" fill="#a855f7" fillOpacity="0.3" />
-        <circle cx="12" cy="19" r="2.5" fill="#a855f7" fillOpacity="0.3" />
+      <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="5" r="2.5" fill="currentColor" className="opacity-20" />
+        <circle cx="5" cy="12" r="2.5" fill="currentColor" className="opacity-20" />
+        <circle cx="19" cy="12" r="2.5" fill="currentColor" className="opacity-20" />
+        <circle cx="12" cy="19" r="2.5" fill="currentColor" className="opacity-20" />
         <path d="M12 7.5v9M7.5 12h9M12 7.5L5 12m14 0l-7-4.5M5 12l7 7m0 0l7-7" />
       </svg>
     );
@@ -320,8 +338,8 @@ export function LogoIcon({ name, className = "", size = 24 }: { name: string; cl
   // Robo Soccer / LFR / Robotics (Mechanical gear)
   if (norm.includes("robo") || norm.includes("soccer") || norm.includes("lfr") || norm.includes("robotics")) {
     return (
-      <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" stroke="#ec4899" strokeWidth="2">
-        <circle cx="12" cy="12" r="9" fill="#ec4899" fillOpacity="0.2" />
+      <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="9" fill="currentColor" className="opacity-15" />
         <path d="M12 2v20M2 12h20" />
         <path d="M12 12l5-5M12 12L7 7M12 12l5 5M12 12l-5 5" />
       </svg>
@@ -331,8 +349,8 @@ export function LogoIcon({ name, className = "", size = 24 }: { name: string; cl
   // IoT Showcase (Microcontroller layout)
   if (norm.includes("iot") || norm.includes("hardware")) {
     return (
-      <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" stroke="#06b6d4" strokeWidth="2">
-        <rect x="4" y="4" width="16" height="16" rx="2" fill="#06b6d4" fillOpacity="0.2" />
+      <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="4" y="4" width="16" height="16" rx="2" fill="currentColor" className="opacity-15" />
         <path d="M9 9h6v6H9zM9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3" />
       </svg>
     );
@@ -341,8 +359,8 @@ export function LogoIcon({ name, className = "", size = 24 }: { name: string; cl
   // Idea Showcase / Pitch (Glowing Idea Bulb)
   if (norm.includes("idea") || norm.includes("pitch")) {
     return (
-      <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" stroke="#eab308" strokeWidth="2">
-        <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 006 8c0 1 .5 2.2 1.5 3.1.7.7 1.3 1.5 1.5 2.5h6z" fill="#eab308" fillOpacity="0.25" />
+      <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 006 8c0 1 .5 2.2 1.5 3.1.7.7 1.3 1.5 1.5 2.5h6z" fill="currentColor" className="opacity-20" />
         <path d="M9 18h6M10 22h4" />
       </svg>
     );
@@ -350,8 +368,8 @@ export function LogoIcon({ name, className = "", size = 24 }: { name: string; cl
 
   // Software Showcase (Interactive desktop dashboard layout fallback)
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" stroke="#6366f1" strokeWidth="2">
-      <rect x="2" y="3" width="20" height="14" rx="2" fill="#6366f1" fillOpacity="0.1" />
+    <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="2" y="3" width="20" height="14" rx="2" fill="currentColor" className="opacity-10" />
       <path d="M8 21h8M12 17v4M6 8l4 4-4 4" />
     </svg>
   );
@@ -368,21 +386,21 @@ interface FloatingIconItem {
 }
 
 const FLOATING_ICONS: FloatingIconItem[] = [
-  { name: "Next.js", color: "text-primary/20", x: "8%", y: "15%", delay: 0.5, duration: 14, size: 24 },
-  { name: "TypeScript", color: "text-neutral-500/20", x: "85%", y: "10%", delay: 1.2, duration: 16, size: 20 },
-  { name: "React.js", color: "text-primary/20", x: "45%", y: "6%", delay: 0.2, duration: 12, size: 28 },
-  { name: "Tailwind CSS v4", color: "text-secondary/20", x: "15%", y: "85%", delay: 2.1, duration: 15, size: 22 },
-  { name: "Python", color: "text-neutral-500/20", x: "88%", y: "82%", delay: 0.8, duration: 18, size: 26 },
-  { name: "C++", color: "text-accent/20", x: "32%", y: "88%", delay: 1.5, duration: 13, size: 22 },
-  { name: "HTML5", color: "text-neutral-500/20", x: "5%", y: "52%", delay: 2.8, duration: 17, size: 20 },
-  { name: "SQL / Supabase", color: "text-accent/20", x: "90%", y: "45%", delay: 0.4, duration: 14, size: 24 },
-  { name: "VALORANT", color: "text-secondary/20", x: "25%", y: "22%", delay: 1.0, duration: 16, size: 30 },
-  { name: "FIFA", color: "text-primary/20", x: "72%", y: "15%", delay: 1.8, duration: 15, size: 26 },
-  { name: "CYBER CTF", color: "text-tertiary/20", x: "42%", y: "80%", delay: 0.5, duration: 14, size: 28 },
-  { name: "DATATHON", color: "text-primary/20", x: "80%", y: "70%", delay: 2.5, duration: 16, size: 24 },
-  { name: "ROBO SOCCER", color: "text-accent/20", x: "18%", y: "78%", delay: 1.3, duration: 13, size: 28 },
-  { name: "LFR RACING", color: "text-secondary/20", x: "92%", y: "30%", delay: 0.7, duration: 15, size: 22 },
-  { name: "IDEA PITCH", color: "text-gold/20", x: "65%", y: "86%", delay: 1.7, duration: 17, size: 24 },
+  { name: "Next.js", color: "text-neutral-600/5", x: "8%", y: "15%", delay: 0.5, duration: 14, size: 24 },
+  { name: "TypeScript", color: "text-neutral-600/5", x: "85%", y: "10%", delay: 1.2, duration: 16, size: 20 },
+  { name: "React.js", color: "text-primary/5", x: "45%", y: "6%", delay: 0.2, duration: 12, size: 28 },
+  { name: "Tailwind CSS v4", color: "text-secondary/5", x: "15%", y: "85%", delay: 2.1, duration: 15, size: 22 },
+  { name: "Python", color: "text-neutral-600/5", x: "88%", y: "82%", delay: 0.8, duration: 18, size: 26 },
+  { name: "C++", color: "text-accent/5", x: "32%", y: "88%", delay: 1.5, duration: 13, size: 22 },
+  { name: "HTML5", color: "text-neutral-600/5", x: "5%", y: "52%", delay: 2.8, duration: 17, size: 20 },
+  { name: "SQL / Supabase", color: "text-accent/5", x: "90%", y: "45%", delay: 0.4, duration: 14, size: 24 },
+  { name: "VALORANT", color: "text-secondary/5", x: "25%", y: "22%", delay: 1.0, duration: 16, size: 30 },
+  { name: "FIFA", color: "text-primary/5", x: "72%", y: "15%", delay: 1.8, duration: 15, size: 26 },
+  { name: "CYBER CTF", color: "text-neutral-600/5", x: "42%", y: "80%", delay: 0.5, duration: 14, size: 28 },
+  { name: "DATATHON", color: "text-primary/5", x: "80%", y: "70%", delay: 2.5, duration: 16, size: 24 },
+  { name: "ROBO SOCCER", color: "text-accent/5", x: "18%", y: "78%", delay: 1.3, duration: 13, size: 28 },
+  { name: "LFR RACING", color: "text-secondary/5", x: "92%", y: "30%", delay: 0.7, duration: 15, size: 22 },
+  { name: "IDEA PITCH", color: "text-neutral-600/5", x: "65%", y: "86%", delay: 1.7, duration: 17, size: 24 },
 ];
 
 export function HeroSection() {
@@ -400,14 +418,14 @@ export function HeroSection() {
   }, []);
 
   // Fetch active published competitions dynamically
-  const { data: dbData } = useSWR<{ success: boolean; data: any[] }>(
+  const { data: dbData } = useSWR<{ success: boolean; data: DbCompetition[] }>(
     mounted ? "/api/public/competitions" : null,
     fetcher
   );
 
   const tracks = React.useMemo(() => {
     if (dbData?.success && Array.isArray(dbData.data)) {
-      const heroCompetitions = dbData.data.filter((c: any) => c.showInHero || c.show_in_hero);
+      const heroCompetitions = dbData.data.filter((c: DbCompetition) => c.showInHero || c.show_in_hero);
       if (heroCompetitions.length > 0) {
         return heroCompetitions.map(mapDbCompToTrack);
       }
@@ -419,7 +437,9 @@ export function HeroSection() {
   React.useEffect(() => {
     if (tracks.length > 0) {
       if (!tracks.some((t) => t.id === activeTrack)) {
-        setActiveTrack(tracks[0].id);
+        setTimeout(() => {
+          setActiveTrack(tracks[0].id);
+        }, 0);
       }
     }
   }, [tracks, activeTrack]);
@@ -484,7 +504,7 @@ export function HeroSection() {
               CSE
             </span>
             <span className="flex items-baseline flex-wrap gap-x-4 md:gap-x-6 animate-slide-down" style={{ animationDelay: "0.2s" }}>
-              <span className="text-transparent bg-clip-text bg-gradient-to-br from-neutral-50 via-neutral-200 to-neutral-500">
+              <span className="text-transparent bg-clip-text bg-linear-to-br from-neutral-50 via-neutral-200 to-neutral-500">
                 FEST
               </span>
               <motion.span 
@@ -509,12 +529,12 @@ export function HeroSection() {
             <p className="text-[9px] text-neutral-500 tracking-[0.2em] font-mono mb-1 group-hover:text-accent transition-colors">LOCATION</p>
             <p className="text-base font-bold text-neutral-100 tracking-wide font-heading">DHAKA</p>
           </div>
-          <div className="h-8 w-px bg-gradient-to-b from-transparent via-neutral-800 to-transparent" />
+          <div className="h-8 w-px bg-linear-to-b from-transparent via-neutral-800 to-transparent" />
           <div className="group cursor-default">
             <p className="text-[9px] text-neutral-500 tracking-[0.2em] font-mono mb-1 group-hover:text-accent transition-colors">DATE</p>
             <p className="text-base font-bold text-neutral-100 tracking-wide font-heading">18 JULY</p>
           </div>
-          <div className="h-8 w-px bg-gradient-to-b from-transparent via-neutral-800 to-transparent" />
+          <div className="h-8 w-px bg-linear-to-b from-transparent via-neutral-800 to-transparent" />
           <div className="group cursor-default">
             <p className="text-[9px] text-neutral-500 tracking-[0.2em] font-mono mb-1 group-hover:text-accent transition-colors">VENUE</p>
             <p className="text-base font-bold text-neutral-100 tracking-wide font-heading">SMUCT</p>
@@ -572,7 +592,7 @@ export function HeroSection() {
         className="relative bg-glass border border-primary/20 hover:border-accent/40 rounded-2xl overflow-hidden shadow-level-4 transition-all duration-normal group z-10"
       >
         {/* Ambient aura background */}
-        <div className="absolute inset-0 bg-gradient-to-tr from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-complex pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-tr from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-complex pointer-events-none" />
         
         {/* Noise texture */}
         <div className="absolute inset-0 bg-noise opacity-[0.02] pointer-events-none" />
@@ -599,7 +619,7 @@ export function HeroSection() {
                       fill="none"
                       stroke="currentColor"
                       strokeDasharray="4 4"
-                      className="stroke-neutral-800/60 stroke-[1] animate-[spin_40s_linear_infinite] origin-center"
+                      className="stroke-neutral-800/60 stroke-1 animate-[spin_40s_linear_infinite] origin-center"
                     />
 
                     {/* Rotating Inner ring */}
@@ -610,7 +630,7 @@ export function HeroSection() {
                       fill="none"
                       stroke="currentColor"
                       strokeDasharray="6 3"
-                      className="stroke-neutral-800 stroke-[1] animate-[spin_20s_linear_infinite_reverse] origin-center"
+                      className="stroke-neutral-800 stroke-1 animate-[spin_20s_linear_infinite_reverse] origin-center"
                     />
 
                     {/* Pulsing Core */}
@@ -618,7 +638,7 @@ export function HeroSection() {
                       cx="65"
                       cy="65"
                       r="8"
-                      className="fill-primary/10 stroke-primary/30 stroke-[1]"
+                      className="fill-primary/10 stroke-primary/30 stroke-1"
                     />
                     <circle
                       cx="65"
@@ -666,7 +686,7 @@ export function HeroSection() {
                             className={`transition-all duration-300 ${
                               activeTrack === track.id
                                 ? "stroke-primary stroke-2"
-                                : "stroke-neutral-800/50 stroke-[1]"
+                                : "stroke-neutral-800/50 stroke-1"
                             }`}
                           />
                           
@@ -806,3 +826,4 @@ export function HeroSection() {
     </section>
   );
 }
+

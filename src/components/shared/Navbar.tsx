@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, LayoutDashboard, LogIn, Sun, Moon } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import { User } from "@supabase/supabase-js";
@@ -304,3 +304,4 @@ export function Navbar() {
     </nav>
   );
 }
+

@@ -1,12 +1,12 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Eye, ArrowRight, Sparkles } from "lucide-react";
 import useSWR from "swr";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -125,7 +125,7 @@ export function FeaturedCompetitions() {
               className="relative bg-glass border border-glass hover:border-primary/40 rounded-2xl flex flex-col group transition-all duration-normal hover:-translate-y-1.5 hover:shadow-level-3 overflow-hidden"
             >
               {/* Hover gradient glow */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-complex pointer-events-none" />
+              <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-complex pointer-events-none" />
 
               {/* Cover image header */}
               <div className="relative h-44 overflow-hidden rounded-t-2xl">
@@ -201,3 +201,4 @@ export function FeaturedCompetitions() {
     </section>
   );
 }
+

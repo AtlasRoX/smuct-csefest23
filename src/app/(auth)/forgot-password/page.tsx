@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
@@ -7,9 +7,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Mail, ArrowRight, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Card, CardContent } from "@/components/ui/Card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/client";
 
 const forgotPasswordSchema = z.object({
@@ -90,7 +90,7 @@ export default function ForgotPasswordPage() {
 
         {/* Footer info */}
         <div className="text-xs text-neutral-500 font-sans z-10">
-          © {new Date().getFullYear()} Dept of CSE & CSIT, SMUCT.
+          Â© {new Date().getFullYear()} Dept of CSE & CSIT, SMUCT.
         </div>
       </div>
 
@@ -157,3 +157,4 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
+

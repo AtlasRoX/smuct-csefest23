@@ -7,8 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Terminal, Upload, AlertCircle, ArrowLeft, ArrowRight, Check, X, ShieldCheck, Fingerprint, GraduationCap, Lock, Info, HelpCircle, Shield, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 import { createClient } from "@/lib/supabase/client";
 
@@ -931,3 +931,4 @@ export default function ProfileSetupWizard() {
     </div>
   );
 }
+

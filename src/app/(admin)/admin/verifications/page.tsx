@@ -17,14 +17,14 @@ import {
   User,
   Search,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Input } from "@/components/ui/Input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
-// ──────────────── Type Definitions ────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Type Definitions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface IdCard {
   front_url: string;
@@ -83,7 +83,7 @@ interface ReviewTeam {
   submission: TeamSubmission | null;
 }
 
-// ──────────────── Helper Components ────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Helper Components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function VerifBadge({ status }: { status: string }) {
   if (status === "approved")
@@ -122,7 +122,7 @@ function TeamStatusBadge({ status }: { status: string }) {
   );
 }
 
-// ──────────────── Main Page ────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function TeamReviewPage() {
   const [teams, setTeams] = React.useState<ReviewTeam[]>([]);
@@ -157,7 +157,10 @@ export default function TeamReviewPage() {
   }, []);
 
   React.useEffect(() => {
-    loadTeams();
+    const timer = setTimeout(() => {
+      loadTeams();
+    }, 0);
+    return () => clearTimeout(timer);
   }, [loadTeams]);
 
   const toggleTeam = (teamId: string) => {
@@ -209,7 +212,7 @@ export default function TeamReviewPage() {
     );
   }, [teams, searchTerm]);
 
-  // ── Render ──
+  // â”€â”€ Render â”€â”€
 
   if (loading) {
     return (
@@ -312,7 +315,7 @@ export default function TeamReviewPage() {
                         )}
                       </div>
                       <p className="text-xs text-neutral-500 font-sans truncate">
-                        {team.competition?.name ?? "No Competition"} &nbsp;·&nbsp; {acceptedMembers.length} members
+                        {team.competition?.name ?? "No Competition"} • {acceptedMembers.length} members
                       </p>
                     </div>
                   </div>
@@ -394,7 +397,7 @@ export default function TeamReviewPage() {
                                     {member.profile?.full_name || "Unknown"}
                                   </button>
                                   <p className="text-[10px] text-neutral-500 font-mono truncate">
-                                    {member.profile?.university || "—"} &nbsp;·&nbsp; {member.profile?.student_id || "No ID"}
+                                    {member.profile?.university || "—"} • {member.profile?.student_id || "No ID"}
                                   </p>
                                 </div>
                               </div>
@@ -436,7 +439,7 @@ export default function TeamReviewPage() {
         </div>
       )}
 
-      {/* ──────────────── Member Profile Modal ──────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Member Profile Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <AnimatePresence>
         {selectedMember && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -540,7 +543,7 @@ export default function TeamReviewPage() {
                         <div key={side.label} className="space-y-1.5">
                           <p className="text-[9px] font-mono text-neutral-600 uppercase tracking-widest">{side.label}</p>
                           {side.url ? (
-                            <div className="w-full aspect-[3/2] relative rounded border border-neutral-800 bg-neutral-950/40 overflow-hidden flex items-center justify-center">
+                            <div className="w-full aspect-3/2 relative rounded border border-neutral-800 bg-neutral-950/40 overflow-hidden flex items-center justify-center">
                               <img
                                 src={side.url}
                                 alt={`ID ${side.label}`}
@@ -551,7 +554,7 @@ export default function TeamReviewPage() {
                               />
                             </div>
                           ) : (
-                            <div className="w-full aspect-[3/2] rounded border border-neutral-800 bg-neutral-950 flex items-center justify-center text-neutral-700 text-xs font-mono">
+                            <div className="w-full aspect-3/2 rounded border border-neutral-800 bg-neutral-950 flex items-center justify-center text-neutral-700 text-xs font-mono">
                               Not uploaded
                             </div>
                           )}
@@ -566,7 +569,7 @@ export default function TeamReviewPage() {
                 )}
               </div>
 
-              {/* Modal Footer — Approve/Reject Actions */}
+              {/* Modal Footer â€” Approve/Reject Actions */}
               {selectedMember.member.verification_status === "pending" && (
                 <div className="p-5 border-t border-neutral-800/60 flex gap-3">
                   <Button
@@ -602,7 +605,7 @@ export default function TeamReviewPage() {
         )}
       </AnimatePresence>
 
-      {/* ──────────────── Submission Viewer Modal ──────────────── */}
+      {/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Submission Viewer Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       <AnimatePresence>
         {viewSubmission && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -669,3 +672,4 @@ export default function TeamReviewPage() {
     </div>
   );
 }
+

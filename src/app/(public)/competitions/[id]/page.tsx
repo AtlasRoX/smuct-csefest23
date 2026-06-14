@@ -8,8 +8,8 @@ import { ArrowLeft, Trophy, Users, Shield, CreditCard, HelpCircle, CheckCircle }
 import useSWR from "swr";
 import { Navbar } from "@/components/shared/Navbar";
 import { Footer } from "@/components/shared/Footer";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { useForm } from "react-hook-form";
@@ -15,9 +15,9 @@ import {
   AlertCircle,
   Clock,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -495,3 +495,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+

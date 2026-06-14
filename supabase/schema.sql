@@ -294,6 +294,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS tr_sync_admin_role ON public.admins;
 CREATE TRIGGER tr_sync_admin_role
 AFTER INSERT OR DELETE ON public.admins
 FOR EACH ROW
@@ -317,6 +318,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS tr_check_user_role_consistency ON public.users;
 CREATE TRIGGER tr_check_user_role_consistency
 BEFORE INSERT OR UPDATE ON public.users
 FOR EACH ROW
@@ -345,34 +347,55 @@ ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 -- 5. Define RLS Policies
 
 -- USERS Table Policies
+DROP POLICY IF EXISTS "Users can view their own record" ON public.users;
+DROP POLICY IF EXISTS "Admins can view all records" ON public.users;
+DROP POLICY IF EXISTS "Admins can update user roles" ON public.users;
 CREATE POLICY "Users can view their own record" ON public.users FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Admins can view all records" ON public.users FOR SELECT USING (public.is_admin(auth.uid()));
 CREATE POLICY "Admins can update user roles" ON public.users FOR UPDATE USING (public.is_admin(auth.uid()));
 
 -- ADMINS Table Policies
+DROP POLICY IF EXISTS "Admins can view all admin records" ON public.admins;
 CREATE POLICY "Admins can view all admin records" ON public.admins FOR SELECT USING (public.is_admin(auth.uid()));
 
 -- PROFILES Table Policies
+DROP POLICY IF EXISTS "Users can read own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+DROP POLICY IF EXISTS "Admins can read all profiles" ON public.profiles;
 CREATE POLICY "Users can read own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Admins can read all profiles" ON public.profiles FOR SELECT USING (public.is_admin(auth.uid()));
 
 -- STUDENT_VERIFICATIONS Table Policies
+DROP POLICY IF EXISTS "Users can read own verification" ON public.student_verifications;
+DROP POLICY IF EXISTS "Users can create own verification" ON public.student_verifications;
+DROP POLICY IF EXISTS "Users can update own verification" ON public.student_verifications;
+DROP POLICY IF EXISTS "Admins can read/write all verifications" ON public.student_verifications;
 CREATE POLICY "Users can read own verification" ON public.student_verifications FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can create own verification" ON public.student_verifications FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own verification" ON public.student_verifications FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Admins can read/write all verifications" ON public.student_verifications USING (public.is_admin(auth.uid()));
 
 -- COMPETITIONS Table Policies
+DROP POLICY IF EXISTS "Public read active competitions" ON public.competitions;
+DROP POLICY IF EXISTS "Admins can do everything on competitions" ON public.competitions;
 CREATE POLICY "Public read active competitions" ON public.competitions FOR SELECT USING (status != 'draft');
 CREATE POLICY "Admins can do everything on competitions" ON public.competitions USING (public.is_admin(auth.uid()));
 
 -- TEAMS Table Policies
+DROP POLICY IF EXISTS "Anyone can read teams" ON public.teams;
+DROP POLICY IF EXISTS "Team leader can create team" ON public.teams;
+DROP POLICY IF EXISTS "Team leader can update team details" ON public.teams;
+DROP POLICY IF EXISTS "Admins can do everything on teams" ON public.teams;
 CREATE POLICY "Anyone can read teams" ON public.teams FOR SELECT USING (true);
 CREATE POLICY "Team leader can create team" ON public.teams FOR INSERT WITH CHECK (auth.uid() = leader_id);
 CREATE POLICY "Team leader can update team details" ON public.teams FOR UPDATE USING (auth.uid() = leader_id);
 CREATE POLICY "Admins can do everything on teams" ON public.teams USING (public.is_admin(auth.uid()));
 
 -- TEAM_MEMBERS Table Policies
+DROP POLICY IF EXISTS "Anyone can read team members" ON public.team_members;
+DROP POLICY IF EXISTS "Leader/members can edit team invitations" ON public.team_members;
+DROP POLICY IF EXISTS "Team leaders can add/remove members" ON public.team_members;
 CREATE POLICY "Anyone can read team members" ON public.team_members FOR SELECT USING (true);
 CREATE POLICY "Leader/members can edit team invitations" ON public.team_members USING (auth.uid() = user_id);
 CREATE POLICY "Team leaders can add/remove members" ON public.team_members USING (
@@ -383,6 +406,9 @@ CREATE POLICY "Team leaders can add/remove members" ON public.team_members USING
 );
 
 -- SUBMISSIONS Table Policies
+DROP POLICY IF EXISTS "Team members can read own team submissions" ON public.submissions;
+DROP POLICY IF EXISTS "Team members can create/edit own submissions" ON public.submissions;
+DROP POLICY IF EXISTS "Admins can read/write all submissions" ON public.submissions;
 CREATE POLICY "Team members can read own team submissions" ON public.submissions FOR SELECT USING (
   EXISTS (
     SELECT 1 FROM public.team_members 
@@ -398,6 +424,9 @@ CREATE POLICY "Team members can create/edit own submissions" ON public.submissio
 CREATE POLICY "Admins can read/write all submissions" ON public.submissions USING (public.is_admin(auth.uid()));
 
 -- PAYMENTS Table Policies
+DROP POLICY IF EXISTS "Team members can read own team payments" ON public.payments;
+DROP POLICY IF EXISTS "Team members can submit payments" ON public.payments;
+DROP POLICY IF EXISTS "Admins can review payments" ON public.payments;
 CREATE POLICY "Team members can read own team payments" ON public.payments FOR SELECT USING (
   EXISTS (
     SELECT 1 FROM public.team_members 
@@ -413,6 +442,8 @@ CREATE POLICY "Team members can submit payments" ON public.payments FOR INSERT W
 CREATE POLICY "Admins can review payments" ON public.payments USING (public.is_admin(auth.uid()));
 
 -- SCORES Table Policies
+DROP POLICY IF EXISTS "Team members can view own team scores" ON public.scores;
+DROP POLICY IF EXISTS "Admins can read/write scores" ON public.scores;
 CREATE POLICY "Team members can view own team scores" ON public.scores FOR SELECT USING (
   EXISTS (
     SELECT 1 FROM public.team_members 
@@ -422,26 +453,39 @@ CREATE POLICY "Team members can view own team scores" ON public.scores FOR SELEC
 CREATE POLICY "Admins can read/write scores" ON public.scores USING (public.is_admin(auth.uid()));
 
 -- RANKINGS Table Policies
+DROP POLICY IF EXISTS "Public read if rankings are public" ON public.rankings;
+DROP POLICY IF EXISTS "Admins can read/write all rankings" ON public.rankings;
 CREATE POLICY "Public read if rankings are public" ON public.rankings FOR SELECT USING (is_public = true);
 CREATE POLICY "Admins can read/write all rankings" ON public.rankings USING (public.is_admin(auth.uid()));
 
 -- NOTIFICATIONS Table Policies
+DROP POLICY IF EXISTS "Users can read/write own notifications" ON public.notifications;
 CREATE POLICY "Users can read/write own notifications" ON public.notifications USING (auth.uid() = user_id);
 
 -- CMS Tables Public Read, Admin Write Policies
+DROP POLICY IF EXISTS "Public read announcements" ON public.announcements;
+DROP POLICY IF EXISTS "Admin write announcements" ON public.announcements;
 CREATE POLICY "Public read announcements" ON public.announcements FOR SELECT USING (status = 'published');
 CREATE POLICY "Admin write announcements" ON public.announcements USING (public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Public read ticker items" ON public.ticker_items;
+DROP POLICY IF EXISTS "Admin write ticker items" ON public.ticker_items;
 CREATE POLICY "Public read ticker items" ON public.ticker_items FOR SELECT USING (active = true);
 CREATE POLICY "Admin write ticker items" ON public.ticker_items USING (public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Public read faqs" ON public.faqs;
+DROP POLICY IF EXISTS "Admin write faqs" ON public.faqs;
 CREATE POLICY "Public read faqs" ON public.faqs FOR SELECT USING (visible = true);
 CREATE POLICY "Admin write faqs" ON public.faqs USING (public.is_admin(auth.uid()));
 
+DROP POLICY IF EXISTS "Public read contact info" ON public.contact_info;
+DROP POLICY IF EXISTS "Admin write contact info" ON public.contact_info;
 CREATE POLICY "Public read contact info" ON public.contact_info FOR SELECT USING (true);
 CREATE POLICY "Admin write contact info" ON public.contact_info USING (public.is_admin(auth.uid()));
 
 -- AUDIT_LOGS Table Policies
+DROP POLICY IF EXISTS "Admins can view audit logs" ON public.audit_logs;
+DROP POLICY IF EXISTS "System/Admins can write audit logs" ON public.audit_logs;
 CREATE POLICY "Admins can view audit logs" ON public.audit_logs FOR SELECT USING (public.is_admin(auth.uid()));
 CREATE POLICY "System/Admins can write audit logs" ON public.audit_logs FOR INSERT WITH CHECK (public.is_admin(auth.uid()));
 

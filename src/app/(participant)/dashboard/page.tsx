@@ -15,9 +15,9 @@ import {
   Flame,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Card, CardHeader, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { createClient } from "@/lib/supabase/client";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
@@ -113,18 +113,20 @@ function StatusBanner({
   const c = config[type];
 
   return (
-    <motion.div
-      variants={itemVariants}
-      className="p-5 rounded-lg border border-border bg-card flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full shadow-sm"
-    >
-      <div className="flex gap-3 items-start relative z-10">
-        <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${c.dot}`} />
-        <div className="space-y-0.5">
-          <h3 className="font-semibold text-sm text-foreground">{title}</h3>
-          <p className="text-xs text-muted-foreground font-sans leading-relaxed">{message}</p>
+    <motion.div variants={itemVariants} className="w-full">
+      <Card
+        variant="glass"
+        className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full"
+      >
+        <div className="flex gap-3 items-start relative z-10">
+          <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${c.dot}`} />
+          <div className="space-y-0.5">
+            <h3 className="font-semibold text-sm text-neutral-100">{title}</h3>
+            <p className="text-xs text-neutral-400 font-sans leading-relaxed">{message}</p>
+          </div>
         </div>
-      </div>
-      {action && <div className="relative z-10 shrink-0">{action}</div>}
+        {action && <div className="relative z-10 shrink-0">{action}</div>}
+      </Card>
     </motion.div>
   );
 }
@@ -291,9 +293,13 @@ export default function DashboardHome() {
       {/* Stats Grid */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {/* Profile Status */}
-        <div className="rounded-lg border border-border bg-card p-5 shadow-sm flex items-center justify-between w-full hover:border-neutral-350 transition-colors cursor-default">
+        <Card
+          variant="glass"
+          hoverable
+          className="p-5 flex items-center justify-between w-full"
+        >
           <div className="space-y-1">
-            <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase tracking-widest block">
+            <span className="text-[10px] font-semibold text-neutral-400 font-sans uppercase tracking-widest block">
               Profile Status
             </span>
             <h4 className={`text-base font-heading font-bold capitalize font-mono ${
@@ -302,40 +308,48 @@ export default function DashboardHome() {
               {!isIncomplete ? "Complete" : "Incomplete"}
             </h4>
           </div>
-          <div className="p-2.5 rounded border border-border bg-muted text-muted-foreground">
+          <div className="p-2.5 rounded border border-border bg-muted text-neutral-400">
             <UserCheck className="h-4 w-4" />
           </div>
-        </div>
+        </Card>
 
         {/* Teams */}
-        <div className="rounded-lg border border-border bg-card p-5 shadow-sm flex items-center justify-between w-full hover:border-neutral-350 transition-colors cursor-default">
+        <Card
+          variant="glass"
+          hoverable
+          className="p-5 flex items-center justify-between w-full"
+        >
           <div className="space-y-1">
-            <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase tracking-widest block">
+            <span className="text-[10px] font-semibold text-neutral-400 font-sans uppercase tracking-widest block">
               My Teams
             </span>
-            <h4 className="text-2xl font-heading font-bold text-foreground font-mono leading-none">
+            <h4 className="text-2xl font-heading font-bold text-neutral-100 font-mono leading-none">
               {teams.length}
             </h4>
           </div>
-          <div className="p-2.5 rounded border border-border bg-muted text-muted-foreground">
+          <div className="p-2.5 rounded border border-border bg-muted text-neutral-400">
             <Users className="h-4 w-4" />
           </div>
-        </div>
+        </Card>
 
         {/* Competitions */}
-        <div className="rounded-lg border border-border bg-card p-5 shadow-sm flex items-center justify-between w-full hover:border-neutral-350 transition-colors cursor-default">
+        <Card
+          variant="glass"
+          hoverable
+          className="p-5 flex items-center justify-between w-full"
+        >
           <div className="space-y-1">
-            <span className="text-[10px] font-semibold text-muted-foreground font-sans uppercase tracking-widest block">
+            <span className="text-[10px] font-semibold text-neutral-400 font-sans uppercase tracking-widest block">
               Registered
             </span>
-            <h4 className="text-2xl font-heading font-bold text-foreground font-mono leading-none">
+            <h4 className="text-2xl font-heading font-bold text-neutral-100 font-mono leading-none">
               {registeredTeams.length}
             </h4>
           </div>
-          <div className="p-2.5 rounded border border-border bg-muted text-muted-foreground">
+          <div className="p-2.5 rounded border border-border bg-muted text-neutral-400">
             <Trophy className="h-4 w-4" />
           </div>
-        </div>
+        </Card>
       </motion.div>
 
       {/* Main Content */}
@@ -389,8 +403,10 @@ export default function DashboardHome() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: idx * 0.05 }}
                   >
-                    <div
-                      className="p-4 border border-border bg-card hover:border-neutral-350 transition-colors duration-150 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full group shadow-sm"
+                    <Card
+                      variant="default"
+                      hoverable
+                      className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full group"
                     >
                       <div className="space-y-1 flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -417,7 +433,7 @@ export default function DashboardHome() {
                           <span>View Rules</span>
                         </button>
                       )}
-                    </div>
+                    </Card>
                   </motion.div>
                 );
               })}
@@ -453,11 +469,11 @@ export default function DashboardHome() {
             <h2 className="text-base font-heading font-semibold text-foreground">Deadlines</h2>
           </div>
 
-          <div className="border border-border bg-card p-5 rounded-lg shadow-sm">
-            <div className="pb-3 mb-4 border-b border-border">
+          <Card variant="glass" className="p-5">
+            <div className="pb-3 mb-4 border-b border-neutral-800/60">
               <div className="flex items-center gap-2">
-                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                <Calendar className="h-3.5 w-3.5 text-neutral-400" />
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
                   {teams.length > 0 ? "My Deadlines" : "Upcoming Deadlines"}
                 </h3>
               </div>
@@ -559,7 +575,7 @@ export default function DashboardHome() {
                 );
               })()}
             </div>
-          </div>
+          </Card>
         </div>
       </motion.div>
 
@@ -617,7 +633,7 @@ export default function DashboardHome() {
                   <div className="space-y-1">
                     <span className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground font-mono block">Entry Fee</span>
                     <span className="text-sm font-semibold text-foreground block">
-                      {Number(selectedCompInfo.entry_fee) === 0 ? "Free" : `৳${selectedCompInfo.entry_fee}`}
+                      {Number(selectedCompInfo.entry_fee) === 0 ? "Free" : `${selectedCompInfo.entry_fee} BDT`}
                     </span>
                   </div>
                   <div className="space-y-1">
@@ -689,3 +705,4 @@ export default function DashboardHome() {
     </motion.div>
   );
 }
+

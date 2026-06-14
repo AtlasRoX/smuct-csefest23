@@ -1,10 +1,10 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Search, Compass, Trophy, ShieldAlert, X } from "lucide-react";
 import useSWR from "swr";
-import { Badge } from "@/components/ui/Badge";
+import { Badge } from "@/components/ui/badge";
 import { useBodyScrollLock } from "@/hooks/useBodyScrollLock";
 
 interface CompItem {
@@ -181,8 +181,8 @@ export function CommandPalette() {
         {/* Footer info banner */}
         <div className="h-9 bg-neutral-950 border-t border-neutral-800 px-4 flex items-center justify-between text-xxs text-neutral-500 select-none shrink-0 font-mono">
           <div className="flex gap-2">
-            <span>↑↓ to navigate</span>
-            <span>↵ to select</span>
+            <span>â†‘â†“ to navigate</span>
+            <span>â†µ to select</span>
           </div>
           <span>ctrl+k to close</span>
         </div>
@@ -190,3 +190,4 @@ export function CommandPalette() {
     </div>
   );
 }
+

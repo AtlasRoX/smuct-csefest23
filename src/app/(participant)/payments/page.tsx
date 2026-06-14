@@ -16,10 +16,10 @@ import {
   Copy,
   Trophy,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Badge } from "@/components/ui/Badge";
-import { Input } from "@/components/ui/Input";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 
 interface UserTeam {
@@ -48,6 +48,15 @@ interface PaymentRecord {
   reviewed_at: string | null;
 }
 
+interface PaymentMethod {
+  id: string;
+  name: string;
+  display_name: string;
+  number: string;
+  instructions: string | null;
+  active: boolean;
+}
+
 export default function PaymentsPage() {
   const [loading, setLoading] = React.useState(true);
   const [teams, setTeams] = React.useState<UserTeam[]>([]);
@@ -57,7 +66,7 @@ export default function PaymentsPage() {
 
   // Form states
   const [method, setMethod] = React.useState<string>("");
-  const [activeMethods, setActiveMethods] = React.useState<any[]>([]);
+  const [activeMethods, setActiveMethods] = React.useState<PaymentMethod[]>([]);
   const [methodsLoading, setMethodsLoading] = React.useState(true);
   const [transactionId, setTransactionId] = React.useState("");
   const [screenshotBase64, setScreenshotBase64] = React.useState<string | null>(null);
@@ -374,7 +383,7 @@ export default function PaymentsPage() {
                 >
                   {teams.map((t) => (
                     <option key={t.id} value={t.id}>
-                      {t.name} ({t.competitions?.name}) — Status: {t.status}
+                      {t.name} ({t.competitions?.name}) {"\u2014"} Status: {t.status}
                     </option>
                   ))}
                 </select>
@@ -427,7 +436,7 @@ export default function PaymentsPage() {
                         Method & Amount
                       </div>
                       <div className="text-sm text-neutral-200 font-semibold mt-1 uppercase">
-                        {latestPayment.method} — {latestPayment.amount} BDT
+                        {latestPayment.method} {"\u2014"} {latestPayment.amount} BDT
                       </div>
                     </div>
                     <div>
@@ -707,7 +716,7 @@ export default function PaymentsPage() {
                     {selectedMethodObj.instructions}
                   </p>
                   <div className="pt-2.5 border-t border-neutral-850/40 font-mono text-[10px] text-neutral-500">
-                    Send exact fee: <strong className="text-neutral-300">৳{entryFee}</strong>
+                    Send exact fee: <strong className="text-neutral-300">{entryFee} BDT</strong>
                   </div>
                 </div>
               ) : (
@@ -738,3 +747,4 @@ export default function PaymentsPage() {
     </div>
   );
 }
+
